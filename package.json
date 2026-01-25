@@ -1,0 +1,18 @@
+{
+  "name": "flashcards",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["app", "site"],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "app:start": "npm run start --workspace=app",
+    "app:ios": "npm run ios --workspace=app",
+    "app:android": "npm run android --workspace=app"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4"
+  },
+  "packageManager": "npm@10.9.2"
+}
