@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { useFlashcardsStore } from '@/store/flashcards';
 import { DeckCard } from '@/components/DeckCard';
 import { FlashcardListItem } from '@/components/FlashcardListItem';
-import { Header } from '@/components/Header';
+import { Header, HeaderAction } from '@/components/Header';
 import { SearchBar } from '@/components/SearchBar';
 import { getFlashcardCount, search } from '@/utils/database';
 import { Deck, Flashcard } from '@/types';
@@ -80,15 +80,7 @@ export function HomeScreen() {
 
 	return (
 		<View flex={1} backgroundColor="$background">
-			<Header
-				title="I tuoi mazzi"
-				showBackButton={false}
-				actions={[
-					<Button key="new" onPress={() => router.push('/deck/new')} size="$3">
-						Nuovo
-					</Button>,
-				]}
-			/>
+			<Header title="I tuoi mazzi" showBackButton={false} actions={[<HeaderAction key="add" icon="add" onPress={() => router.push('/deck/new')} />]} />
 
 			<YStack flex={1} padding="$4" gap="$4">
 				{/* Search bar */}

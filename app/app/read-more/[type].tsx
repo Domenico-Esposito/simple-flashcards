@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, Linking } from 'react-native';
-import { Text, View, Heading } from 'tamagui';
+import { Text, View, Heading, Stack } from 'tamagui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMemo } from 'react';
 import Markdown from 'react-native-markdown-display';
@@ -12,7 +12,7 @@ export default function ReadMoreScreen() {
 	const { type, content } = useLocalSearchParams<{ type: 'question' | 'answer'; content: string }>();
 	const insets = useSafeAreaInsets();
 
-	const title = type === 'question' ? 'DOMANDA' : 'RISPOSTA';
+	const title = type === 'question' ? 'Domanda' : 'Risposta';
 
 	// Markdown render rules using Tamagui components
 	const markdownRules: RenderRules = useMemo(
@@ -148,8 +148,10 @@ export default function ReadMoreScreen() {
 			<Header title={title} isModal />
 
 			{/* Content */}
-			<ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24, paddingBottom: insets.bottom + 24 }}>
-				<Markdown rules={markdownRules}>{content || ''}</Markdown>
+			<ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: insets.bottom }}>
+				<Stack gap="$4" flex={1} paddingHorizontal="$4" paddingVertical="$2">
+					<Markdown rules={markdownRules}>{content || ''}</Markdown>
+				</Stack>
 			</ScrollView>
 		</View>
 	);

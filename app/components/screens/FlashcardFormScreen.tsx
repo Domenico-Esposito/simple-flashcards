@@ -88,10 +88,10 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 
 	return (
 		<KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-			<ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
-				<View flex={1} backgroundColor="$background">
-					<Header title={mode === 'new' ? 'Nuova Flashcard' : 'Modifica Flashcard'} isModal />
-					<YStack gap="$4" flex={1} padding="$4">
+			<View flex={1} backgroundColor="$background">
+				<Header title={mode === 'new' ? 'Nuova Flashcard' : 'Modifica Flashcard'} isModal />
+				<ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
+					<YStack gap="$4" flex={1} paddingHorizontal="$4">
 						<YStack gap="$1">
 							<Label htmlFor="question">Domanda *</Label>
 							<TextArea
@@ -156,8 +156,8 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 							</Button>
 						</YStack>
 					</YStack>
-				</View>
-			</ScrollView>
+				</ScrollView>
+			</View>
 		</KeyboardAvoidingView>
 	);
 }
