@@ -1,6 +1,6 @@
 import { SetStateAction, useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
-import { Button, Label, Text, TextArea, View, YStack } from 'tamagui';
+import { Button, Text, TextArea, View, XStack, YStack } from 'tamagui';
 import { useRouter } from 'expo-router';
 
 import { useFlashcardsStore } from '@/store/flashcards';
@@ -22,6 +22,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 	const [questionError, setQuestionError] = useState('');
 	const [answerError, setAnswerError] = useState('');
 	const [isLoading, setIsLoading] = useState(mode === 'edit');
+	const [activeSection, setActiveSection] = useState<'question' | 'answer'>('question');
 
 	// Load existing flashcard data when in edit mode
 	useEffect(() => {
@@ -92,53 +93,86 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 				<Header title={mode === 'new' ? 'Nuova Flashcard' : 'Modifica Flashcard'} isModal />
 				<ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
 					<YStack gap="$4" flex={1} paddingHorizontal="$4">
-						<YStack gap="$1">
-							<Label htmlFor="question">Domanda *</Label>
-							<TextArea
-								id="question"
-								size="$4"
-								value={question}
-								onChangeText={(text: SetStateAction<string>) => {
-									setQuestion(text);
-									setQuestionError('');
-								}}
-								placeholder="Scrivi la domanda..."
-								numberOfLines={3}
-								style={{ textAlignVertical: 'top' }}
-								borderColor={questionError ? '$red10' : undefined}
-							/>
-							{questionError && (
-								<Text fontSize={12} color="$red10">
-									{questionError}
-								</Text>
-							)}
-						</YStack>
+						<XStack gap="$2" padding="$1" borderRadius="$4" backgroundColor="$color2">
+							<Button
+								size="$3"
+								flex={1}
+								onPress={() => setActiveSection('question')}
+								borderWidth={0}
+								backgroundColor={activeSection === 'question' ? '$background' : 'transparent'}
+								pressStyle={{ backgroundColor: '$background' }}>
+								Domanda
+							</Button>
+							<Button
+								size="$3"
+								flex={1}
+								onPress={() => setActiveSection('answer')}
+								borderWidth={0}
+								backgroundColor={activeSection === 'answer' ? '$background' : 'transparent'}
+								pressStyle={{ backgroundColor: '$background' }}>
+								Risposta
+							</Button>
+						</XStack>
 
-						<YStack gap="$1">
-							<Label htmlFor="answer">Risposta * (supporta Markdown)</Label>
-							<TextArea
-								id="answer"
-								size="$4"
-								value={answer}
-								onChangeText={(text: SetStateAction<string>) => {
-									setAnswer(text);
-									setAnswerError('');
-								}}
-								placeholder="Scrivi la risposta..."
-								numberOfLines={9}
-								style={{ textAlignVertical: 'top' }}
-								borderColor={answerError ? '$red10' : undefined}
-							/>
-							{answerError && (
-								<Text fontSize={12} color="$red10">
-									{answerError}
+						{activeSection === 'question' ? (
+							<YStack gap="$1">
+								<TextArea
+									id="question"
+									size="$4"
+									value={question}
+									onChangeText={(text: SetStateAction<string>) => {
+										setQuestion(text);
+										setQuestionError('');
+									}}
+									placeholder="Domanda"
+									numberOfLines={6}
+									style={{ textAlignVertical: 'top' }}
+									borderWidth={0}
+									backgroundColor="transparent"
+									paddingHorizontal={0}
+									paddingVertical={0}
+									fontSize={22}
+									fontWeight="700"
+									color="$color"
+									placeholderTextColor="$color9"
+								/>
+								{questionError && (
+									<Text fontSize={12} color="$red10">
+										{questionError}
+									</Text>
+								)}
+							</YStack>
+						) : (
+							<YStack gap="$1">
+								<TextArea
+									id="answer"
+									size="$4"
+									value={answer}
+									onChangeText={(text: SetStateAction<string>) => {
+										setAnswer(text);
+										setAnswerError('');
+									}}
+									placeholder="Risposta (supporta Markdown)"
+									numberOfLines={10}
+									style={{ textAlignVertical: 'top' }}
+									borderWidth={0}
+									backgroundColor="transparent"
+									paddingHorizontal={0}
+									paddingVertical={0}
+									fontSize={14}
+									color="$color"
+									placeholderTextColor="$color9"
+								/>
+								{answerError && (
+									<Text fontSize={12} color="$red10">
+										{answerError}
+									</Text>
+								)}
+								<Text fontSize={12} color="$placeholderColor">
+									Puoi usare Markdown per formattare la risposta: **grassetto**, *corsivo*, `codice`, ecc.
 								</Text>
-							)}
-						</YStack>
-
-						<Text fontSize={12} color="$placeholderColor">
-							Puoi usare Markdown per formattare la risposta: **grassetto**, *corsivo*, `codice`, ecc.
-						</Text>
+							</YStack>
+						)}
 
 						<View flex={1} minHeight={20} />
 
