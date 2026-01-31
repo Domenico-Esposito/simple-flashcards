@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Deck, Flashcard } from '@/types';
+import { Deck, Flashcard, StatsSeries } from '@/types';
 import * as db from '@/utils/database';
 import { shuffleArray } from '@/utils';
 
@@ -11,6 +11,9 @@ interface FlashcardsState {
   shuffledFlashcards: Flashcard[];
   isLoading: boolean;
   isInitialized: boolean;
+  currentSessionId: number | null;
+  sessionStartTime: number | null;
+  answeredFlashcardIds: Set<number>;
   
   // Actions - Initialization
   initialize: () => Promise<void>;
@@ -32,6 +35,22 @@ interface FlashcardsState {
   
   // Actions - Import
   importDeck: (title: string, description: string | undefined, flashcards: Array<{ question: string; answer: string }>) => Promise<Deck>;
+
+  // Actions - Quiz Session
+  startQuizSession: (deckId: number) => Promise<number>;
+  recordAnswer: (flashcardId: number, responseType: 'correct' | 'incorrect') => Promise<void>;
+  endQuizSession: () => Promise<void>;
+
+  // Actions - Statistics
+  getGlobalStats: (interval: 'day' | 'month' | 'quarter' | 'semester' | 'year', startDate?: string) => Promise<StatsSeries[]>;
+  getDeckStats: (deckId: number, interval: 'day' | 'month' | 'quarter' | 'semester' | 'year', startDate?: string) => Promise<StatsSeries[]>;
+  getKPIs: (deckId?: number) => Promise<{
+    totalQuizzes: number;
+    accuracy: number;
+    totalAnswers: number;
+    totalTime: number;
+    avgTimePerQuiz: number;
+  }>;
 }
 
 export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
@@ -41,6 +60,9 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
   shuffledFlashcards: [],
   isLoading: false,
   isInitialized: false,
+  currentSessionId: null,
+  sessionStartTime: null,
+  answeredFlashcardIds: new Set(),
   
   initialize: async () => {
     if (get().isInitialized) return;
@@ -146,5 +168,44 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
       decks: [deck, ...state.decks],
     }));
     return deck;
+  },
+
+  startQuizSession: async (deckId: number) => {
+    const sessionId = await db.createQuizSession(deckId);
+    set({ currentSessionId: sessionId, sessionStartTime: Date.now(), answeredFlashcardIds: new Set() });
+    return sessionId;
+  },
+
+  recordAnswer: async (flashcardId: number, responseType: 'correct' | 'incorrect') => {
+    const { currentSessionId, answeredFlashcardIds } = get();
+    if (!currentSessionId) return;
+    await db.createQuizAnswer(currentSessionId, flashcardId, responseType);
+    
+    const newSet = new Set(answeredFlashcardIds);
+    newSet.add(flashcardId);
+    set({ answeredFlashcardIds: newSet });
+  },
+
+  endQuizSession: async () => {
+    const { currentSessionId, sessionStartTime } = get();
+    if (!currentSessionId || !sessionStartTime) return;
+
+    const endTime = Date.now();
+    const totalTimeSpent = endTime - sessionStartTime;
+
+    await db.updateQuizSession(currentSessionId, new Date().toISOString(), totalTimeSpent);
+    set({ currentSessionId: null, sessionStartTime: null, answeredFlashcardIds: new Set() });
+  },
+
+  getGlobalStats: async (interval, startDate) => {
+    return await db.getStats(interval, undefined, startDate);
+  },
+
+  getDeckStats: async (deckId, interval, startDate) => {
+    return await db.getStats(interval, deckId, startDate);
+  },
+
+  getKPIs: async (deckId) => {
+    return await db.getKPIs(deckId);
   },
 }));

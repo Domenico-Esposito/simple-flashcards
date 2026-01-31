@@ -5,7 +5,9 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Markdown from 'react-native-markdown-display';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS, withSequence, withSpring, withDelay } from 'react-native-reanimated';
+
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { useFlashcardsStore } from '@/store/flashcards';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -25,7 +27,7 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 	const router = useRouter();
 	const colorScheme = useColorScheme();
 
-	const { shuffledFlashcards, loadFlashcardsForQuiz } = useFlashcardsStore();
+	const { shuffledFlashcards, loadFlashcardsForQuiz, startQuizSession, endQuizSession, recordAnswer } = useFlashcardsStore();
 
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [showAnswer, setShowAnswer] = useState(false);
@@ -57,6 +59,11 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 
 	useEffect(() => {
 		loadFlashcardsForQuiz(deckId);
+		startQuizSession(deckId);
+
+		return () => {
+			endQuizSession();
+		};
 	}, [deckId, loadFlashcardsForQuiz]);
 
 	const currentCard = shuffledFlashcards[currentIndex];
@@ -72,6 +79,14 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 		},
 		[router, currentCard],
 	);
+
+	const handleResponse = async (type: 'correct' | 'incorrect') => {
+		if (!currentCard) return;
+		await recordAnswer(currentCard.id, type);
+		setTimeout(() => {
+			runOnJS(goNext)();
+		}, 400);
+	};
 
 	const goNext = useCallback(() => {
 		setShowAnswer(false);
@@ -354,6 +369,12 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 					</Text>
 				</View>
 
+				{/* Response Buttons Overlay */}
+				<View position="absolute" right={16} top="50%" marginTop={-56} zIndex={100} gap="$4" pointerEvents="box-none">
+					<ResponseButton type="correct" onPress={() => handleResponse('correct')} />
+					<ResponseButton type="incorrect" onPress={() => handleResponse('incorrect')} />
+				</View>
+
 				{/* Card content */}
 				<GestureDetector gesture={composedGesture}>
 					<Animated.View
@@ -466,3 +487,44 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 		</GestureHandlerRootView>
 	);
 }
+
+const ResponseButton = ({ type, onPress }: { type: 'correct' | 'incorrect'; onPress: () => void }) => {
+	const scale = useSharedValue(1);
+
+	const animatedStyle = useAnimatedStyle(() => ({
+		transform: [{ scale: scale.value }],
+	}));
+
+	const handlePress = () => {
+		scale.value = withSequence(withSpring(1.2), withDelay(300, withSpring(1)));
+		onPress();
+	};
+
+	let iconName: 'check' | 'close' = 'check';
+	let bgColor = '#4CD964'; // Green
+
+	if (type === 'incorrect') {
+		iconName = 'close';
+		bgColor = '#FF3B30'; // Red
+	}
+
+	return (
+		<Pressable onPress={handlePress}>
+			<Animated.View style={[animatedStyle, { 
+				backgroundColor: bgColor, 
+				borderRadius: 24, 
+				width: 48, 
+				height: 48, 
+				alignItems: 'center', 
+				justifyContent: 'center',
+				elevation: 10, 
+				shadowColor: '#000', 
+				shadowOffset: { width: 0, height: 2 }, 
+				shadowOpacity: 0.25, 
+				shadowRadius: 3.84 
+			}]}>
+				<MaterialIcons name={iconName} size={28} color="#FFFFFF" />
+			</Animated.View>
+		</Pressable>
+	);
+};

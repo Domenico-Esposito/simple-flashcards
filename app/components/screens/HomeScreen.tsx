@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { FlatList, Alert, SectionList } from 'react-native';
-import { Button, Text, View, YStack } from 'tamagui';
+import { Text, View, YStack } from 'tamagui';
 import { useRouter } from 'expo-router';
 
 import { useFlashcardsStore } from '@/store/flashcards';
 import { DeckCard } from '@/components/DeckCard';
 import { FlashcardListItem } from '@/components/FlashcardListItem';
-import { Header, HeaderAction } from '@/components/Header';
+import { Header, createHeaderAction } from '@/components/Header';
 import { SearchBar } from '@/components/SearchBar';
 import { getFlashcardCount, search } from '@/utils/database';
 import { Deck, Flashcard } from '@/types';
@@ -80,21 +80,21 @@ export function HomeScreen() {
 
 	return (
 		<View flex={1} backgroundColor="$background">
-			<Header title="I tuoi mazzi" showBackButton={false} actions={[<HeaderAction key="add" icon="add" onPress={() => router.push('/deck/new')} />]} />
+			<Header title="I tuoi mazzi" showBackButton={false} actions={[createHeaderAction({ icon: 'add', label: 'Nuovo mazzo', onPress: () => router.push('/deck/new') })]} />
 
-			<YStack flex={1} padding="$4" gap="$4">
+			<YStack flex={1} paddingHorizontal="$4" gap="$4">
 				{/* Search bar */}
 				{decks.length > 0 && <SearchBar value={searchQuery} onChangeText={setSearchQuery} placeholder="Cerca mazzi..." />}
 
 				{decks.length === 0 ? (
 					<YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
-						<Text color="$secondary" fontSize={16} textAlign="center">
+						<Text color="$gray10" fontSize={16} textAlign="center">
 							Nessun mazzo ancora.{'\n'}Crea il tuo primo mazzo!
 						</Text>
 					</YStack>
 				) : filteredDecks.length === 0 ? (
 					<YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
-						<Text color="$secondary" fontSize={16} textAlign="center">
+						<Text color="$gray10" fontSize={16} textAlign="center">
 							Nessun risultato per &quot;{searchQuery}&quot;
 						</Text>
 					</YStack>
@@ -105,14 +105,14 @@ export function HomeScreen() {
 						keyExtractor={(item) => item.id.toString()}
 						renderSectionHeader={({ section }) => (
 							<View backgroundColor="$background" paddingVertical="$2" marginTop="$3">
-								<Text fontSize={14} fontWeight="600" color="$secondary">
+								<Text fontSize={13} fontWeight="600" color="$gray10" textTransform="uppercase" letterSpacing={0.5}>
 									{section.deckTitle}
 								</Text>
 							</View>
 						)}
-						renderItem={({ item, section }) => <FlashcardListItem flashcard={item} onPress={() => router.push(`/flashcard-edit/${item.id}`)} />}
+						renderItem={({ item }) => <FlashcardListItem flashcard={item} onPress={() => router.push(`/flashcard-edit/${item.id}`)} />}
 						contentContainerStyle={{ paddingBottom: 20 }}
-						ItemSeparatorComponent={() => <View height={8} />}
+						ItemSeparatorComponent={() => <View height={10} />}
 						stickySectionHeadersEnabled={false}
 						showsVerticalScrollIndicator={false}
 					/>

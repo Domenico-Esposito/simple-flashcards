@@ -1,7 +1,8 @@
 import React from 'react';
 import { Pressable } from 'react-native';
-import { Heading, Text, View } from 'tamagui';
+import { Text, View, XStack, YStack } from 'tamagui';
 import { Flashcard } from '@/types';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 interface FlashcardListItemProps {
 	flashcard: Flashcard;
@@ -60,13 +61,22 @@ export function FlashcardListItem({ flashcard, onPress, onLongPress }: Flashcard
 	return (
 		<Pressable onPress={onPress} onLongPress={onLongPress}>
 			{({ pressed }) => (
-				<View backgroundColor={pressed ? '$backgroundPress' : '$cardBackground'} borderRadius="$4" padding="$3" borderWidth={0.5} borderColor="$borderColor" gap="$2">
-					<Heading size="$1" numberOfLines={1} fontWeight="500">
-						{flashcard.question}
-					</Heading>
-					<Text fontSize={14} color="$secondary" numberOfLines={2} fontWeight="400">
-						{answerPreview}
-					</Text>
+				<View 
+					backgroundColor={pressed ? '$backgroundPress' : '$backgroundStrong'} 
+					borderRadius="$4" 
+					padding="$4"
+				>
+					<XStack gap="$3" alignItems="center">
+						<YStack flex={1} gap="$2">
+							<Text fontSize={15} fontWeight="600" numberOfLines={2} color="$color">
+								{flashcard.question}
+							</Text>
+							<Text fontSize={13} color="$gray10" numberOfLines={2}>
+								{answerPreview}
+							</Text>
+						</YStack>
+						<MaterialIcons name="chevron-right" size={22} color="#888888" />
+					</XStack>
 				</View>
 			)}
 		</Pressable>

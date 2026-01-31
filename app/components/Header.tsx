@@ -1,17 +1,23 @@
-import React from 'react';
-import { Pressable, Platform } from 'react-native';
-import { Button, Heading, Stack, Text, View, XStack, YStack, ZStack, useTheme } from 'tamagui';
+import React, { useState } from 'react';
+import { Platform } from 'react-native';
+import { Button, Heading, Popover, Stack, Text, XStack, YStack, ZStack, useTheme } from 'tamagui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+
+export interface HeaderActionItem {
+	icon: React.ComponentProps<typeof MaterialIcons>['name'];
+	label: string;
+	onPress: () => void;
+}
 
 interface HeaderProps {
 	title: string;
 	subtitle?: string;
 	showBackButton?: boolean;
-	actions?: React.ReactNode[];
+	actions?: HeaderActionItem[];
 	onBackPress?: () => void;
-	isModal?: boolean; // New prop to handle modal spacing
+	isModal?: boolean;
 }
 
 /**
@@ -22,6 +28,7 @@ export function Header({ title, subtitle, showBackButton = true, actions = [], o
 	const router = useRouter();
 	const theme = useTheme();
 	const headerIconColor = (theme.primary as any)?.val ?? (theme.color as any)?.val;
+	const [menuOpen, setMenuOpen] = useState(false);
 
 	const handleBackPress = () => {
 		if (onBackPress) {
@@ -41,12 +48,14 @@ export function Header({ title, subtitle, showBackButton = true, actions = [], o
 		return insets.top;
 	};
 
+	const handleActionPress = (action: HeaderActionItem) => {
+		setMenuOpen(false);
+		action.onPress();
+	};
+
 	return (
-		<Stack paddingTop={getTopPadding()} backgroundColor={'$background'}>
+		<Stack paddingTop={getTopPadding()} backgroundColor={'$background'} paddingBottom="$4">
 			<ZStack
-				paddingTop="$4"
-				paddingBottom="$2"
-				paddingHorizontal="$4"
 				gap="$2"
 				minHeight={56} // Consistent header height
 			>
@@ -69,11 +78,41 @@ export function Header({ title, subtitle, showBackButton = true, actions = [], o
 					)}
 
 					{actions.length > 0 && (
-						<XStack gap="$2" alignItems="flex-end" justifyContent="center">
-							{actions.map((action, index) => (
-								<View key={index}>{action}</View>
-							))}
-						</XStack>
+						<Popover open={menuOpen} onOpenChange={setMenuOpen} placement="bottom-end">
+							<Popover.Trigger asChild>
+								<Button size="$4" height="100%" circular>
+									<MaterialIcons name="more-vert" size={24} color={headerIconColor} />
+								</Button>
+							</Popover.Trigger>
+
+							<Popover.Content
+								marginTop="$1"
+								backgroundColor="$background"
+								borderRadius="$4"
+								padding="$0"
+								enterStyle={{ opacity: 0, y: -5 }}
+								exitStyle={{ opacity: 0, y: -5 }}
+								animation="bouncy"
+								overflow="hidden">
+								<YStack>
+									{actions.map((action, index) => (
+										<Button
+											key={index}
+											borderRadius="$0"
+											borderWidth="$0"
+											size="$4"
+											justifyContent="flex-start"
+											paddingHorizontal="$3"
+											onPress={() => handleActionPress(action)}>
+											<XStack gap="$3" alignItems="center">
+												<MaterialIcons name={action.icon} size={20} color={headerIconColor} />
+												<Text color="$color">{action.label}</Text>
+											</XStack>
+										</Button>
+									))}
+								</YStack>
+							</Popover.Content>
+						</Popover>
 					)}
 				</XStack>
 			</ZStack>
@@ -83,19 +122,13 @@ export function Header({ title, subtitle, showBackButton = true, actions = [], o
 
 interface HeaderActionProps {
 	icon: React.ComponentProps<typeof MaterialIcons>['name'];
+	label: string;
 	onPress: () => void;
-	size?: number;
 }
 
 /**
- * Helper component for header action buttons
+ * Helper function to create header action items
  */
-export function HeaderAction({ icon, onPress, size = 20 }: HeaderActionProps) {
-	const theme = useTheme();
-	const actionIconColor = (theme.primary as any)?.val ?? (theme.color as any)?.val;
-	return (
-		<Button size="$4" height="100%" onPress={onPress} circular>
-			<MaterialIcons name={icon} size={size} color={actionIconColor} />
-		</Button>
-	);
+export function createHeaderAction(props: HeaderActionProps): HeaderActionItem {
+	return props;
 }

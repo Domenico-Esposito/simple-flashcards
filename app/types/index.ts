@@ -40,3 +40,34 @@ export type DeckExport = {
     answer: string;
   }>;
 };
+
+/**
+ * Represents a quiz session
+ */
+export type QuizSession = {
+  id: number;
+  deckId: number;
+  startedAt: string;
+  endedAt: string | null;
+  totalTimeSpent: number | null;
+};
+
+/**
+ * Represents a user's answer to a flashcard in a session
+ */
+export type QuizAnswer = {
+  id: number;
+  sessionId: number;
+  flashcardId: number;
+  responseType: 'correct' | 'incorrect';
+  answeredAt: string;
+};
+
+/**
+ * Statistics data series for charts
+ */
+export type StatsSeries = {
+  period: string;
+  correct: number;
+  incorrect: number;
+};

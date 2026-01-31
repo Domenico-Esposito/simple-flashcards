@@ -1,5 +1,6 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { TamaguiProvider, Theme } from '@tamagui/core';
+import { PortalProvider } from '@tamagui/portal';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
@@ -35,28 +36,30 @@ export default function RootLayout() {
 	return (
 		<TamaguiProvider config={config} defaultTheme={theme}>
 			<Theme name={theme}>
-				<ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-					<Stack screenOptions={{ headerShown: false }}>
-						<Stack.Screen name="(tabs)" />
-						<Stack.Screen
-							name="flashcard-edit/[flashcardId]"
-							options={{
-								presentation: 'modal',
-								gestureEnabled: true,
-								animation: 'slide_from_bottom',
-							}}
-						/>
-						<Stack.Screen
-							name="read-more/[type]"
-							options={{
-								presentation: 'modal',
-								gestureEnabled: true,
-								animation: 'slide_from_bottom',
-							}}
-						/>
-					</Stack>
-					<StatusBar style="auto" />
-				</ThemeProvider>
+				<PortalProvider>
+					<ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+						<Stack screenOptions={{ headerShown: false }}>
+							<Stack.Screen name="(tabs)" />
+							<Stack.Screen
+								name="flashcard-edit/[flashcardId]"
+								options={{
+									presentation: 'modal',
+									gestureEnabled: true,
+									animation: 'slide_from_bottom',
+								}}
+							/>
+							<Stack.Screen
+								name="read-more/[type]"
+								options={{
+									presentation: 'modal',
+									gestureEnabled: true,
+									animation: 'slide_from_bottom',
+								}}
+							/>
+						</Stack>
+						<StatusBar style="auto" />
+					</ThemeProvider>
+				</PortalProvider>
 			</Theme>
 		</TamaguiProvider>
 	);
