@@ -1,18 +1,18 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { Dimensions, Pressable, Linking, LayoutChangeEvent } from 'react-native';
-import { Text, View, YStack, Heading, Button } from 'tamagui';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { Dimensions, Pressable, LayoutChangeEvent, Alert } from 'react-native';
+import { Text, View, YStack, Button } from 'tamagui';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Markdown from 'react-native-markdown-display';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS, withSequence, withSpring, withDelay } from 'react-native-reanimated';
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { useFlashcardsStore } from '@/store/flashcards';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { HtmlContent } from '@/components/ui/HtmlContent';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import type { RenderRules } from 'react-native-markdown-display';
+import { QuizCompletionCard, QuizStats } from '@/components/QuizCompletionCard';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 80;
@@ -27,14 +27,16 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 	const router = useRouter();
 	const colorScheme = useColorScheme();
 
-	const { shuffledFlashcards, loadFlashcardsForQuiz, startQuizSession, endQuizSession, recordAnswer } = useFlashcardsStore();
+	const { shuffledFlashcards, loadFlashcardsForQuiz, startQuizSession, endQuizSession, discardQuizSession, recordAnswer, sessionStartTime } = useFlashcardsStore();
 
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [showAnswer, setShowAnswer] = useState(false);
+	const [votes, setVotes] = useState<Record<number, 'correct' | 'incorrect'>>({});
 
 	const [layoutHeight, setLayoutHeight] = useState(0);
 	const [questionContentHeight, setQuestionContentHeight] = useState(0);
 	const [answerContentHeight, setAnswerContentHeight] = useState(0);
+	const [showCompletionCard, setShowCompletionCard] = useState(false);
 
 	const isQuestionOverflow = questionContentHeight > layoutHeight;
 	const isAnswerOverflow = answerContentHeight > layoutHeight;
@@ -82,11 +84,69 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 
 	const handleResponse = async (type: 'correct' | 'incorrect') => {
 		if (!currentCard) return;
+		const newVotes = { ...votes, [currentCard.id]: type };
+		setVotes(newVotes);
 		await recordAnswer(currentCard.id, type);
+
+		// Check if this was the last unanswered card
+		const newAnsweredCount = Object.keys(newVotes).length;
+		const isNowComplete = newAnsweredCount >= shuffledFlashcards.length;
+
+		// Wait for button animation to complete (250ms = 100ms zoom in + 150ms zoom out)
 		setTimeout(() => {
-			runOnJS(goNext)();
-		}, 400);
+			if (isNowComplete) {
+				setShowCompletionCard(true);
+			} else {
+				goNext();
+			}
+		}, 250);
 	};
+
+	// Check if all flashcards have been answered
+	const answeredCount = Object.keys(votes).length;
+	const totalCount = shuffledFlashcards.length;
+	const allAnswered = answeredCount >= totalCount;
+
+	// Calculate quiz stats for the completion card
+	const getQuizStats = useCallback((): QuizStats => {
+		const correctCount = Object.values(votes).filter((v) => v === 'correct').length;
+		const incorrectCount = Object.values(votes).filter((v) => v === 'incorrect').length;
+		const totalTimeMs = sessionStartTime ? Date.now() - sessionStartTime : 0;
+		return {
+			correctCount,
+			incorrectCount,
+			totalCount: shuffledFlashcards.length,
+			totalTimeMs,
+		};
+	}, [votes, sessionStartTime, shuffledFlashcards.length]);
+
+	const handleCloseQuiz = useCallback(() => {
+		router.back();
+	}, [router]);
+
+	const handleExit = useCallback(() => {
+		if (allAnswered) {
+			router.back();
+		} else {
+			const remaining = totalCount - answeredCount;
+			Alert.alert(
+				'Uscire dal quiz?',
+				`Hai ancora ${remaining} ${remaining === 1 ? 'domanda' : 'domande'} senza risposta. Sei sicuro di voler uscire?`,
+				[
+					{ text: 'Annulla', style: 'cancel' },
+					{
+						text: 'Esci senza salvare',
+						style: 'destructive',
+						onPress: async () => {
+							await discardQuizSession();
+							router.back();
+						},
+					},
+					{ text: 'Esci', onPress: () => router.back() },
+				],
+			);
+		}
+	}, [allAnswered, answeredCount, totalCount, router, discardQuizSession]);
 
 	const goNext = useCallback(() => {
 		setShowAnswer(false);
@@ -200,143 +260,6 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 		};
 	});
 
-	// Markdown render rules using Tamagui components
-	const markdownRules: RenderRules = useMemo(
-		() => ({
-			// Text elements
-			text: (node, _children, _parent, _styles, inheritedStyles = {}) => (
-				<Text key={node.key} fontSize={17} style={inheritedStyles}>
-					{node.content}
-				</Text>
-			),
-			paragraph: (node, children) => (
-				<Text key={node.key} fontSize={17} marginBottom="$3">
-					{children}
-				</Text>
-			),
-			// Headings using Tamagui Heading component
-			heading1: (node, children) => (
-				<Heading key={node.key} size="$9">
-					{children}
-				</Heading>
-			),
-			heading2: (node, children) => (
-				<Heading key={node.key} size="$8">
-					{children}
-				</Heading>
-			),
-			heading3: (node, children) => (
-				<Heading key={node.key} size="$7">
-					{children}
-				</Heading>
-			),
-			heading4: (node, children) => (
-				<Heading key={node.key} size="$6">
-					{children}
-				</Heading>
-			),
-			heading5: (node, children) => (
-				<Heading key={node.key} size="$5">
-					{children}
-				</Heading>
-			),
-			heading6: (node, children) => (
-				<Heading key={node.key} size="$4">
-					{children}
-				</Heading>
-			),
-			// Emphasis
-			strong: (node, children) => (
-				<Text key={node.key} fontWeight="bold">
-					{children}
-				</Text>
-			),
-			em: (node, children) => (
-				<Text key={node.key} fontStyle="italic">
-					{children}
-				</Text>
-			),
-			s: (node, children) => (
-				<Text key={node.key} textDecorationLine="line-through">
-					{children}
-				</Text>
-			),
-			// Code
-			code_inline: (node) => (
-				<Text
-					key={node.key}
-					backgroundColor={colorScheme === 'dark' ? '$backgroundStrong' : '$backgroundStrong'}
-					color={colorScheme === 'dark' ? '$primary' : '$primary'}
-					paddingHorizontal="$1"
-					paddingVertical="$0.5"
-					borderRadius="$2"
-					fontSize={16}
-					fontFamily="$mono">
-					{node.content}
-				</Text>
-			),
-			fence: (node) => (
-				<View key={node.key} backgroundColor={colorScheme === 'dark' ? '$backgroundStrong' : '$backgroundStrong'} padding="$3" borderRadius="$3" marginVertical="$2">
-					<Text fontSize={14} fontFamily="$mono">
-						{node.content}
-					</Text>
-				</View>
-			),
-			code_block: (node) => (
-				<View key={node.key} backgroundColor={colorScheme === 'dark' ? '$backgroundStrong' : '$backgroundStrong'} padding="$3" borderRadius="$3" marginVertical="$2">
-					<Text fontSize={14} fontFamily="$mono">
-						{node.content}
-					</Text>
-				</View>
-			),
-			// Blockquote
-			blockquote: (node, children) => (
-				<View key={node.key} borderLeftWidth={4} borderLeftColor="$primary" paddingLeft="$3" marginVertical="$2" opacity={0.9}>
-					{children}
-				</View>
-			),
-			// Lists
-			bullet_list: (node, children) => (
-				<View key={node.key} marginVertical="$2">
-					{children}
-				</View>
-			),
-			ordered_list: (node, children) => (
-				<View key={node.key} marginVertical="$2">
-					{children}
-				</View>
-			),
-			list_item: (node, children, _parent, _styles) => {
-				const isOrdered = _parent[0]?.type === 'ordered_list';
-				const index = _parent[0]?.children?.indexOf(node) ?? 0;
-				const bullet = isOrdered ? `${index + 1}.` : '•';
-				return (
-					<View key={node.key} flexDirection="row" marginBottom="$1">
-						<Text width={24} fontSize={18}>
-							{bullet}
-						</Text>
-						<View flex={1}>{children}</View>
-					</View>
-				);
-			},
-			// Links
-			link: (node, children) => (
-				<Text key={node.key} color="$primary" textDecorationLine="underline" onPress={() => Linking.openURL(node.attributes.href)}>
-					{children}
-				</Text>
-			),
-			// Horizontal rule
-			hr: (node) => <View key={node.key} height={1} backgroundColor="$borderColor" marginVertical="$4" />,
-			// Image - keep default behavior but wrap in View
-			image: (node) => (
-				<View key={node.key} marginVertical="$2">
-					<Text color="$secondary">[Image: {node.attributes.alt || 'image'}]</Text>
-				</View>
-			),
-		}),
-		[colorScheme],
-	);
-
 	if (shuffledFlashcards.length === 0) {
 		return (
 			<View flex={1} justifyContent="center" alignItems="center" backgroundColor="$background">
@@ -350,7 +273,7 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 			<View flex={1} paddingTop={insets.top} backgroundColor="$background">
 				{/* Header */}
 				<View flexDirection="row" alignItems="center" justifyContent="space-between" paddingHorizontal="$4" paddingVertical="$3">
-					<Pressable onPress={() => router.back()} style={{ padding: 8 }}>
+					<Pressable onPress={handleExit} style={{ padding: 8 }}>
 						<IconSymbol name="xmark" size={24} color={colorScheme === 'dark' ? '#FFF' : '#000'} />
 					</Pressable>
 					<View flexDirection="row" gap="$1" flex={1} justifyContent="center" marginHorizontal="$4">
@@ -369,25 +292,22 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 					</Text>
 				</View>
 
-				{/* Response Buttons Overlay */}
-				<View position="absolute" right={16} top="50%" marginTop={-56} zIndex={100} gap="$4" pointerEvents="box-none">
-					<ResponseButton type="correct" onPress={() => handleResponse('correct')} />
-					<ResponseButton type="incorrect" onPress={() => handleResponse('incorrect')} />
-				</View>
+				{/* Card area wrapper */}
+				<View style={{ flex: 1, position: 'relative' }}>
+					{/* Card content */}
+					<GestureDetector gesture={composedGesture}>
+						<Animated.View
+							style={[
+								{
+									flex: 1,
+									paddingHorizontal: CARD_HORIZONTAL_MARGIN,
+									zIndex: 1,
+								},
+								animatedCardStyle,
+							]}>
+							{/* Card container for flip effect */}
+							<View style={{ flex: 1, position: 'relative' }}>
 
-				{/* Card content */}
-				<GestureDetector gesture={composedGesture}>
-					<Animated.View
-						style={[
-							{
-								flex: 1,
-								paddingHorizontal: CARD_HORIZONTAL_MARGIN,
-								zIndex: 1,
-							},
-							animatedCardStyle,
-						]}>
-						{/* Card container for flip effect */}
-						<View style={{ flex: 1, position: 'relative' }}>
 							{/* Front face - Question */}
 							<Animated.View
 								style={[
@@ -416,7 +336,7 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 											<Text fontSize={14} color="$secondary" marginBottom="$2">
 												DOMANDA
 											</Text>
-											<Markdown rules={markdownRules}>{currentCard.question}</Markdown>
+											<HtmlContent html={currentCard.question} />
 										</YStack>
 										{isQuestionOverflow && (
 											<View position="absolute" bottom={16} left={0} right={0} alignItems="center" pointerEvents="box-none">
@@ -450,18 +370,18 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 									},
 									backFaceStyle,
 								]}>
-								<View width="100%" height="100%" justifyContent="center" paddingHorizontal="$6">
+								<View width="100%" height="100%" justifyContent="center" paddingHorizontal="$6" paddingBottom={72}>
 									<View style={{ overflow: 'hidden', flex: 1, justifyContent: isAnswerOverflow ? 'flex-start' : 'center' }}>
 										<YStack paddingVertical="$6" onLayout={(e: LayoutChangeEvent) => setAnswerContentHeight(e.nativeEvent.layout.height)}>
 											<Text fontSize={14} color="$secondary" marginBottom="$2">
 												RISPOSTA
 											</Text>
-											<Markdown rules={markdownRules}>{currentCard.answer}</Markdown>
+											<HtmlContent html={currentCard.answer} />
 										</YStack>
 									</View>
 									{/* Gradient overlay + Read more button */}
 									{isAnswerOverflow && (
-										<View position="absolute" bottom={16} left={0} right={0} alignItems="center" pointerEvents="box-none">
+										<View position="absolute" bottom={70} left={0} right={0} alignItems="center" pointerEvents="box-none">
 											<GestureDetector gesture={answerReadMoreTap}>
 												<View>
 													<Button size="$3" theme="active" borderRadius="$10" pointerEvents="none">
@@ -471,11 +391,21 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 											</GestureDetector>
 										</View>
 									)}
+									{/* Response Buttons - inside the card for flip animation */}
+									<GestureDetector gesture={Gesture.Tap()}>
+										<View position="absolute" bottom={16} left={0} right={0} paddingHorizontal="$6">
+											<View flexDirection="row" gap="$3" width="100%">
+												<ResponseButton type="incorrect" onPress={() => handleResponse('incorrect')} votedType={currentCard ? votes[currentCard.id] : undefined} />
+												<ResponseButton type="correct" onPress={() => handleResponse('correct')} votedType={currentCard ? votes[currentCard.id] : undefined} />
+											</View>
+										</View>
+									</GestureDetector>
 								</View>
 							</Animated.View>
 						</View>
 					</Animated.View>
 				</GestureDetector>
+				</View>
 
 				{/* Navigation hints - fixed at bottom */}
 				<View paddingBottom={insets.bottom} paddingTop={16} alignItems="center" justifyContent="center" backgroundColor="$transparent" zIndex={0}>
@@ -483,12 +413,15 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 						↑↓ cambia carta • tocco per {showAnswer ? 'nascondere' : 'mostrare'} risposta
 					</Text>
 				</View>
+
+				{/* Quiz completion card */}
+				{showCompletionCard && <QuizCompletionCard stats={getQuizStats()} onClose={handleCloseQuiz} />}
 			</View>
 		</GestureHandlerRootView>
 	);
 }
 
-const ResponseButton = ({ type, onPress }: { type: 'correct' | 'incorrect'; onPress: () => void }) => {
+const ResponseButton = ({ type, onPress, votedType }: { type: 'correct' | 'incorrect'; onPress: () => void; votedType?: 'correct' | 'incorrect' }) => {
 	const scale = useSharedValue(1);
 
 	const animatedStyle = useAnimatedStyle(() => ({
@@ -496,34 +429,49 @@ const ResponseButton = ({ type, onPress }: { type: 'correct' | 'incorrect'; onPr
 	}));
 
 	const handlePress = () => {
-		scale.value = withSequence(withSpring(1.2), withDelay(300, withSpring(1)));
-		onPress();
+		// Simple zoom in and back, call onPress after animation completes
+		scale.value = withSequence(
+			withTiming(1.15, { duration: 100 }),
+			withTiming(1, { duration: 150 }, (finished) => {
+				if (finished) {
+					runOnJS(onPress)();
+				}
+			}),
+		);
 	};
 
 	let iconName: 'check' | 'close' = 'check';
 	let bgColor = '#4CD964'; // Green
+	let label = 'Ricordo';
 
 	if (type === 'incorrect') {
 		iconName = 'close';
 		bgColor = '#FF3B30'; // Red
+		label = 'Non ricordo';
 	}
 
+	// Determine opacity based on voted state
+	const opacity = !votedType ? 1 : votedType === type ? 1 : 0.5;
+
 	return (
-		<Pressable onPress={handlePress}>
+		<Pressable onPress={handlePress} style={{ flex: 1 }}>
 			<Animated.View style={[animatedStyle, { 
 				backgroundColor: bgColor, 
-				borderRadius: 24, 
-				width: 48, 
+				borderRadius: 12, 
 				height: 48, 
+				flexDirection: 'row',
 				alignItems: 'center', 
 				justifyContent: 'center',
+				gap: 8,
 				elevation: 10, 
-				shadowColor: '#000', 
-				shadowOffset: { width: 0, height: 2 }, 
-				shadowOpacity: 0.25, 
-				shadowRadius: 3.84 
+				shadowColor: bgColor, 
+				shadowOffset: { width: 0, height: 4 }, 
+				shadowOpacity: 0.4, 
+				shadowRadius: 8,
+				opacity,
 			}]}>
-				<MaterialIcons name={iconName} size={28} color="#FFFFFF" />
+				<MaterialIcons name={iconName} size={22} color="#FFFFFF" />
+				<Text color="#FFFFFF" fontWeight="600" fontSize={15}>{label}</Text>
 			</Animated.View>
 		</Pressable>
 	);

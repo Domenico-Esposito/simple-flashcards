@@ -1,11 +1,15 @@
-import { SetStateAction, useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
-import { Button, Text, TextArea, View, XStack, YStack } from 'tamagui';
+import { useEffect, useState, useRef } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, Alert, Keyboard, View as RNView } from 'react-native';
+import { Button, Text, View, XStack, YStack } from 'tamagui';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useFlashcardsStore } from '@/store/flashcards';
 import { Header } from '@/components/Header';
 import { getFlashcardById } from '@/utils/database';
+import { RichTextEditor, RichTextEditorRef, FormattingToolbar, useKeyboardHeight } from '@/components/ui/RichTextEditor';
+import type { OnChangeStateEvent } from '@/components/ui/RichTextEditor';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 type FlashcardFormScreenProps = {
 	mode: 'new' | 'edit';
@@ -15,14 +19,27 @@ type FlashcardFormScreenProps = {
 
 export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardFormScreenProps) {
 	const router = useRouter();
+	const colorScheme = useColorScheme() ?? 'light';
 	const { addFlashcard, editFlashcard, removeFlashcard } = useFlashcardsStore();
+	const keyboardHeight = useKeyboardHeight();
+	const insets = useSafeAreaInsets();
 
-	const [question, setQuestion] = useState('');
-	const [answer, setAnswer] = useState('');
+	const questionEditorRef = useRef<RichTextEditorRef>(null);
+	const answerEditorRef = useRef<RichTextEditorRef>(null);
+
+	const [initialQuestion, setInitialQuestion] = useState('');
+	const [initialAnswer, setInitialAnswer] = useState('');
+	// Track current HTML content in state (updated on every change)
+	const [questionHtml, setQuestionHtml] = useState('');
+	const [answerHtml, setAnswerHtml] = useState('');
 	const [questionError, setQuestionError] = useState('');
 	const [answerError, setAnswerError] = useState('');
 	const [isLoading, setIsLoading] = useState(mode === 'edit');
 	const [activeSection, setActiveSection] = useState<'question' | 'answer'>('question');
+	const [stylesState, setStylesState] = useState<OnChangeStateEvent | null>(null);
+
+	// Get the active editor ref
+	const activeEditorRef = activeSection === 'question' ? questionEditorRef : answerEditorRef;
 
 	// Load existing flashcard data when in edit mode
 	useEffect(() => {
@@ -30,8 +47,10 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 			const loadFlashcard = async () => {
 				const fc = await getFlashcardById(flashcardId);
 				if (fc) {
-					setQuestion(fc.question);
-					setAnswer(fc.answer);
+					setInitialQuestion(fc.question);
+					setInitialAnswer(fc.answer);
+					setQuestionHtml(fc.question);
+					setAnswerHtml(fc.answer);
 				}
 				setIsLoading(false);
 			};
@@ -39,15 +58,21 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 		}
 	}, [mode, flashcardId]);
 
+	// Helper to strip HTML tags and check if content is empty
+	const isHtmlEmpty = (html: string): boolean => {
+		const stripped = html.replace(/<[^>]*>/g, '').trim();
+		return stripped.length === 0;
+	};
+
 	const handleSave = async () => {
 		let hasError = false;
 
-		if (!question.trim()) {
+		if (isHtmlEmpty(questionHtml)) {
 			setQuestionError('La domanda è obbligatoria');
 			hasError = true;
 		}
 
-		if (!answer.trim()) {
+		if (isHtmlEmpty(answerHtml)) {
 			setAnswerError('La risposta è obbligatoria');
 			hasError = true;
 		}
@@ -55,9 +80,9 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 		if (hasError) return;
 
 		if (mode === 'new' && deckId !== undefined) {
-			await addFlashcard(deckId, question.trim(), answer.trim());
+			await addFlashcard(deckId, questionHtml, answerHtml);
 		} else if (mode === 'edit' && flashcardId !== undefined) {
-			await editFlashcard(flashcardId, question.trim(), answer.trim());
+			await editFlashcard(flashcardId, questionHtml, answerHtml);
 		}
 
 		router.back();
@@ -91,7 +116,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 		<KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 			<View flex={1} backgroundColor="$background">
 				<Header title={mode === 'new' ? 'Nuova Flashcard' : 'Modifica Flashcard'} isModal />
-				<ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
+				<ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
 					<YStack gap="$4" flex={1} paddingHorizontal="$4">
 						<XStack gap="$2" padding="$1" borderRadius="$4" backgroundColor="$color2">
 							<Button
@@ -114,27 +139,18 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 							</Button>
 						</XStack>
 
-						{activeSection === 'question' ? (
-							<YStack gap="$1">
-								<TextArea
-									id="question"
-									size="$4"
-									value={question}
-									onChangeText={(text: SetStateAction<string>) => {
-										setQuestion(text);
+						{/* Question Editor - rendered only when active, uses questionHtml to preserve content */}
+						{activeSection === 'question' && (
+							<YStack gap="$1" flex={1}>
+								<RichTextEditor
+									ref={questionEditorRef}
+									placeholder="Scrivi la domanda..."
+									initialValue={questionHtml || initialQuestion}
+									onChangeHtml={(html) => {
+										setQuestionHtml(html);
 										setQuestionError('');
 									}}
-									placeholder="Domanda"
-									numberOfLines={6}
-									style={{ textAlignVertical: 'top' }}
-									borderWidth={0}
-									backgroundColor="transparent"
-									paddingHorizontal={0}
-									paddingVertical={0}
-									fontSize={22}
-									fontWeight="700"
-									color="$color"
-									placeholderTextColor="$color9"
+									onChangeState={setStylesState}
 								/>
 								{questionError && (
 									<Text fontSize={12} color="$red10">
@@ -142,39 +158,28 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 									</Text>
 								)}
 							</YStack>
-						) : (
-							<YStack gap="$1">
-								<TextArea
-									id="answer"
-									size="$4"
-									value={answer}
-									onChangeText={(text: SetStateAction<string>) => {
-										setAnswer(text);
+						)}
+
+						{/* Answer Editor - rendered only when active, uses answerHtml to preserve content */}
+						{activeSection === 'answer' && (
+							<YStack gap="$1" flex={1}>
+								<RichTextEditor
+									ref={answerEditorRef}
+									placeholder="Scrivi la risposta..."
+									initialValue={answerHtml || initialAnswer}
+									onChangeHtml={(html) => {
+										setAnswerHtml(html);
 										setAnswerError('');
 									}}
-									placeholder="Risposta (supporta Markdown)"
-									numberOfLines={10}
-									style={{ textAlignVertical: 'top' }}
-									borderWidth={0}
-									backgroundColor="transparent"
-									paddingHorizontal={0}
-									paddingVertical={0}
-									fontSize={14}
-									color="$color"
-									placeholderTextColor="$color9"
+									onChangeState={setStylesState}
 								/>
 								{answerError && (
 									<Text fontSize={12} color="$red10">
 										{answerError}
 									</Text>
 								)}
-								<Text fontSize={12} color="$placeholderColor">
-									Puoi usare Markdown per formattare la risposta: **grassetto**, *corsivo*, `codice`, ecc.
-								</Text>
 							</YStack>
 						)}
-
-						<View flex={1} minHeight={20} />
 
 						<YStack gap="$3">
 							<Button size="$4" onPress={handleSave} themeInverse>
@@ -191,6 +196,41 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 						</YStack>
 					</YStack>
 				</ScrollView>
+
+				{/* Floating toolbar above keyboard */}
+				{keyboardHeight > 0 && (
+					<RNView
+						style={{
+							position: 'absolute',
+							bottom: insets.bottom + 15,
+							left: 0,
+							right: 0,
+							zIndex: 100,
+						}}>
+						<FormattingToolbar
+							stylesState={stylesState}
+							onToggleBold={() => activeEditorRef.current?.toggleBold()}
+							onToggleItalic={() => activeEditorRef.current?.toggleItalic()}
+							onToggleUnderline={() => activeEditorRef.current?.toggleUnderline()}
+							onToggleStrikeThrough={() => activeEditorRef.current?.toggleStrikeThrough()}
+							onToggleInlineCode={() => activeEditorRef.current?.toggleInlineCode()}
+							onToggleBlockQuote={() => activeEditorRef.current?.toggleBlockQuote()}
+							onToggleUnorderedList={() => activeEditorRef.current?.toggleUnorderedList()}
+							onToggleOrderedList={() => activeEditorRef.current?.toggleOrderedList()}
+							onToggleH1={() => activeEditorRef.current?.toggleH1()}
+							onToggleH2={() => activeEditorRef.current?.toggleH2()}
+							onToggleH3={() => activeEditorRef.current?.toggleH3()}
+							onToggleH4={() => activeEditorRef.current?.toggleH4()}
+							onToggleH5={() => activeEditorRef.current?.toggleH5()}
+							onToggleH6={() => activeEditorRef.current?.toggleH6()}
+							onDismiss={() => {
+								activeEditorRef.current?.blur();
+								Keyboard.dismiss();
+							}}
+							colorScheme={colorScheme}
+						/>
+					</RNView>
+				)}
 			</View>
 		</KeyboardAvoidingView>
 	);
