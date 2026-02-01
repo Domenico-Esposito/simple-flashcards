@@ -19,6 +19,7 @@ export type Deck = {
   id: number;
   title: string;
   description?: string;
+  emoji?: string;
   createdAt: string;
 };
 
@@ -35,6 +36,7 @@ export type DeckWithFlashcards = Deck & {
 export type DeckExport = {
   title: string;
   description?: string;
+  emoji?: string;
   flashcards: Array<{
     question: string;
     answer: string;

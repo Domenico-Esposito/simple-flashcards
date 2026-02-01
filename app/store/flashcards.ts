@@ -21,8 +21,8 @@ interface FlashcardsState {
   // Actions - Decks
   loadDecks: () => Promise<void>;
   loadDeck: (id: number) => Promise<void>;
-  addDeck: (title: string, description?: string) => Promise<Deck>;
-  editDeck: (id: number, title: string, description?: string) => Promise<void>;
+  addDeck: (title: string, description?: string, emoji?: string) => Promise<Deck>;
+  editDeck: (id: number, title: string, description?: string, emoji?: string) => Promise<void>;
   removeDeck: (id: number) => Promise<void>;
   
   // Actions - Flashcards
@@ -34,12 +34,13 @@ interface FlashcardsState {
   removeFlashcard: (id: number) => Promise<void>;
   
   // Actions - Import
-  importDeck: (title: string, description: string | undefined, flashcards: Array<{ question: string; answer: string }>) => Promise<Deck>;
+  importDeck: (title: string, description: string | undefined, flashcards: Array<{ question: string; answer: string }>, emoji?: string) => Promise<Deck>;
 
   // Actions - Quiz Session
   startQuizSession: (deckId: number) => Promise<number>;
   recordAnswer: (flashcardId: number, responseType: 'correct' | 'incorrect') => Promise<void>;
   endQuizSession: () => Promise<void>;
+  discardQuizSession: () => Promise<void>;
 
   // Actions - Statistics
   getGlobalStats: (interval: 'day' | 'month' | 'quarter' | 'semester' | 'year', startDate?: string) => Promise<StatsSeries[]>;
@@ -51,6 +52,7 @@ interface FlashcardsState {
     totalTime: number;
     avgTimePerQuiz: number;
   }>;
+  resetStats: () => Promise<void>;
 }
 
 export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
@@ -90,20 +92,20 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
     }
   },
   
-  addDeck: async (title: string, description?: string) => {
-    const deck = await db.createDeck(title, description);
+  addDeck: async (title: string, description?: string, emoji?: string) => {
+    const deck = await db.createDeck(title, description, emoji);
     set((state) => ({ decks: [deck, ...state.decks] }));
     return deck;
   },
   
-  editDeck: async (id: number, title: string, description?: string) => {
-    await db.updateDeck(id, title, description);
+  editDeck: async (id: number, title: string, description?: string, emoji?: string) => {
+    await db.updateDeck(id, title, description, emoji);
     set((state) => ({
       decks: state.decks.map((d) =>
-        d.id === id ? { ...d, title, description } : d
+        d.id === id ? { ...d, title, description, emoji } : d
       ),
       currentDeck: state.currentDeck?.id === id
-        ? { ...state.currentDeck, title, description }
+        ? { ...state.currentDeck, title, description, emoji }
         : state.currentDeck,
     }));
   },
@@ -157,8 +159,8 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
     }));
   },
   
-  importDeck: async (title: string, description: string | undefined, flashcards: Array<{ question: string; answer: string }>) => {
-    const deck = await db.createDeck(title, description);
+  importDeck: async (title: string, description: string | undefined, flashcards: Array<{ question: string; answer: string }>, emoji?: string) => {
+    const deck = await db.createDeck(title, description, emoji);
     
     for (const fc of flashcards) {
       await db.createFlashcard(deck.id, fc.question, fc.answer);
@@ -197,6 +199,14 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
     set({ currentSessionId: null, sessionStartTime: null, answeredFlashcardIds: new Set() });
   },
 
+  discardQuizSession: async () => {
+    const { currentSessionId } = get();
+    if (!currentSessionId) return;
+
+    await db.deleteQuizSession(currentSessionId);
+    set({ currentSessionId: null, sessionStartTime: null, answeredFlashcardIds: new Set() });
+  },
+
   getGlobalStats: async (interval, startDate) => {
     return await db.getStats(interval, undefined, startDate);
   },
@@ -207,5 +217,9 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
 
   getKPIs: async (deckId) => {
     return await db.getKPIs(deckId);
+  },
+
+  resetStats: async () => {
+    await db.resetAllStats();
   },
 }));

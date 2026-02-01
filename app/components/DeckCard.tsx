@@ -21,7 +21,13 @@ export function DeckCard({ deck, flashcardCount, onPress, onLongPress }: DeckCar
 			{({ pressed }) => (
 				<View backgroundColor={pressed ? '$backgroundPress' : '$backgroundStrong'} borderRadius="$4" padding="$4">
 					<XStack gap="$4" alignItems="center">
-						<MaterialIcons name="style" size={34} color="#3B82F6" />
+						{deck.emoji ? (
+							<Text fontSize={34} color="$color">
+								{deck.emoji}
+							</Text>
+						) : (
+							<MaterialIcons name="style" size={34} color="#3B82F6" />
+						)}
 						<YStack flex={1} gap="$1.5">
 							<Text fontSize={17} fontWeight="600" numberOfLines={1} color="$color">
 								{deck.title}
