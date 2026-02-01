@@ -4,9 +4,18 @@ import { useStatistics, Interval } from '@/hooks/useStatistics';
 import { HistogramChart } from '@/components/HistogramChart';
 import { StatCard } from '@/components/StatCard';
 import { Header } from '@/components/Header';
+import { useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 
 export default function StatisticsScreen() {
-  const { interval, setInterval, data, kpis, loading } = useStatistics();
+  const { interval, setInterval, data, kpis, loading, refresh } = useStatistics();
+
+  // Refresh stats when tab comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
   
   const intervals: { value: Interval; label: string }[] = [
     { value: 'day', label: '7G' },

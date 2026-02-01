@@ -4,12 +4,20 @@ import { useStatistics, Interval } from '@/hooks/useStatistics';
 import { HistogramChart } from '@/components/HistogramChart';
 import { StatCard } from '@/components/StatCard';
 import { Header } from '@/components/Header';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 
 export default function DeckStatisticsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const deckId = parseInt(id, 10);
-  const { interval, setInterval, data, kpis, loading } = useStatistics(deckId);
+  const { interval, setInterval, data, kpis, loading, refresh } = useStatistics(deckId);
+
+  // Refresh stats when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
   
   const intervals: { value: Interval; label: string }[] = [
     { value: 'day', label: '7G' },
