@@ -72,37 +72,27 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 			<YStack flex={1} paddingHorizontal="$4" gap="$4">
 				{/* Action Buttons */}
 				<XStack gap="$3">
-					<Pressable 
-						onPress={() => router.push(`/deck/${deckId}/flashcard/new`)} 
-						style={{ flex: 1 }}
-					>
-						<View
-							backgroundColor="$primary"
-							borderRadius="$4"
-							padding="$4"
-							alignItems="center"
-							justifyContent="center"
-							gap="$2"
-						>
+					<Pressable onPress={() => router.push(`/deck/${deckId}/flashcard/new`)} style={{ flex: 1 }}>
+						<View backgroundColor="$primary" borderRadius="$4" padding="$4" alignItems="center" justifyContent="center" gap="$2">
 							<MaterialIcons name="add" size={24} color="#FFFFFF" />
 							<Text fontSize={14} fontWeight="600" color="#FFFFFF">
-								Nuova Flashcard
+								Aggiungi
 							</Text>
 						</View>
 					</Pressable>
 					{flashcards.length > 0 && (
-						<Pressable 
-							onPress={() => router.push(`/deck/${deckId}/quiz`)} 
-							style={{ flex: 1 }}
-						>
-							<View
-								backgroundColor="$backgroundStrong"
-								borderRadius="$4"
-								padding="$4"
-								alignItems="center"
-								justifyContent="center"
-								gap="$2"
-							>
+						<Pressable onPress={() => router.push(`/deck/${deckId}/study`)} style={{ flex: 1 }}>
+							<View backgroundColor="$backgroundStrong" borderRadius="$4" padding="$4" alignItems="center" justifyContent="center" gap="$2">
+								<MaterialIcons name="menu-book" size={24} color="#3B82F6" />
+								<Text fontSize={14} fontWeight="600" color="$color">
+									Studio
+								</Text>
+							</View>
+						</Pressable>
+					)}
+					{flashcards.length > 0 && (
+						<Pressable onPress={() => router.push(`/deck/${deckId}/quiz`)} style={{ flex: 1 }}>
+							<View backgroundColor="$backgroundStrong" borderRadius="$4" padding="$4" alignItems="center" justifyContent="center" gap="$2">
 								<MaterialIcons name="play-arrow" size={24} color="#4CD964" />
 								<Text fontSize={14} fontWeight="600" color="$color">
 									Avvia Quiz

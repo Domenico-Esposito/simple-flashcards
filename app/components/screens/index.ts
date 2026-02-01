@@ -6,3 +6,4 @@ export { QuizScreen } from './QuizScreen';
 export { NewDeckScreen } from './NewDeckScreen';
 export { NewFlashcardScreen } from './NewFlashcardScreen';
 export { EditFlashcardScreen } from './EditFlashcardScreen';
+export { StudyScreen } from './StudyScreen';
