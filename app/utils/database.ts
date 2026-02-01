@@ -1,97 +1,19 @@
 import * as SQLite from 'expo-sqlite';
 import { Deck, Flashcard, QuizSession, QuizAnswer, StatsSeries } from '@/types';
+import { runMigrations } from './migrationRunner';
 
 const DATABASE_NAME = 'flashcards.db';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
 /**
- * Initialize the database and create tables if they don't exist
+ * Initialize the database and run migrations
  */
 export async function initDatabase(): Promise<void> {
 	db = await SQLite.openDatabaseAsync(DATABASE_NAME);
 
-	await db.execAsync(`
-    CREATE TABLE IF NOT EXISTS decks (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      description TEXT,
-      createdAt TEXT NOT NULL
-    );
-    
-    CREATE TABLE IF NOT EXISTS flashcards (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      question TEXT NOT NULL,
-      answer TEXT NOT NULL,
-      deckId INTEGER NOT NULL,
-      FOREIGN KEY (deckId) REFERENCES decks(id) ON DELETE CASCADE
-    );
-
-    CREATE TABLE IF NOT EXISTS quiz_sessions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      deckId INTEGER NOT NULL,
-      startedAt TEXT NOT NULL,
-      endedAt TEXT,
-      totalTimeSpent INTEGER,
-      FOREIGN KEY (deckId) REFERENCES decks(id) ON DELETE CASCADE
-    );
-
-    CREATE TABLE IF NOT EXISTS quiz_answers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      sessionId INTEGER NOT NULL,
-      flashcardId INTEGER NOT NULL,
-      responseType TEXT NOT NULL,
-      answeredAt TEXT NOT NULL,
-      FOREIGN KEY (sessionId) REFERENCES quiz_sessions(id) ON DELETE CASCADE,
-      FOREIGN KEY (flashcardId) REFERENCES flashcards(id) ON DELETE CASCADE
-    );
-
-    -- FTS5 virtual table for full-text search with trigram tokenizer
-    CREATE VIRTUAL TABLE IF NOT EXISTS flashcards_fts USING fts5(
-      question,
-      answer,
-      content='flashcards',
-      content_rowid='id',
-      tokenize='trigram'
-    );
-
-    -- FTS5 virtual table for deck search
-    CREATE VIRTUAL TABLE IF NOT EXISTS decks_fts USING fts5(
-      title,
-      description,
-      content='decks',
-      content_rowid='id',
-      tokenize='trigram'
-    );
-
-    -- Triggers to keep FTS index in sync with flashcards table
-    CREATE TRIGGER IF NOT EXISTS flashcards_ai AFTER INSERT ON flashcards BEGIN
-      INSERT INTO flashcards_fts(rowid, question, answer) VALUES (new.id, new.question, new.answer);
-    END;
-
-    CREATE TRIGGER IF NOT EXISTS flashcards_ad AFTER DELETE ON flashcards BEGIN
-      INSERT INTO flashcards_fts(flashcards_fts, rowid, question, answer) VALUES('delete', old.id, old.question, old.answer);
-    END;
-
-    CREATE TRIGGER IF NOT EXISTS flashcards_au AFTER UPDATE ON flashcards BEGIN
-      INSERT INTO flashcards_fts(flashcards_fts, rowid, question, answer) VALUES('delete', old.id, old.question, old.answer);
-      INSERT INTO flashcards_fts(rowid, question, answer) VALUES (new.id, new.question, new.answer);
-    END;
-
-    -- Triggers to keep FTS index in sync with decks table
-    CREATE TRIGGER IF NOT EXISTS decks_ai AFTER INSERT ON decks BEGIN
-      INSERT INTO decks_fts(rowid, title, description) VALUES (new.id, new.title, COALESCE(new.description, ''));
-    END;
-
-    CREATE TRIGGER IF NOT EXISTS decks_ad AFTER DELETE ON decks BEGIN
-      INSERT INTO decks_fts(decks_fts, rowid, title, description) VALUES('delete', old.id, old.title, COALESCE(old.description, ''));
-    END;
-
-    CREATE TRIGGER IF NOT EXISTS decks_au AFTER UPDATE ON decks BEGIN
-      INSERT INTO decks_fts(decks_fts, rowid, title, description) VALUES('delete', old.id, old.title, COALESCE(old.description, ''));
-      INSERT INTO decks_fts(rowid, title, description) VALUES (new.id, new.title, COALESCE(new.description, ''));
-    END;
-  `);
+	// Run all pending migrations
+	await runMigrations(db);
 
 	// Rebuild FTS indexes to ensure they're in sync with existing data
 	await rebuildFtsIndexes();
@@ -128,14 +50,15 @@ export async function getDeckById(id: number): Promise<Deck | null> {
 /**
  * Create a new deck
  */
-export async function createDeck(title: string, description?: string): Promise<Deck> {
+export async function createDeck(title: string, description?: string, emoji?: string): Promise<Deck> {
 	const createdAt = new Date().toISOString();
-	const result = await getDb().runAsync('INSERT INTO decks (title, description, createdAt) VALUES (?, ?, ?)', [title, description || null, createdAt]);
+	const result = await getDb().runAsync('INSERT INTO decks (title, description, emoji, createdAt) VALUES (?, ?, ?, ?)', [title, description || null, emoji || null, createdAt]);
 
 	return {
 		id: result.lastInsertRowId,
 		title,
 		description,
+		emoji,
 		createdAt,
 	};
 }
@@ -143,8 +66,8 @@ export async function createDeck(title: string, description?: string): Promise<D
 /**
  * Update an existing deck
  */
-export async function updateDeck(id: number, title: string, description?: string): Promise<void> {
-	await getDb().runAsync('UPDATE decks SET title = ?, description = ? WHERE id = ?', [title, description || null, id]);
+export async function updateDeck(id: number, title: string, description?: string, emoji?: string): Promise<void> {
+	await getDb().runAsync('UPDATE decks SET title = ?, description = ?, emoji = ? WHERE id = ?', [title, description || null, emoji || null, id]);
 }
 
 /**
@@ -335,23 +258,18 @@ export async function updateQuizSession(id: number, endedAt: string, totalTimeSp
 	await getDb().runAsync('UPDATE quiz_sessions SET endedAt = ?, totalTimeSpent = ? WHERE id = ?', [endedAt, totalTimeSpent, id]);
 }
 
+export async function deleteQuizSession(id: number): Promise<void> {
+	await getDb().runAsync('DELETE FROM quiz_sessions WHERE id = ?', [id]);
+}
+
 export async function createQuizAnswer(sessionId: number, flashcardId: number, responseType: string): Promise<void> {
 	const answeredAt = new Date().toISOString();
-	await getDb().runAsync('INSERT INTO quiz_answers (sessionId, flashcardId, responseType, answeredAt) VALUES (?, ?, ?, ?)', [
-		sessionId,
-		flashcardId,
-		responseType,
-		answeredAt,
-	]);
+	await getDb().runAsync('INSERT INTO quiz_answers (sessionId, flashcardId, responseType, answeredAt) VALUES (?, ?, ?, ?)', [sessionId, flashcardId, responseType, answeredAt]);
 }
 
 // ==================== STATS OPERATIONS ====================
 
-export async function getStats(
-	interval: 'day' | 'month' | 'quarter' | 'semester' | 'year',
-	deckId?: number,
-	startDate?: string
-): Promise<StatsSeries[]> {
+export async function getStats(interval: 'day' | 'month' | 'quarter' | 'semester' | 'year', deckId?: number, startDate?: string): Promise<StatsSeries[]> {
 	let periodExpr = "strftime('%Y-%m-%d', a.answeredAt)";
 
 	if (interval === 'month') {
@@ -446,4 +364,12 @@ export async function getKPIs(deckId?: number): Promise<{
 		accuracy: totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0,
 		avgTimePerQuiz: totalQuizzes > 0 ? totalTime / totalQuizzes : 0,
 	};
+}
+
+/**
+ * Reset all statistics by deleting all quiz sessions and answers
+ */
+export async function resetAllStats(): Promise<void> {
+	await getDb().runAsync('DELETE FROM quiz_answers');
+	await getDb().runAsync('DELETE FROM quiz_sessions');
 }
