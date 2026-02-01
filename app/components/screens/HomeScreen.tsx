@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { FlatList, Alert, SectionList } from 'react-native';
 import { Text, View, YStack } from 'tamagui';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 
 import { useFlashcardsStore } from '@/store/flashcards';
 import { DeckCard } from '@/components/DeckCard';
@@ -67,9 +67,12 @@ export function HomeScreen() {
 		loadDecks();
 	}, [loadDecks]);
 
-	useEffect(() => {
-		loadCounts();
-	}, [loadCounts]);
+	// Reload counts every time the screen is focused
+	useFocusEffect(
+		useCallback(() => {
+			loadCounts();
+		}, [loadCounts])
+	);
 
 	const handleDeleteDeck = (deck: Deck) => {
 		Alert.alert('Elimina mazzo', `Sei sicuro di voler eliminare "${deck.title}"?`, [

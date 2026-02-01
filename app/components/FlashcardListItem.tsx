@@ -16,8 +16,18 @@ interface FlashcardListItemProps {
 function stripMarkdown(text: string): string {
 	return (
 		text
+			// Replace <br> and <br/> with space
+			.replace(/<br\s*\/?>/gi, ' ')
 			// Remove HTML tags
 			.replace(/<[^>]*>/g, '')
+			// Decode common HTML entities
+			.replace(/&nbsp;/gi, ' ')
+			.replace(/&amp;/gi, '&')
+			.replace(/&lt;/gi, '<')
+			.replace(/&gt;/gi, '>')
+			.replace(/&quot;/gi, '"')
+			.replace(/&#39;/gi, "'")
+			.replace(/&[a-z]+;/gi, '')
 			// Remove setext-style headers
 			.replace(/^[=-]{2,}\s*$/gm, '')
 			// Remove footnotes
@@ -46,8 +56,10 @@ function stripMarkdown(text: string): string {
 			// Remove list markers
 			.replace(/^[-*+]\s+/gm, '')
 			.replace(/^\d+\.\s+/gm, '')
+			// Replace newlines with spaces
+			.replace(/\n+/g, ' ')
 			// Clean up extra whitespace
-			.replace(/\n{2,}/g, '\n')
+			.replace(/\s{2,}/g, ' ')
 			.trim()
 	);
 }
@@ -56,6 +68,7 @@ function stripMarkdown(text: string): string {
  * List item displaying a flashcard preview
  */
 export function FlashcardListItem({ flashcard, onPress, onLongPress }: FlashcardListItemProps) {
+	const questionPreview = stripMarkdown(flashcard.question);
 	const answerPreview = stripMarkdown(flashcard.answer);
 
 	return (
@@ -69,7 +82,7 @@ export function FlashcardListItem({ flashcard, onPress, onLongPress }: Flashcard
 					<XStack gap="$3" alignItems="center">
 						<YStack flex={1} gap="$2">
 							<Text fontSize={15} fontWeight="600" numberOfLines={2} color="$color">
-								{flashcard.question}
+								{questionPreview}
 							</Text>
 							<Text fontSize={13} color="$gray10" numberOfLines={2}>
 								{answerPreview}

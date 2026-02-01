@@ -18,12 +18,22 @@ interface HeaderProps {
 	actions?: HeaderActionItem[];
 	onBackPress?: () => void;
 	isModal?: boolean;
+	maxTitleLength?: number;
+	maxSubtitleLength?: number;
+}
+
+/**
+ * Truncates a string to the specified maximum length, adding ellipsis if needed
+ */
+function truncateText(text: string, maxLength: number): string {
+	if (text.length <= maxLength) return text;
+	return text.slice(0, maxLength - 1).trimEnd() + '…';
 }
 
 /**
  * Reusable header component with consistent styling across all screens
  */
-export function Header({ title, subtitle, showBackButton = true, actions = [], onBackPress, isModal = false }: HeaderProps) {
+export function Header({ title, subtitle, showBackButton = true, actions = [], onBackPress, isModal = false, maxTitleLength = 20, maxSubtitleLength = 30 }: HeaderProps) {
 	const insets = useSafeAreaInsets();
 	const router = useRouter();
 	const theme = useTheme();
@@ -54,18 +64,18 @@ export function Header({ title, subtitle, showBackButton = true, actions = [], o
 	};
 
 	return (
-		<Stack paddingTop={getTopPadding()} backgroundColor={'$background'} paddingBottom="$4">
+		<Stack paddingTop={getTopPadding()} backgroundColor={'$background'} paddingBottom="$2">
 			<ZStack
 				gap="$2"
 				minHeight={56} // Consistent header height
 			>
 				<YStack flex={1} alignItems="center" justifyContent="center" absolute>
 					<Heading size="$4" numberOfLines={1} color="$color" fontWeight="600">
-						{title}
+						{truncateText(title, maxTitleLength)}
 					</Heading>
 					{subtitle && (
 						<Text fontSize={14} color="$secondary" numberOfLines={1}>
-							{subtitle}
+							{truncateText(subtitle, maxSubtitleLength)}
 						</Text>
 					)}
 				</YStack>
