@@ -45,6 +45,12 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 	const currentIndexRef = useRef(currentIndex);
 	const shuffledCardsRef = useRef(shuffledFlashcards);
 
+	// Reanimated shared values
+	const translateY = useSharedValue(0);
+	const flipRotation = useSharedValue(0); // 0 = question, 180 = answer
+	const isShowingAnswer = useSharedValue(0); // 0 = question, 1 = answer
+	const contentOpacity = useSharedValue(1); // For fade-in/out content transitions
+
 	// Aggiorna i refs quando cambiano i valori
 	useEffect(() => {
 		currentIndexRef.current = currentIndex;
@@ -54,10 +60,10 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 		shuffledCardsRef.current = shuffledFlashcards;
 	}, [shuffledFlashcards]);
 
-	// Reanimated shared values
-	const translateY = useSharedValue(0);
-	const flipRotation = useSharedValue(0); // 0 = question, 180 = answer
-	const isShowingAnswer = useSharedValue(0); // 0 = question, 1 = answer
+	// Fade-in content when currentIndex changes
+	useEffect(() => {
+		contentOpacity.value = withDelay(100, withTiming(1, { duration: 300 }));
+	}, [currentIndex, contentOpacity]);
 
 	useEffect(() => {
 		loadFlashcardsForQuiz(deckId);
@@ -91,6 +97,9 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 		// Check if this was the last unanswered card
 		const newAnsweredCount = Object.keys(newVotes).length;
 		const isNowComplete = newAnsweredCount >= shuffledFlashcards.length;
+
+		// Fade out content before transitioning
+		contentOpacity.value = withTiming(0, { duration: 200 });
 
 		// Wait for button animation to complete (250ms = 100ms zoom in + 150ms zoom out)
 		setTimeout(() => {
@@ -129,22 +138,18 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 			router.back();
 		} else {
 			const remaining = totalCount - answeredCount;
-			Alert.alert(
-				'Uscire dal quiz?',
-				`Hai ancora ${remaining} ${remaining === 1 ? 'domanda' : 'domande'} senza risposta. Sei sicuro di voler uscire?`,
-				[
-					{ text: 'Annulla', style: 'cancel' },
-					{
-						text: 'Esci senza salvare',
-						style: 'destructive',
-						onPress: async () => {
-							await discardQuizSession();
-							router.back();
-						},
+			Alert.alert('Uscire dal quiz?', `Hai ancora ${remaining} ${remaining === 1 ? 'domanda' : 'domande'} senza risposta. Sei sicuro di voler uscire?`, [
+				{ text: 'Annulla', style: 'cancel' },
+				{
+					text: 'Esci senza salvare',
+					style: 'destructive',
+					onPress: async () => {
+						await discardQuizSession();
+						router.back();
 					},
-					{ text: 'Esci', onPress: () => router.back() },
-				],
-			);
+				},
+				{ text: 'Esci', onPress: () => router.back() },
+			]);
 		}
 	}, [allAnswered, answeredCount, totalCount, router, discardQuizSession]);
 
@@ -176,6 +181,8 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 			const canGoPrev = idx > 0;
 
 			if (translationY < -SWIPE_THRESHOLD && canGoNext) {
+				// Fade out content immediately when swipe starts
+				contentOpacity.value = withTiming(0, { duration: 100 });
 				translateY.value = withTiming(-SCREEN_HEIGHT, { duration: 200 }, (finished) => {
 					if (finished) {
 						translateY.value = 0;
@@ -183,6 +190,8 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 					}
 				});
 			} else if (translationY > SWIPE_THRESHOLD && canGoPrev) {
+				// Fade out content immediately when swipe starts
+				contentOpacity.value = withTiming(0, { duration: 100 });
 				translateY.value = withTiming(SCREEN_HEIGHT, { duration: 200 }, (finished) => {
 					if (finished) {
 						translateY.value = 0;
@@ -193,7 +202,7 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 				resetPosition();
 			}
 		},
-		[translateY, goNext, goPrev, resetPosition],
+		[translateY, goNext, goPrev, resetPosition, contentOpacity],
 	);
 
 	const questionReadMoreTap = Gesture.Tap()
@@ -260,6 +269,11 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 		};
 	});
 
+	// Animated style for content fade-in/out
+	const animatedContentStyle = useAnimatedStyle(() => ({
+		opacity: contentOpacity.value,
+	}));
+
 	if (shuffledFlashcards.length === 0) {
 		return (
 			<View flex={1} justifyContent="center" alignItems="center" backgroundColor="$background">
@@ -307,104 +321,115 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 							]}>
 							{/* Card container for flip effect */}
 							<View style={{ flex: 1, position: 'relative' }}>
-
-							{/* Front face - Question */}
-							<Animated.View
-								style={[
-									{
-										position: 'absolute',
-										width: '100%',
-										height: '100%',
-										borderRadius: 24,
-										backgroundColor: colorScheme === 'dark' ? '#171717' : '#FFFFFF',
-										shadowColor: colorScheme === 'dark' ? '#646464' : '#171717',
-										shadowOffset: { width: 0, height: 5 },
-										shadowOpacity: 0.2,
-										shadowRadius: 16,
-										elevation: 8,
-									},
-									frontFaceStyle,
-								]}>
-								<View
-									width="100%"
-									height="100%"
-									justifyContent="center"
-									paddingHorizontal="$6"
-									onLayout={(e: LayoutChangeEvent) => setLayoutHeight(e.nativeEvent.layout.height)}>
-									<View style={{ overflow: 'hidden', flex: 1, justifyContent: isQuestionOverflow ? 'flex-start' : 'center' }}>
-										<YStack paddingVertical="$6" onLayout={(e: LayoutChangeEvent) => setQuestionContentHeight(e.nativeEvent.layout.height)}>
-											<Text fontSize={14} color="$secondary" marginBottom="$2">
-												DOMANDA
-											</Text>
-											<HtmlContent html={currentCard.question} />
-										</YStack>
-										{isQuestionOverflow && (
-											<View position="absolute" bottom={16} left={0} right={0} alignItems="center" pointerEvents="box-none">
-												<GestureDetector gesture={questionReadMoreTap}>
-													<View>
-														<Button size="$3" theme="active" borderRadius="$10" pointerEvents="none">
-															Leggi tutto
-														</Button>
+								{/* Front face - Question */}
+								<Animated.View
+									style={[
+										{
+											position: 'absolute',
+											width: '100%',
+											height: '100%',
+											borderRadius: 24,
+											backgroundColor: colorScheme === 'dark' ? '#171717' : '#FFFFFF',
+											shadowColor: colorScheme === 'dark' ? '#646464' : '#171717',
+											shadowOffset: { width: 0, height: 5 },
+											shadowOpacity: 0.2,
+											shadowRadius: 16,
+											elevation: 8,
+										},
+										frontFaceStyle,
+									]}>
+									<Animated.View style={[{ width: '100%', height: '100%' }, animatedContentStyle]}>
+										<View
+											width="100%"
+											height="100%"
+											justifyContent="center"
+											paddingHorizontal="$6"
+											onLayout={(e: LayoutChangeEvent) => setLayoutHeight(e.nativeEvent.layout.height)}>
+											<View style={{ overflow: 'hidden', flex: 1, justifyContent: isQuestionOverflow ? 'flex-start' : 'center' }}>
+												<YStack paddingVertical="$6" onLayout={(e: LayoutChangeEvent) => setQuestionContentHeight(e.nativeEvent.layout.height)}>
+													<Text fontSize={14} color="$secondary" marginBottom="$2">
+														DOMANDA
+													</Text>
+													<HtmlContent html={currentCard.question} />
+												</YStack>
+												{isQuestionOverflow && (
+													<View position="absolute" bottom={16} left={0} right={0} alignItems="center" pointerEvents="box-none">
+														<GestureDetector gesture={questionReadMoreTap}>
+															<View>
+																<Button size="$3" theme="active" borderRadius="$10" pointerEvents="none">
+																	Leggi tutto
+																</Button>
+															</View>
+														</GestureDetector>
 													</View>
-												</GestureDetector>
+												)}
 											</View>
-										)}
-									</View>
-								</View>
-							</Animated.View>
+										</View>
+									</Animated.View>
+								</Animated.View>
 
-							{/* Back face - Answer */}
-							<Animated.View
-								style={[
-									{
-										position: 'absolute',
-										width: '100%',
-										height: '100%',
-										borderRadius: 24,
-										backgroundColor: colorScheme === 'dark' ? '#171717' : '#FFFFFF',
-										shadowColor: colorScheme === 'dark' ? '#646464' : '#171717',
-										shadowOffset: { width: 0, height: 5 },
-										shadowOpacity: 0.2,
-										shadowRadius: 16,
-										elevation: 8,
-									},
-									backFaceStyle,
-								]}>
-								<View width="100%" height="100%" justifyContent="center" paddingHorizontal="$6" paddingBottom={72}>
-									<View style={{ overflow: 'hidden', flex: 1, justifyContent: isAnswerOverflow ? 'flex-start' : 'center' }}>
-										<YStack paddingVertical="$6" onLayout={(e: LayoutChangeEvent) => setAnswerContentHeight(e.nativeEvent.layout.height)}>
-											<Text fontSize={14} color="$secondary" marginBottom="$2">
-												RISPOSTA
-											</Text>
-											<HtmlContent html={currentCard.answer} />
-										</YStack>
-									</View>
-									{/* Gradient overlay + Read more button */}
-									{isAnswerOverflow && (
-										<View position="absolute" bottom={70} left={0} right={0} alignItems="center" pointerEvents="box-none">
-											<GestureDetector gesture={answerReadMoreTap}>
-												<View>
-													<Button size="$3" theme="active" borderRadius="$10" pointerEvents="none">
-														Leggi tutto
-													</Button>
+								{/* Back face - Answer */}
+								<Animated.View
+									style={[
+										{
+											position: 'absolute',
+											width: '100%',
+											height: '100%',
+											borderRadius: 24,
+											backgroundColor: colorScheme === 'dark' ? '#171717' : '#FFFFFF',
+											shadowColor: colorScheme === 'dark' ? '#646464' : '#171717',
+											shadowOffset: { width: 0, height: 5 },
+											shadowOpacity: 0.2,
+											shadowRadius: 16,
+											elevation: 8,
+										},
+										backFaceStyle,
+									]}>
+									<Animated.View style={[{ width: '100%', height: '100%' }, animatedContentStyle]}>
+										<View width="100%" height="100%" justifyContent="center" paddingHorizontal="$6" paddingBottom={72}>
+											<View style={{ overflow: 'hidden', flex: 1, justifyContent: isAnswerOverflow ? 'flex-start' : 'center' }}>
+												<YStack paddingVertical="$6" onLayout={(e: LayoutChangeEvent) => setAnswerContentHeight(e.nativeEvent.layout.height)}>
+													<Text fontSize={14} color="$secondary" marginBottom="$2">
+														RISPOSTA
+													</Text>
+													<HtmlContent html={currentCard.answer} />
+												</YStack>
+											</View>
+											{/* Gradient overlay + Read more button */}
+											{isAnswerOverflow && (
+												<View position="absolute" bottom={70} left={0} right={0} alignItems="center" pointerEvents="box-none">
+													<GestureDetector gesture={answerReadMoreTap}>
+														<View>
+															<Button size="$3" theme="active" borderRadius="$10" pointerEvents="none">
+																Leggi tutto
+															</Button>
+														</View>
+													</GestureDetector>
+												</View>
+											)}
+											{/* Response Buttons - inside the card for flip animation */}
+											<GestureDetector gesture={Gesture.Tap()}>
+												<View position="absolute" bottom={16} left={0} right={0} paddingHorizontal="$6">
+													<View flexDirection="row" gap="$3" width="100%">
+														<ResponseButton
+															type="incorrect"
+															onPress={() => handleResponse('incorrect')}
+															votedType={currentCard ? votes[currentCard.id] : undefined}
+														/>
+														<ResponseButton
+															type="correct"
+															onPress={() => handleResponse('correct')}
+															votedType={currentCard ? votes[currentCard.id] : undefined}
+														/>
+													</View>
 												</View>
 											</GestureDetector>
 										</View>
-									)}
-									{/* Response Buttons - inside the card for flip animation */}
-									<GestureDetector gesture={Gesture.Tap()}>
-										<View position="absolute" bottom={16} left={0} right={0} paddingHorizontal="$6">
-											<View flexDirection="row" gap="$3" width="100%">
-												<ResponseButton type="incorrect" onPress={() => handleResponse('incorrect')} votedType={currentCard ? votes[currentCard.id] : undefined} />
-												<ResponseButton type="correct" onPress={() => handleResponse('correct')} votedType={currentCard ? votes[currentCard.id] : undefined} />
-											</View>
-										</View>
-									</GestureDetector>
-								</View>
-							</Animated.View>
-						</View>
-					</Animated.View>
-				</GestureDetector>
+									</Animated.View>
+								</Animated.View>
+							</View>
+						</Animated.View>
+					</GestureDetector>
 				</View>
 
 				{/* Navigation hints - fixed at bottom */}
@@ -455,23 +480,29 @@ const ResponseButton = ({ type, onPress, votedType }: { type: 'correct' | 'incor
 
 	return (
 		<Pressable onPress={handlePress} style={{ flex: 1 }}>
-			<Animated.View style={[animatedStyle, { 
-				backgroundColor: bgColor, 
-				borderRadius: 12, 
-				height: 48, 
-				flexDirection: 'row',
-				alignItems: 'center', 
-				justifyContent: 'center',
-				gap: 8,
-				elevation: 10, 
-				shadowColor: bgColor, 
-				shadowOffset: { width: 0, height: 4 }, 
-				shadowOpacity: 0.4, 
-				shadowRadius: 8,
-				opacity,
-			}]}>
+			<Animated.View
+				style={[
+					animatedStyle,
+					{
+						backgroundColor: bgColor,
+						borderRadius: 12,
+						height: 48,
+						flexDirection: 'row',
+						alignItems: 'center',
+						justifyContent: 'center',
+						gap: 8,
+						elevation: 10,
+						shadowColor: bgColor,
+						shadowOffset: { width: 0, height: 4 },
+						shadowOpacity: 0.4,
+						shadowRadius: 8,
+						opacity,
+					},
+				]}>
 				<MaterialIcons name={iconName} size={22} color="#FFFFFF" />
-				<Text color="#FFFFFF" fontWeight="600" fontSize={15}>{label}</Text>
+				<Text color="#FFFFFF" fontWeight="600" fontSize={15}>
+					{label}
+				</Text>
 			</Animated.View>
 		</Pressable>
 	);

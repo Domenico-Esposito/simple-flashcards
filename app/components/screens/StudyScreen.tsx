@@ -4,7 +4,7 @@ import { Text, View, YStack, Button } from 'tamagui';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS, withDelay } from 'react-native-reanimated';
 
 import { useFlashcardsStore } from '@/store/flashcards';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -56,6 +56,12 @@ export function StudyScreen({ deckId }: StudyScreenProps) {
 	const translateY = useSharedValue(0);
 	const flipRotation = useSharedValue(0); // 0 = question, 180 = answer
 	const isShowingAnswer = useSharedValue(0); // 0 = question, 1 = answer
+	const contentOpacity = useSharedValue(1); // For fade-in/out content transitions
+
+	// Fade-in content when currentIndex changes
+	useEffect(() => {
+		contentOpacity.value = withDelay(100, withTiming(1, { duration: 300 }));
+	}, [currentIndex, contentOpacity]);
 
 	useEffect(() => {
 		loadFlashcardsForQuiz(deckId);
@@ -104,6 +110,8 @@ export function StudyScreen({ deckId }: StudyScreenProps) {
 			const canGoPrev = idx > 0;
 
 			if (translationY < -SWIPE_THRESHOLD && canGoNext) {
+				// Fade out content immediately when swipe starts
+				contentOpacity.value = withTiming(0, { duration: 100 });
 				translateY.value = withTiming(-SCREEN_HEIGHT, { duration: 200 }, (finished) => {
 					if (finished) {
 						translateY.value = 0;
@@ -111,6 +119,8 @@ export function StudyScreen({ deckId }: StudyScreenProps) {
 					}
 				});
 			} else if (translationY > SWIPE_THRESHOLD && canGoPrev) {
+				// Fade out content immediately when swipe starts
+				contentOpacity.value = withTiming(0, { duration: 100 });
 				translateY.value = withTiming(SCREEN_HEIGHT, { duration: 200 }, (finished) => {
 					if (finished) {
 						translateY.value = 0;
@@ -121,7 +131,7 @@ export function StudyScreen({ deckId }: StudyScreenProps) {
 				resetPosition();
 			}
 		},
-		[translateY, goNext, goPrev, resetPosition],
+		[translateY, goNext, goPrev, resetPosition, contentOpacity],
 	);
 
 	const questionReadMoreTap = Gesture.Tap()
@@ -188,6 +198,11 @@ export function StudyScreen({ deckId }: StudyScreenProps) {
 		};
 	});
 
+	// Animated style for content fade-in/out
+	const animatedContentStyle = useAnimatedStyle(() => ({
+		opacity: contentOpacity.value,
+	}));
+
 	if (shuffledFlashcards.length === 0) {
 		return (
 			<View flex={1} justifyContent="center" alignItems="center" backgroundColor="$background">
@@ -235,95 +250,98 @@ export function StudyScreen({ deckId }: StudyScreenProps) {
 							]}>
 							{/* Card container for flip effect */}
 							<View style={{ flex: 1, position: 'relative' }}>
-
-							{/* Front face - Question */}
-							<Animated.View
-								style={[
-									{
-										position: 'absolute',
-										width: '100%',
-										height: '100%',
-										borderRadius: 24,
-										backgroundColor: colorScheme === 'dark' ? '#171717' : '#FFFFFF',
-										shadowColor: colorScheme === 'dark' ? '#646464' : '#171717',
-										shadowOffset: { width: 0, height: 5 },
-										shadowOpacity: 0.2,
-										shadowRadius: 16,
-										elevation: 8,
-									},
-									frontFaceStyle,
-								]}>
-								<View
-									width="100%"
-									height="100%"
-									justifyContent="center"
-									paddingHorizontal="$6"
-									onLayout={(e: LayoutChangeEvent) => setLayoutHeight(e.nativeEvent.layout.height)}>
-									<View style={{ overflow: 'hidden', flex: 1, justifyContent: isQuestionOverflow ? 'flex-start' : 'center' }}>
-										<YStack paddingVertical="$6" onLayout={(e: LayoutChangeEvent) => setQuestionContentHeight(e.nativeEvent.layout.height)}>
-											<Text fontSize={14} color="$secondary" marginBottom="$2">
-												DOMANDA
-											</Text>
-											<HtmlContent html={currentCard.question} />
-										</YStack>
-										{isQuestionOverflow && (
-											<View position="absolute" bottom={16} left={0} right={0} alignItems="center" pointerEvents="box-none">
-												<GestureDetector gesture={questionReadMoreTap}>
-													<View>
-														<Button size="$3" theme="active" borderRadius="$10" pointerEvents="none">
-															Leggi tutto
-														</Button>
+								{/* Front face - Question */}
+								<Animated.View
+									style={[
+										{
+											position: 'absolute',
+											width: '100%',
+											height: '100%',
+											borderRadius: 24,
+											backgroundColor: colorScheme === 'dark' ? '#171717' : '#FFFFFF',
+											shadowColor: colorScheme === 'dark' ? '#646464' : '#171717',
+											shadowOffset: { width: 0, height: 5 },
+											shadowOpacity: 0.2,
+											shadowRadius: 16,
+											elevation: 8,
+										},
+										frontFaceStyle,
+									]}>
+									<Animated.View style={[{ width: '100%', height: '100%' }, animatedContentStyle]}>
+										<View
+											width="100%"
+											height="100%"
+											justifyContent="center"
+											paddingHorizontal="$6"
+											onLayout={(e: LayoutChangeEvent) => setLayoutHeight(e.nativeEvent.layout.height)}>
+											<View style={{ overflow: 'hidden', flex: 1, justifyContent: isQuestionOverflow ? 'flex-start' : 'center' }}>
+												<YStack paddingVertical="$6" onLayout={(e: LayoutChangeEvent) => setQuestionContentHeight(e.nativeEvent.layout.height)}>
+													<Text fontSize={14} color="$secondary" marginBottom="$2">
+														DOMANDA
+													</Text>
+													<HtmlContent html={currentCard.question} />
+												</YStack>
+												{isQuestionOverflow && (
+													<View position="absolute" bottom={16} left={0} right={0} alignItems="center" pointerEvents="box-none">
+														<GestureDetector gesture={questionReadMoreTap}>
+															<View>
+																<Button size="$3" theme="active" borderRadius="$10" pointerEvents="none">
+																	Leggi tutto
+																</Button>
+															</View>
+														</GestureDetector>
 													</View>
-												</GestureDetector>
+												)}
 											</View>
-										)}
-									</View>
-								</View>
-							</Animated.View>
-
-							{/* Back face - Answer */}
-							<Animated.View
-								style={[
-									{
-										position: 'absolute',
-										width: '100%',
-										height: '100%',
-										borderRadius: 24,
-										backgroundColor: colorScheme === 'dark' ? '#171717' : '#FFFFFF',
-										shadowColor: colorScheme === 'dark' ? '#646464' : '#171717',
-										shadowOffset: { width: 0, height: 5 },
-										shadowOpacity: 0.2,
-										shadowRadius: 16,
-										elevation: 8,
-									},
-									backFaceStyle,
-								]}>
-								<View width="100%" height="100%" justifyContent="center" paddingHorizontal="$6">
-									<View style={{ overflow: 'hidden', flex: 1, justifyContent: isAnswerOverflow ? 'flex-start' : 'center' }}>
-										<YStack paddingVertical="$6" onLayout={(e: LayoutChangeEvent) => setAnswerContentHeight(e.nativeEvent.layout.height)}>
-											<Text fontSize={14} color="$secondary" marginBottom="$2">
-												RISPOSTA
-											</Text>
-											<HtmlContent html={currentCard.answer} />
-										</YStack>
-									</View>
-									{/* Gradient overlay + Read more button */}
-									{isAnswerOverflow && (
-										<View position="absolute" bottom={16} left={0} right={0} alignItems="center" pointerEvents="box-none">
-											<GestureDetector gesture={answerReadMoreTap}>
-												<View>
-													<Button size="$3" theme="active" borderRadius="$10" pointerEvents="none">
-														Leggi tutto
-													</Button>
-												</View>
-											</GestureDetector>
 										</View>
-									)}
-								</View>
-							</Animated.View>
-						</View>
-					</Animated.View>
-				</GestureDetector>
+									</Animated.View>
+								</Animated.View>
+
+								{/* Back face - Answer */}
+								<Animated.View
+									style={[
+										{
+											position: 'absolute',
+											width: '100%',
+											height: '100%',
+											borderRadius: 24,
+											backgroundColor: colorScheme === 'dark' ? '#171717' : '#FFFFFF',
+											shadowColor: colorScheme === 'dark' ? '#646464' : '#171717',
+											shadowOffset: { width: 0, height: 5 },
+											shadowOpacity: 0.2,
+											shadowRadius: 16,
+											elevation: 8,
+										},
+										backFaceStyle,
+									]}>
+									<Animated.View style={[{ width: '100%', height: '100%' }, animatedContentStyle]}>
+										<View width="100%" height="100%" justifyContent="center" paddingHorizontal="$6">
+											<View style={{ overflow: 'hidden', flex: 1, justifyContent: isAnswerOverflow ? 'flex-start' : 'center' }}>
+												<YStack paddingVertical="$6" onLayout={(e: LayoutChangeEvent) => setAnswerContentHeight(e.nativeEvent.layout.height)}>
+													<Text fontSize={14} color="$secondary" marginBottom="$2">
+														RISPOSTA
+													</Text>
+													<HtmlContent html={currentCard.answer} />
+												</YStack>
+											</View>
+											{/* Gradient overlay + Read more button */}
+											{isAnswerOverflow && (
+												<View position="absolute" bottom={16} left={0} right={0} alignItems="center" pointerEvents="box-none">
+													<GestureDetector gesture={answerReadMoreTap}>
+														<View>
+															<Button size="$3" theme="active" borderRadius="$10" pointerEvents="none">
+																Leggi tutto
+															</Button>
+														</View>
+													</GestureDetector>
+												</View>
+											)}
+										</View>
+									</Animated.View>
+								</Animated.View>
+							</View>
+						</Animated.View>
+					</GestureDetector>
 				</View>
 
 				{/* Navigation hints - fixed at bottom */}
