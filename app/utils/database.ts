@@ -1,8 +1,10 @@
 import * as SQLite from 'expo-sqlite';
+import { Directory, File, Paths } from 'expo-file-system';
 import { Deck, Flashcard, QuizSession, QuizAnswer, StatsSeries } from '@/types';
 import { runMigrations } from './migrationRunner';
 
 const DATABASE_NAME = 'flashcards.db';
+const BACKUP_DIRECTORY_NAME = 'flashcards-backups';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -20,6 +22,24 @@ export async function initDatabase(): Promise<void> {
 }
 
 /**
+ * Close the database connection
+ */
+export async function closeDatabase(): Promise<void> {
+	if (db) {
+		await db.closeAsync();
+		db = null;
+	}
+}
+
+/**
+ * Reinitialize the database connection and rebuild indexes
+ */
+export async function reinitializeDatabase(): Promise<void> {
+	await closeDatabase();
+	await initDatabase();
+}
+
+/**
  * Get the database instance
  */
 function getDb(): SQLite.SQLiteDatabase {
@@ -27,6 +47,65 @@ function getDb(): SQLite.SQLiteDatabase {
 		throw new Error('Database not initialized. Call initDatabase() first.');
 	}
 	return db;
+}
+
+function getBackupDirectory(): Directory {
+	const backupDirectory = new Directory(Paths.document, BACKUP_DIRECTORY_NAME);
+	backupDirectory.create({ idempotent: true });
+	return backupDirectory;
+}
+
+/**
+ * Backup the database into a file on disk
+ */
+export async function backupDatabaseToFile(): Promise<File> {
+	const backupDirectory = getBackupDirectory();
+	const filename = `flashcards_backup_${Date.now()}.db`;
+	const backupFile = new File(backupDirectory, filename);
+
+	if (backupFile.exists) {
+		backupFile.delete();
+	}
+
+	const serialized = await getDb().serializeAsync();
+	backupFile.create({ intermediates: true });
+	backupFile.write(serialized);
+
+	return backupFile;
+}
+
+/**
+ * Restore the database from a backup file
+ */
+export async function restoreDatabaseFromFile(file: File): Promise<void> {
+	const backupDirectory = getBackupDirectory();
+	const tempFile = new File(backupDirectory, `restore_${Date.now()}.db`);
+
+	if (tempFile.exists) {
+		tempFile.delete();
+	}
+
+	tempFile.create({ intermediates: true });
+	if (tempFile.exists) {
+		tempFile.delete();
+	}
+	file.copy(tempFile);
+
+	const serialized = await tempFile.bytes();
+	const sourceDb = await SQLite.deserializeDatabaseAsync(serialized);
+	try {
+		await SQLite.backupDatabaseAsync({
+			sourceDatabase: sourceDb,
+			destDatabase: getDb(),
+		});
+	} finally {
+		await sourceDb.closeAsync();
+		if (tempFile.exists) {
+			tempFile.delete();
+		}
+	}
+
+	await reinitializeDatabase();
 }
 
 // ==================== DECK OPERATIONS ====================

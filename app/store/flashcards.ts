@@ -21,6 +21,7 @@ interface FlashcardsState {
   // Actions - Decks
   loadDecks: () => Promise<void>;
   loadDeck: (id: number) => Promise<void>;
+  refreshAfterRestore: () => Promise<void>;
   addDeck: (title: string, description?: string, emoji?: string) => Promise<Deck>;
   editDeck: (id: number, title: string, description?: string, emoji?: string) => Promise<void>;
   removeDeck: (id: number) => Promise<void>;
@@ -83,13 +84,25 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
     const decks = await db.getAllDecks();
     set({ decks });
   },
-  
+
   loadDeck: async (id: number) => {
     const deck = await db.getDeckById(id);
     set({ currentDeck: deck });
     if (deck) {
       await get().loadFlashcards(id);
     }
+  },
+
+  refreshAfterRestore: async () => {
+    set({
+      currentDeck: null,
+      flashcards: [],
+      shuffledFlashcards: [],
+      currentSessionId: null,
+      sessionStartTime: null,
+      answeredFlashcardIds: new Set(),
+    });
+    await get().loadDecks();
   },
   
   addDeck: async (title: string, description?: string, emoji?: string) => {

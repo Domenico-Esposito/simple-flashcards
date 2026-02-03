@@ -14,6 +14,7 @@ type SettingsItem = {
 const settingsItems: SettingsItem[] = [
 	{ title: 'Importa dati', icon: 'file-download', route: '/settings/import' },
 	{ title: 'Esporta dati', icon: 'file-upload', route: '/settings/export' },
+	{ title: 'Backup e ripristino', icon: 'backup', route: '/settings/backup' },
 	{ title: 'Reset statistiche', icon: 'delete-outline', route: '/settings/reset-stats' },
 	{ title: 'Informazioni', icon: 'info-outline', route: '/settings/info' },
 ];
