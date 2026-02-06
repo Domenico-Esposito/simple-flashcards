@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { KeyboardAvoidingView, Platform } from 'react-native';
+import { useState, useRef } from 'react';
+import { KeyboardAvoidingView, Platform, TextInput as RNTextInput } from 'react-native';
 import { Button, Input, Label, Text, TextArea, View, XStack, YStack } from 'tamagui';
 import { useRouter } from 'expo-router';
 
@@ -10,6 +10,8 @@ export function NewDeckScreen() {
   const router = useRouter();
   const addDeck = useFlashcardsStore((state) => state.addDeck);
 
+  const titleRef = useRef<RNTextInput>(null);
+  const descriptionRef = useRef<RNTextInput>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [emoji, setEmoji] = useState('');
@@ -36,7 +38,7 @@ export function NewDeckScreen() {
               <Input
                 id="emoji"
                 size="$4"
-                value={emoji}
+                defaultValue={emoji}
                 onChangeText={(text) => {
                   // Extract only the first emoji/character
                   const firstEmoji = [...text].slice(-1).join('');
@@ -48,10 +50,11 @@ export function NewDeckScreen() {
                 fontSize={28}
               />
               <Input
+                ref={titleRef}
                 id="title"
                 flex={1}
                 size="$4"
-                value={title}
+                defaultValue={title}
                 onChangeText={(text) => {
                   setTitle(text);
                   setError('');
@@ -66,10 +69,11 @@ export function NewDeckScreen() {
           <YStack gap="$1" flex={1}>
             <Label htmlFor="description">Descrizione</Label>
             <TextArea
+              ref={descriptionRef}
               id="description"
               size="$4"
               flex={1}
-              value={description}
+              defaultValue={description}
               onChangeText={setDescription}
               placeholder="Descrizione opzionale del mazzo"
               borderWidth={0}
