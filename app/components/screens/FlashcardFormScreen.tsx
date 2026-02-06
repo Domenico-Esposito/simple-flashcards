@@ -29,9 +29,9 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 
 	const [initialQuestion, setInitialQuestion] = useState('');
 	const [initialAnswer, setInitialAnswer] = useState('');
-	// Track current HTML content in state (updated on every change)
-	const [questionHtml, setQuestionHtml] = useState('');
-	const [answerHtml, setAnswerHtml] = useState('');
+	// Track current HTML content in refs to avoid re-renders that reset cursor
+	const questionHtmlRef = useRef('');
+	const answerHtmlRef = useRef('');
 	const [questionError, setQuestionError] = useState('');
 	const [answerError, setAnswerError] = useState('');
 	const [isLoading, setIsLoading] = useState(mode === 'edit');
@@ -49,8 +49,8 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 				if (fc) {
 					setInitialQuestion(fc.question);
 					setInitialAnswer(fc.answer);
-					setQuestionHtml(fc.question);
-					setAnswerHtml(fc.answer);
+					questionHtmlRef.current = fc.question;
+					answerHtmlRef.current = fc.answer;
 				}
 				setIsLoading(false);
 			};
@@ -67,12 +67,12 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 	const handleSave = async () => {
 		let hasError = false;
 
-		if (isHtmlEmpty(questionHtml)) {
+		if (isHtmlEmpty(questionHtmlRef.current)) {
 			setQuestionError('La domanda è obbligatoria');
 			hasError = true;
 		}
 
-		if (isHtmlEmpty(answerHtml)) {
+		if (isHtmlEmpty(answerHtmlRef.current)) {
 			setAnswerError('La risposta è obbligatoria');
 			hasError = true;
 		}
@@ -80,9 +80,9 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 		if (hasError) return;
 
 		if (mode === 'new' && deckId !== undefined) {
-			await addFlashcard(deckId, questionHtml, answerHtml);
+			await addFlashcard(deckId, questionHtmlRef.current, answerHtmlRef.current);
 		} else if (mode === 'edit' && flashcardId !== undefined) {
-			await editFlashcard(flashcardId, questionHtml, answerHtml);
+			await editFlashcard(flashcardId, questionHtmlRef.current, answerHtmlRef.current);
 		}
 
 		router.back();
@@ -139,47 +139,43 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 							</Button>
 						</XStack>
 
-						{/* Question Editor - rendered only when active, uses questionHtml to preserve content */}
-						{activeSection === 'question' && (
-							<YStack gap="$1" flex={1}>
-								<RichTextEditor
-									ref={questionEditorRef}
-									placeholder="Scrivi la domanda..."
-									initialValue={questionHtml || initialQuestion}
-									onChangeHtml={(html) => {
-										setQuestionHtml(html);
-										setQuestionError('');
-									}}
-									onChangeState={setStylesState}
-								/>
-								{questionError && (
-									<Text fontSize={12} color="$red10">
-										{questionError}
-									</Text>
-								)}
-							</YStack>
-						)}
+						{/* Question Editor - always mounted, hidden when not active */}
+						<YStack gap="$1" flex={1} display={activeSection === 'question' ? 'flex' : 'none'}>
+							<RichTextEditor
+								ref={questionEditorRef}
+								placeholder="Scrivi la domanda..."
+								initialValue={initialQuestion}
+								onChangeHtml={(html) => {
+									questionHtmlRef.current = html;
+									setQuestionError('');
+								}}
+								onChangeState={activeSection === 'question' ? setStylesState : undefined}
+							/>
+							{questionError && (
+								<Text fontSize={12} color="$red10">
+									{questionError}
+								</Text>
+							)}
+						</YStack>
 
-						{/* Answer Editor - rendered only when active, uses answerHtml to preserve content */}
-						{activeSection === 'answer' && (
-							<YStack gap="$1" flex={1}>
-								<RichTextEditor
-									ref={answerEditorRef}
-									placeholder="Scrivi la risposta..."
-									initialValue={answerHtml || initialAnswer}
-									onChangeHtml={(html) => {
-										setAnswerHtml(html);
-										setAnswerError('');
-									}}
-									onChangeState={setStylesState}
-								/>
-								{answerError && (
-									<Text fontSize={12} color="$red10">
-										{answerError}
-									</Text>
-								)}
-							</YStack>
-						)}
+						{/* Answer Editor - always mounted, hidden when not active */}
+						<YStack gap="$1" flex={1} display={activeSection === 'answer' ? 'flex' : 'none'}>
+							<RichTextEditor
+								ref={answerEditorRef}
+								placeholder="Scrivi la risposta..."
+								initialValue={initialAnswer}
+								onChangeHtml={(html) => {
+									answerHtmlRef.current = html;
+									setAnswerError('');
+								}}
+								onChangeState={activeSection === 'answer' ? setStylesState : undefined}
+							/>
+							{answerError && (
+								<Text fontSize={12} color="$red10">
+									{answerError}
+								</Text>
+							)}
+						</YStack>
 
 						<YStack gap="$3">
 							<Button size="$4" onPress={handleSave} themeInverse>

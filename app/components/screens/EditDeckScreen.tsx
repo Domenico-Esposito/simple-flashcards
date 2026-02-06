@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { useEffect, useState, useRef } from 'react';
+import { KeyboardAvoidingView, Platform, Alert, TextInput as RNTextInput } from 'react-native';
 import { Button, Input, Text, TextArea, View, XStack, YStack } from 'tamagui';
 import { useRouter } from 'expo-router';
 
@@ -15,6 +15,8 @@ export function EditDeckScreen({ deckId }: EditDeckScreenProps) {
 
 	const { currentDeck, loadDeck, editDeck, removeDeck } = useFlashcardsStore();
 
+	const titleRef = useRef<RNTextInput>(null);
+	const descriptionRef = useRef<RNTextInput>(null);
 	const [title, setTitle] = useState('');
 	const [description, setDescription] = useState('');
 	const [emoji, setEmoji] = useState('');
@@ -29,6 +31,13 @@ export function EditDeckScreen({ deckId }: EditDeckScreenProps) {
 			setTitle(currentDeck.title);
 			setDescription(currentDeck.description || '');
 			setEmoji(currentDeck.emoji || '');
+			// Update the actual input values
+			if (titleRef.current) {
+				titleRef.current.setNativeProps({ text: currentDeck.title });
+			}
+			if (descriptionRef.current) {
+				descriptionRef.current.setNativeProps({ text: currentDeck.description || '' });
+			}
 		}
 	}, [currentDeck]);
 
@@ -65,7 +74,7 @@ export function EditDeckScreen({ deckId }: EditDeckScreenProps) {
 						<Input
 							id="emoji"
 							size="$4"
-							value={emoji}
+							defaultValue={emoji}
 							onChangeText={(text) => {
 								// Extract only the first emoji/character
 								const firstEmoji = [...text].slice(-1).join('');
@@ -82,9 +91,10 @@ export function EditDeckScreen({ deckId }: EditDeckScreenProps) {
 						/>
 						<YStack flex={1} gap="$2">
 							<Input
+								ref={titleRef}
 								id="title"
 								size="$4"
-								value={title}
+								defaultValue={title}
 								onChangeText={(text) => {
 									setTitle(text);
 									setError('');
@@ -109,10 +119,11 @@ export function EditDeckScreen({ deckId }: EditDeckScreenProps) {
 
 					<YStack gap="$1" flex={1}>
 						<TextArea
+							ref={descriptionRef}
 							id="description"
 							size="$4"
 							flex={1}
-							value={description}
+							defaultValue={description}
 							onChangeText={setDescription}
 							placeholder="Corpo del testo (facoltativo)"
 							borderWidth={0}
