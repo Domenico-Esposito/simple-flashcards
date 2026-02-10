@@ -22,8 +22,8 @@ interface FlashcardsState {
   loadDecks: () => Promise<void>;
   loadDeck: (id: number) => Promise<void>;
   refreshAfterRestore: () => Promise<void>;
-  addDeck: (title: string, description?: string, emoji?: string) => Promise<Deck>;
-  editDeck: (id: number, title: string, description?: string, emoji?: string) => Promise<void>;
+  addDeck: (title: string, description?: string) => Promise<Deck>;
+  editDeck: (id: number, title: string, description?: string) => Promise<void>;
   removeDeck: (id: number) => Promise<void>;
   
   // Actions - Flashcards
@@ -35,7 +35,7 @@ interface FlashcardsState {
   removeFlashcard: (id: number) => Promise<void>;
   
   // Actions - Import
-  importDeck: (title: string, description: string | undefined, flashcards: Array<{ question: string; answer: string }>, emoji?: string) => Promise<Deck>;
+  importDeck: (title: string, description: string | undefined, flashcards: Array<{ question: string; answer: string }>) => Promise<Deck>;
 
   // Actions - Quiz Session
   startQuizSession: (deckId: number) => Promise<number>;
@@ -105,20 +105,20 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
     await get().loadDecks();
   },
   
-  addDeck: async (title: string, description?: string, emoji?: string) => {
-    const deck = await db.createDeck(title, description, emoji);
+  addDeck: async (title: string, description?: string) => {
+    const deck = await db.createDeck(title, description);
     set((state) => ({ decks: [deck, ...state.decks] }));
     return deck;
   },
   
-  editDeck: async (id: number, title: string, description?: string, emoji?: string) => {
-    await db.updateDeck(id, title, description, emoji);
+  editDeck: async (id: number, title: string, description?: string) => {
+    await db.updateDeck(id, title, description);
     set((state) => ({
       decks: state.decks.map((d) =>
-        d.id === id ? { ...d, title, description, emoji } : d
+        d.id === id ? { ...d, title, description } : d
       ),
       currentDeck: state.currentDeck?.id === id
-        ? { ...state.currentDeck, title, description, emoji }
+        ? { ...state.currentDeck, title, description }
         : state.currentDeck,
     }));
   },
@@ -172,8 +172,8 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
     }));
   },
   
-  importDeck: async (title: string, description: string | undefined, flashcards: Array<{ question: string; answer: string }>, emoji?: string) => {
-    const deck = await db.createDeck(title, description, emoji);
+  importDeck: async (title: string, description: string | undefined, flashcards: Array<{ question: string; answer: string }>) => {
+    const deck = await db.createDeck(title, description);
     
     for (const fc of flashcards) {
       await db.createFlashcard(deck.id, fc.question, fc.answer);

@@ -128,29 +128,57 @@ export const migrations: Migration[] = [
 	// ============================================================
 	// ADD NEW MIGRATIONS BELOW THIS LINE
 	// ============================================================
-	// Example migration for adding a new column:
-	// {
-	// 	version: 2,
-	// 	name: 'add_difficulty_to_flashcards',
-	// 	up: async (db) => {
-	// 		await db.execAsync(`ALTER TABLE flashcards ADD COLUMN difficulty TEXT DEFAULT 'medium'`);
-	// 	},
-	// 	down: async (db) => {
-	// 		// SQLite doesn't support DROP COLUMN directly, need table recreation
-	// 		await db.execAsync(`
-	// 			CREATE TABLE flashcards_new (
-	// 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-	// 				question TEXT NOT NULL,
-	// 				answer TEXT NOT NULL,
-	// 				deckId INTEGER NOT NULL,
-	// 				FOREIGN KEY (deckId) REFERENCES decks(id) ON DELETE CASCADE
-	// 			);
-	// 			INSERT INTO flashcards_new SELECT id, question, answer, deckId FROM flashcards;
-	// 			DROP TABLE flashcards;
-	// 			ALTER TABLE flashcards_new RENAME TO flashcards;
-	// 		`);
-	// 	},
-	// },
+	
+	// Migration 2: Remove emoji column from decks table
+	{
+		version: 2,
+		name: 'remove_emoji_from_decks',
+		up: async (db) => {
+			// SQLite doesn't support DROP COLUMN directly, need table recreation
+			await db.execAsync(`
+				-- Create temporary table without emoji column
+				CREATE TABLE decks_new (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					title TEXT NOT NULL,
+					description TEXT,
+					createdAt TEXT NOT NULL
+				);
+				
+				-- Copy data from old table
+				INSERT INTO decks_new (id, title, description, createdAt)
+				SELECT id, title, description, createdAt FROM decks;
+				
+				-- Drop old table
+				DROP TABLE decks;
+				
+				-- Rename new table
+				ALTER TABLE decks_new RENAME TO decks;
+				
+				-- Rebuild FTS indexes for decks
+				INSERT INTO decks_fts(decks_fts) VALUES('rebuild');
+			`);
+		},
+		down: async (db) => {
+			// Add emoji column back if needed to rollback
+			await db.execAsync(`
+				CREATE TABLE decks_new (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					title TEXT NOT NULL,
+					description TEXT,
+					emoji TEXT,
+					createdAt TEXT NOT NULL
+				);
+				
+				INSERT INTO decks_new (id, title, description, createdAt)
+				SELECT id, title, description, createdAt FROM decks;
+				
+				DROP TABLE decks;
+				ALTER TABLE decks_new RENAME TO decks;
+				
+				INSERT INTO decks_fts(decks_fts) VALUES('rebuild');
+			`);
+		},
+	},
 ];
 
 /**

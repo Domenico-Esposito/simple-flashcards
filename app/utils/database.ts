@@ -129,15 +129,14 @@ export async function getDeckById(id: number): Promise<Deck | null> {
 /**
  * Create a new deck
  */
-export async function createDeck(title: string, description?: string, emoji?: string): Promise<Deck> {
+export async function createDeck(title: string, description?: string): Promise<Deck> {
 	const createdAt = new Date().toISOString();
-	const result = await getDb().runAsync('INSERT INTO decks (title, description, emoji, createdAt) VALUES (?, ?, ?, ?)', [title, description || null, emoji || null, createdAt]);
+	const result = await getDb().runAsync('INSERT INTO decks (title, description, createdAt) VALUES (?, ?, ?)', [title, description || null, createdAt]);
 
 	return {
 		id: result.lastInsertRowId,
 		title,
 		description,
-		emoji,
 		createdAt,
 	};
 }
@@ -145,8 +144,8 @@ export async function createDeck(title: string, description?: string, emoji?: st
 /**
  * Update an existing deck
  */
-export async function updateDeck(id: number, title: string, description?: string, emoji?: string): Promise<void> {
-	await getDb().runAsync('UPDATE decks SET title = ?, description = ?, emoji = ? WHERE id = ?', [title, description || null, emoji || null, id]);
+export async function updateDeck(id: number, title: string, description?: string): Promise<void> {
+	await getDb().runAsync('UPDATE decks SET title = ?, description = ? WHERE id = ?', [title, description || null, id]);
 }
 
 /**

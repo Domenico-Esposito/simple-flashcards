@@ -24,7 +24,6 @@ export async function exportDeckToJson(deckId: number): Promise<string> {
 	const exportData: DeckExport = {
 		title: deck.title,
 		description: deck.description,
-		emoji: deck.emoji,
 		flashcards: flashcards.map((fc) => ({
 			question: fc.question,
 			answer: fc.answer,
@@ -46,7 +45,6 @@ export async function exportAllDecksToJson(): Promise<string> {
 		exportData.push({
 			title: deck.title,
 			description: deck.description,
-			emoji: deck.emoji,
 			flashcards: flashcards.map((fc) => ({
 				question: fc.question,
 				answer: fc.answer,
@@ -119,7 +117,7 @@ export async function importDeckFromJson(data: unknown): Promise<DeckWithFlashca
 	}
 
 	// Create deck
-	const deck = await db.createDeck(deckData.title, deckData.description, deckData.emoji);
+	const deck = await db.createDeck(deckData.title, deckData.description);
 
 	// Create flashcards - wrap HTML content
 	const flashcards = [];
@@ -146,7 +144,6 @@ export const JSON_FORMAT_DOCS = `
 {
   "title": "Nome del mazzo",
   "description": "Descrizione opzionale",
-  "emoji": "📚",
   "flashcards": [
     {
       "question": "Qual è la capitale d'Italia?",
@@ -163,7 +160,6 @@ export const JSON_FORMAT_DOCS = `
 ### Campi:
 - **title** (obbligatorio): Nome del mazzo
 - **description** (opzionale): Descrizione del mazzo
-- **emoji** (opzionale): Emoticon del mazzo
 - **flashcards** (obbligatorio): Array di flashcard
   - **question** (obbligatorio): Testo della domanda (HTML)
   - **answer** (obbligatorio): Testo della risposta (HTML)
