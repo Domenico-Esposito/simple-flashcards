@@ -72,3 +72,5 @@ file_descriptor_set.bin
 .devcontainer/cache/
 .devcontainer/cargo/
 .env*.local
+
+.vscode/
