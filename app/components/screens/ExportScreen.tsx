@@ -3,6 +3,8 @@ import { FlatList } from 'react-native';
 import { Text, View, YStack, ListItem, ScrollView } from 'tamagui';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
+import { useTranslation } from 'react-i18next';
+
 import { Header } from '@/components/Header';
 import { useFlashcardsStore } from '@/store/flashcards';
 import { exportDeckToJson, shareJsonFile } from '@/utils/import-export';
@@ -10,6 +12,7 @@ import type { Deck } from '@/types';
 import { useAppAlert } from '@/hooks/useAppAlert';
 
 export function ExportScreen() {
+	const { t } = useTranslation();
 	const { decks } = useFlashcardsStore();
 	const { showAlert, AlertDialog } = useAppAlert();
 	const [exportingDeckId, setExportingDeckId] = useState<number | null>(null);
@@ -22,7 +25,7 @@ export function ExportScreen() {
 			const filename = `flashcards_${sanitizedTitle}_${Date.now()}.json`;
 			await shareJsonFile(json, filename);
 		} catch (error) {
-			showAlert('Errore', error instanceof Error ? error.message : "Errore durante l'esportazione");
+			showAlert(t('common.error'), error instanceof Error ? error.message : t('export.error'));
 		} finally {
 			setExportingDeckId(null);
 		}
@@ -52,16 +55,16 @@ export function ExportScreen() {
 
 	return (
 		<View flex={1} backgroundColor="$background">
-			<Header title="Esporta dati" showBackButton />
+			<Header title={t('export.title')} showBackButton />
 
 			<ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
 				<YStack padding="$4" gap="$6">
 					<YStack gap="$6">
 						<Text fontSize={18} fontWeight="600" color="$color">
-							Seleziona un mazzo da esportare
+							{t('export.selectDeck')}
 						</Text>
 						<Text fontSize={14} color="$secondary">
-							Tocca un mazzo per esportarlo in formato JSON.
+							{t('export.description')}
 						</Text>
 					</YStack>
 
@@ -69,7 +72,7 @@ export function ExportScreen() {
 						<YStack padding="$4" paddingTop="$8" alignItems="center">
 							<MaterialIcons name="folder-open" size={64} color="gray" style={{ opacity: 0.3 }} />
 							<Text fontSize={16} color="$placeholderColor" textAlign="center" marginTop="$4">
-								Nessun mazzo disponibile per l'esportazione
+								{t('export.noDecks')}
 							</Text>
 						</YStack>
 					) : (

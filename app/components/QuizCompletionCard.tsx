@@ -4,6 +4,8 @@ import { Text, View, YStack, Button } from 'tamagui';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, withDelay } from 'react-native-reanimated';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
+import { useTranslation } from 'react-i18next';
+
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { SkiaCardShadow } from '@/components/ui/SkiaCardShadow';
 import { getColors } from '@/constants/colors';
@@ -23,6 +25,7 @@ type QuizCompletionCardProps = {
 };
 
 export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) {
+	const { t } = useTranslation();
 	const colorScheme = useColorScheme();
 
 	// Animation values
@@ -129,10 +132,10 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 
 				{/* Title */}
 				<Text fontSize={24} fontWeight="700" color={textPrimary} textAlign="center" marginBottom="$2">
-					Quiz completato!
+					{t('quiz.completionTitle')}
 				</Text>
 				<Text fontSize={14} color={textSecondary} textAlign="center" marginBottom="$5">
-					Hai risposto a tutte le domande
+					{t('quiz.completionSubtitle')}
 				</Text>
 
 				{/* Stats grid */}
@@ -144,7 +147,7 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 								{successRate}%
 							</Text>
 							<Text fontSize={13} color={textSecondary} marginTop="$1">
-								Tasso di successo
+								{t('quiz.successRate')}
 							</Text>
 						</View>
 
@@ -163,7 +166,7 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 									</Text>
 								</View>
 								<Text fontSize={12} color={textSecondary} marginTop="$1">
-									Corrette
+									{t('quiz.correct')}
 								</Text>
 							</View>
 
@@ -180,7 +183,7 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 									</Text>
 								</View>
 								<Text fontSize={12} color={textSecondary} marginTop="$1">
-									Errate
+									{t('quiz.incorrect')}
 								</Text>
 							</View>
 						</View>
@@ -194,7 +197,7 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 								</Text>
 							</View>
 							<Text fontSize={12} color={textSecondary} marginTop="$1">
-								Tempo totale
+								{t('quiz.totalTime')}
 							</Text>
 						</View>
 					</YStack>
@@ -203,7 +206,7 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 				{/* Close button */}
 				<Animated.View style={buttonAnimatedStyle}>
 					<Button size="$5" theme="active" borderRadius="$10" onPress={onClose} fontWeight="600">
-						Chiudi quiz
+						{t('quiz.closeButton')}
 					</Button>
 				</Animated.View>
 				</SkiaCardShadow>

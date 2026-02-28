@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { Pressable } from 'react-native';
 import { ScrollView, YStack, XStack, Text, Spinner, View, Separator } from 'tamagui';
 import { useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 import { useStatistics, Interval } from '@/hooks/useStatistics';
 import { HistogramChart } from '@/components/HistogramChart';
@@ -9,14 +10,6 @@ import { StatCard } from '@/components/StatCard';
 import { Header } from '@/components/Header';
 import { formatTime } from '@/utils';
 import { chartColors, kpiColors } from '@/constants/colors';
-
-const INTERVALS: { value: Interval; label: string }[] = [
-  { value: 'day', label: '7G' },
-  { value: 'month', label: '6M' },
-  { value: 'quarter', label: 'Trim.' },
-  { value: 'semester', label: 'Sem.' },
-  { value: 'year', label: 'Anno' },
-];
 
 type StatisticsContentProps = {
   /** When provided, shows deck-specific statistics */
@@ -30,8 +23,19 @@ type StatisticsContentProps = {
 /**
  * Shared statistics UI used by both the global statistics tab and the per-deck statistics screen.
  */
-export function StatisticsContent({ deckId, title = 'Statistiche', showBackButton = false }: StatisticsContentProps) {
+export function StatisticsContent({ deckId, title, showBackButton = false }: StatisticsContentProps) {
   const { interval, setInterval, data, kpis, loading, refresh } = useStatistics(deckId);
+  const { t } = useTranslation();
+
+  const resolvedTitle = title ?? t('tab.statistics');
+
+  const INTERVALS: { value: Interval; label: string }[] = [
+    { value: 'day', label: t('stats.interval7days') },
+    { value: 'month', label: t('stats.interval6months') },
+    { value: 'quarter', label: t('stats.intervalQuarter') },
+    { value: 'semester', label: t('stats.intervalSemester') },
+    { value: 'year', label: t('stats.intervalYear') },
+  ];
 
   useFocusEffect(
     useCallback(() => {
@@ -41,7 +45,7 @@ export function StatisticsContent({ deckId, title = 'Statistiche', showBackButto
 
   return (
     <View flex={1} backgroundColor="$background">
-      <Header title={title} showBackButton={showBackButton} />
+      <Header title={resolvedTitle} showBackButton={showBackButton} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 50 }} showsVerticalScrollIndicator={false}>
         <YStack gap="$5">
           {/* Interval Selector */}
@@ -83,7 +87,7 @@ export function StatisticsContent({ deckId, title = 'Statistiche', showBackButto
 
           {/* Chart Section */}
           <YStack gap="$3">
-            <Text fontSize={18} fontWeight="600" color="$color">Andamento Risposte</Text>
+            <Text fontSize={18} fontWeight="600" color="$color">{t('stats.answerTrend')}</Text>
             <View 
               backgroundColor="$backgroundStrong" 
               borderRadius="$4" 
@@ -104,11 +108,11 @@ export function StatisticsContent({ deckId, title = 'Statistiche', showBackButto
             <XStack justifyContent="center" gap="$6" paddingTop="$2">
               <XStack alignItems="center" gap="$2">
                 <View width={12} height={12} borderRadius={3} backgroundColor={chartColors.correct} />
-                <Text fontSize={13} color="$gray10">Corrette</Text>
+                <Text fontSize={13} color="$gray10">{t('stats.correct')}</Text>
               </XStack>
               <XStack alignItems="center" gap="$2">
                 <View width={12} height={12} borderRadius={3} backgroundColor={chartColors.incorrect} />
-                <Text fontSize={13} color="$gray10">Errate</Text>
+                <Text fontSize={13} color="$gray10">{t('stats.incorrect')}</Text>
               </XStack>
             </XStack>
           </YStack>
@@ -117,17 +121,17 @@ export function StatisticsContent({ deckId, title = 'Statistiche', showBackButto
 
           {/* KPIs Section */}
           <YStack gap="$4">
-            <Text fontSize={18} fontWeight="600" color="$color">Riepilogo</Text>
+            <Text fontSize={18} fontWeight="600" color="$color">{t('stats.summary')}</Text>
             
             <XStack gap="$3">
               <StatCard 
-                title="Quiz Completati" 
+                title={t('stats.quizzesCompleted')} 
                 value={kpis.totalQuizzes} 
                 icon="school"
                 iconColor={kpiColors.quizzes}
               />
               <StatCard 
-                title="Accuratezza" 
+                title={t('stats.accuracy')} 
                 value={`${kpis.accuracy.toFixed(1)}%`}
                 icon="check-circle"
                 iconColor={kpiColors.accuracy}
@@ -136,13 +140,13 @@ export function StatisticsContent({ deckId, title = 'Statistiche', showBackButto
             
             <XStack gap="$3">
               <StatCard 
-                title="Risposte Totali" 
+                title={t('stats.totalAnswers')} 
                 value={kpis.totalAnswers}
                 icon="question-answer"
                 iconColor={kpiColors.answers}
               />
               <StatCard 
-                title="Tempo Totale" 
+                title={t('stats.totalTime')} 
                 value={formatTime(kpis.totalTime)}
                 icon="schedule"
                 iconColor={kpiColors.totalTime}
@@ -150,7 +154,7 @@ export function StatisticsContent({ deckId, title = 'Statistiche', showBackButto
             </XStack>
             
             <StatCard 
-              title="Tempo Medio per Quiz" 
+              title={t('stats.avgTimePerQuiz')} 
               value={formatTime(kpis.avgTimePerQuiz)}
               icon="timer"
               iconColor={kpiColors.avgTime}

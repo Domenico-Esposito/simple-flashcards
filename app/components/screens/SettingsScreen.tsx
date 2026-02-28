@@ -3,6 +3,8 @@ import { Text, View, YStack, XStack } from 'tamagui';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
+import { useTranslation } from 'react-i18next';
+
 import { Header } from '@/components/Header';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getColors } from '@/constants/colors';
@@ -13,23 +15,24 @@ type SettingsItem = {
 	route: string;
 };
 
-const settingsItems: SettingsItem[] = [
-	{ title: 'Importa dati', icon: 'file-download', route: '/settings/import' },
-	{ title: 'Esporta dati', icon: 'file-upload', route: '/settings/export' },
-	{ title: 'Backup e ripristino', icon: 'backup', route: '/settings/backup' },
-	{ title: 'Reset statistiche', icon: 'delete-outline', route: '/settings/reset-stats' },
-	{ title: 'Reset contenuti', icon: 'delete-forever', route: '/settings/reset-data' },
-	{ title: 'Informazioni', icon: 'info-outline', route: '/settings/info' },
-];
-
 export function SettingsScreen() {
+	const { t } = useTranslation();
 	const router = useRouter();
 	const colorScheme = useColorScheme();
 	const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
 
+	const settingsItems: SettingsItem[] = [
+		{ title: t('settings.import'), icon: 'file-download', route: '/settings/import' },
+		{ title: t('settings.export'), icon: 'file-upload', route: '/settings/export' },
+		{ title: t('settings.backup'), icon: 'backup', route: '/settings/backup' },
+		{ title: t('settings.resetStats'), icon: 'delete-outline', route: '/settings/reset-stats' },
+		{ title: t('settings.resetData'), icon: 'delete-forever', route: '/settings/reset-data' },
+		{ title: t('settings.info'), icon: 'info-outline', route: '/settings/info' },
+	];
+
 	return (
 		<View flex={1} backgroundColor="$background">
-			<Header title="Impostazioni" showBackButton={false} />
+			<Header title={t('settings.title')} showBackButton={false} />
 
 			<YStack padding="$4" gap="$2">
 				{settingsItems.map((item, index) => (

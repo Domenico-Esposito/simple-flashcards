@@ -1,5 +1,6 @@
 import { Pressable } from 'react-native';
 import { Text, View, XStack, YStack } from 'tamagui';
+import { useTranslation } from 'react-i18next';
 import { Deck } from '@/types';
 import { formatDate } from '@/utils';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -17,6 +18,7 @@ interface DeckCardProps {
  * Card component displaying a deck summary
  */
 export function DeckCard({ deck, flashcardCount, onPress, onLongPress }: DeckCardProps) {
+	const { t } = useTranslation();
 	const colorScheme = useColorScheme();
 	const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
 
@@ -39,7 +41,7 @@ export function DeckCard({ deck, flashcardCount, onPress, onLongPress }: DeckCar
 								<XStack alignItems="center" gap="$1">
 									<MaterialIcons name="layers" size={14} color={colors.muted} />
 									<Text fontSize={12} color="$gray9">
-										{flashcardCount} {flashcardCount === 1 ? 'carta' : 'carte'}
+										{t('deck.cardCount', { count: flashcardCount })}
 									</Text>
 								</XStack>
 								<XStack alignItems="center" gap="$1">

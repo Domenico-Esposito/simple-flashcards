@@ -1,4 +1,5 @@
 import { Button, Text, View, YStack } from 'tamagui';
+import { useTranslation } from 'react-i18next';
 
 import { Header } from '@/components/Header';
 import { useFlashcardsStore } from '@/store/flashcards';
@@ -7,16 +8,17 @@ import { useAppAlert } from '@/hooks/useAppAlert';
 export function ResetDataScreen() {
 	const { resetAllData } = useFlashcardsStore();
 	const { showAlert, AlertDialog } = useAppAlert();
+	const { t } = useTranslation();
 
 	const handleResetData = () => {
-		showAlert('Reset contenuti', 'Sei sicuro di voler eliminare tutti i dati? Mazzi, flashcard e statistiche verranno eliminati. Questa azione è irreversibile.', [
-			{ text: 'Annulla', style: 'cancel' },
+		showAlert(t('resetData.title'), t('resetData.confirmMessage'), [
+			{ text: t('common.cancel'), style: 'cancel' },
 			{
-				text: 'Elimina tutto',
+				text: t('common.deleteAll'),
 				style: 'destructive',
 				onPress: async () => {
 					await resetAllData();
-					showAlert('Completato', 'Tutti i dati sono stati eliminati.');
+					showAlert(t('common.completed'), t('resetData.success'));
 				},
 			},
 		]);
@@ -24,19 +26,19 @@ export function ResetDataScreen() {
 
 	return (
 		<View flex={1} backgroundColor="$background">
-			<Header title="Reset contenuti" showBackButton />
+			<Header title={t('resetData.title')} showBackButton />
 
 			<YStack padding="$4" gap="$4">
 				<Text fontSize={14} color="$secondary">
-					Questa azione eliminerà tutti i dati dell'applicazione: mazzi, flashcard e statistiche dei quiz completati.
+					{t('resetData.description1')}
 				</Text>
 
 				<Text fontSize={14} color="$secondary">
-					Il database verrà reinizializzato da zero. L'operazione è irreversibile.
+					{t('resetData.description2')}
 				</Text>
 
 				<Button size="$4" theme="red" onPress={handleResetData} marginTop="$4">
-					Reset contenuti
+					{t('resetData.buttonLabel')}
 				</Button>
 			</YStack>
 			{AlertDialog}

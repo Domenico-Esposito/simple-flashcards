@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { ScrollView } from 'react-native';
 import { Button, Input, Label, Text, TextArea, View, YStack, XStack } from 'tamagui';
 
+import { useTranslation } from 'react-i18next';
+
 import { Header } from '@/components/Header';
 import { useFlashcardsStore } from '@/store/flashcards';
 import { importDeckFromUrl, importDeckFromJson } from '@/utils/import-export';
@@ -10,6 +12,7 @@ import { useAppAlert } from '@/hooks/useAppAlert';
 type ImportMode = 'url' | 'json';
 
 export function ImportScreen() {
+	const { t } = useTranslation();
 	const { loadDecks } = useFlashcardsStore();
 	const { showAlert, AlertDialog } = useAppAlert();
 
@@ -21,7 +24,7 @@ export function ImportScreen() {
 
 	const handleImportFromUrl = async () => {
 		if (!importUrl.trim()) {
-			showAlert('Errore', 'Inserisci un URL valido');
+			showAlert(t('common.error'), t('import.invalidUrl'));
 			return;
 		}
 
@@ -29,11 +32,11 @@ export function ImportScreen() {
 		try {
 			const deck = await importDeckFromUrl(importUrl.trim());
 			await loadDecks();
-			showAlert('Importazione completata', `Mazzo "${deck.title}" importato con ${deck.flashcards.length} flashcard!`, [
+			showAlert(t('import.successTitle'), t('import.successMessage', { title: deck.title, count: deck.flashcards.length }), [
 				{ text: 'OK', onPress: () => setImportUrl('') },
 			]);
 		} catch (error) {
-			showAlert('Errore', error instanceof Error ? error.message : "Errore durante l'importazione");
+			showAlert(t('common.error'), error instanceof Error ? error.message : t('import.error'));
 		} finally {
 			setIsImporting(false);
 		}
@@ -41,7 +44,7 @@ export function ImportScreen() {
 
 	const handleImportFromJson = async () => {
 		if (!importJson.trim()) {
-			showAlert('Errore', 'Inserisci il JSON del mazzo');
+			showAlert(t('common.error'), t('import.missingJson'));
 			return;
 		}
 
@@ -50,14 +53,14 @@ export function ImportScreen() {
 			const data = JSON.parse(importJson.trim());
 			const deck = await importDeckFromJson(data);
 			await loadDecks();
-			showAlert('Importazione completata', `Mazzo "${deck.title}" importato con ${deck.flashcards.length} flashcard!`, [
+			showAlert(t('import.successTitle'), t('import.successMessage', { title: deck.title, count: deck.flashcards.length }), [
 				{ text: 'OK', onPress: () => setImportJson('') },
 			]);
 		} catch (error) {
 			if (error instanceof SyntaxError) {
-				showAlert('Errore', 'JSON non valido. Controlla la sintassi.');
+				showAlert(t('common.error'), t('import.invalidJson'));
 			} else {
-				showAlert('Errore', error instanceof Error ? error.message : "Errore durante l'importazione");
+				showAlert(t('common.error'), error instanceof Error ? error.message : t('import.error'));
 			}
 		} finally {
 			setIsImporting(false);
@@ -66,7 +69,7 @@ export function ImportScreen() {
 
 	return (
 		<View flex={1} backgroundColor="$background">
-			<Header title="Importa dati" showBackButton />
+			<Header title={t('import.title')} showBackButton />
 
 			<ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
 				<YStack padding="$4" gap="$6">
@@ -74,45 +77,45 @@ export function ImportScreen() {
 						{/* Import Mode Toggle */}
 						<XStack gap="$2">
 							<Button size="$3" flex={1} onPress={() => setImportMode('url')} themeInverse={importMode === 'url'} chromeless={importMode !== 'url'}>
-								Da URL
+								{t('import.fromUrl')}
 							</Button>
 							<Button size="$3" flex={1} onPress={() => setImportMode('json')} themeInverse={importMode === 'json'} chromeless={importMode !== 'json'}>
-								Da JSON
+								{t('import.fromJson')}
 							</Button>
 						</XStack>
 
 						{importMode === 'url' ? (
 							<>
 								<Text fontSize={14} color="$secondary">
-									Importa un mazzo da un file JSON ospitato sul web.
+									{t('import.urlDescription')}
 								</Text>
 								<YStack gap="$1">
-									<Label htmlFor="importUrl">URL del file JSON</Label>
-									<Input id="importUrl" size="$4" value={importUrl} onChangeText={setImportUrl} placeholder="https://esempio.com/mazzo.json" />
+									<Label htmlFor="importUrl">{t('import.urlLabel')}</Label>
+									<Input id="importUrl" size="$4" value={importUrl} onChangeText={setImportUrl} placeholder={t('import.urlPlaceholder')} />
 								</YStack>
 								<Button size="$4" onPress={handleImportFromUrl} disabled={isImporting} themeInverse>
-									{isImporting ? 'Importando...' : 'Importa da URL'}
+									{isImporting ? t('common.importing') : t('import.fromUrlButton')}
 								</Button>
 							</>
 						) : (
 							<>
 								<Text fontSize={14} color="$secondary">
-									Incolla direttamente il JSON del mazzo da importare.
+									{t('import.jsonDescription')}
 								</Text>
 								<YStack gap="$1">
-									<Label htmlFor="importJson">JSON del mazzo</Label>
+									<Label htmlFor="importJson">{t('import.jsonLabel')}</Label>
 									<TextArea
 										id="importJson"
 										size="$4"
 										value={importJson}
 										onChangeText={setImportJson}
-										placeholder={'{\n  "title": "Nome mazzo",\n  "flashcards": [...]\n}'}
+										placeholder={t('import.jsonPlaceholder')}
 										numberOfLines={8}
 										minHeight={160}
 									/>
 								</YStack>
 								<Button size="$4" onPress={handleImportFromJson} disabled={isImporting} themeInverse>
-									{isImporting ? 'Importando...' : 'Importa JSON'}
+									{isImporting ? t('common.importing') : t('import.fromJsonButton')}
 								</Button>
 							</>
 						)}
@@ -121,45 +124,36 @@ export function ImportScreen() {
 					{/* Format Documentation */}
 					<YStack gap="$3">
 						<Button size="$4" onPress={() => setShowFormat(!showFormat)} chromeless>
-							{showFormat ? 'Nascondi formato JSON' : 'Mostra formato JSON'}
+							{showFormat ? t('import.hideFormat') : t('import.showFormat')}
 						</Button>
 						{showFormat && (
 							<View backgroundColor="$backgroundStrong" padding="$4" borderRadius="$3" gap="$3">
 								<Text fontSize={16} fontWeight="600" color="$color">
-									Formato JSON
+									{t('import.formatTitle')}
 								</Text>
 								<View backgroundColor="$background" padding="$3" borderRadius="$2">
 									<Text fontFamily="$mono" fontSize={12} color="$color">
-										{`{
-  "title": "Nome del mazzo",
-  "description": "Descrizione opzionale",
-  "flashcards": [
-    {
-      "question": "Domanda 1",
-      "answer": "Risposta 1"
-    }
-  ]
-}`}
+										{t('import.formatExample')}
 									</Text>
 								</View>
 								<YStack gap="$2">
 									<Text fontSize={14} fontWeight="600" color="$color">
-										Campi:
+										{t('import.fieldsLabel')}
 									</Text>
 									<Text fontSize={13} color="$secondary">
-										• <Text fontWeight="bold">title</Text> (obbligatorio): Nome del mazzo
+										{t('import.titleField')}
 									</Text>
 									<Text fontSize={13} color="$secondary">
-										• <Text fontWeight="bold">description</Text> (opzionale): Descrizione
+										{t('import.descriptionField')}
 									</Text>
 									<Text fontSize={13} color="$secondary">
-										• <Text fontWeight="bold">flashcards</Text> (obbligatorio): Array di flashcard
+										{t('import.flashcardsField')}
 									</Text>
 									<Text fontSize={13} color="$secondary" marginLeft="$3">
-										• <Text fontWeight="bold">question</Text>: Testo della domanda (Markdown)
+										{t('import.questionField')}
 									</Text>
 									<Text fontSize={13} color="$secondary" marginLeft="$3">
-										• <Text fontWeight="bold">answer</Text>: Testo della risposta (Markdown)
+										{t('import.answerField')}
 									</Text>
 								</YStack>
 							</View>

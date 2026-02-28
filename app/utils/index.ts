@@ -20,8 +20,10 @@ export function shuffleArray<T>(array: T[]): T[] {
  * Format a date string to a localized format
  */
 export function formatDate(isoString: string): string {
+  const i18n = require('@/i18n').default;
+  const locale = i18n.language ?? 'it';
   const date = new Date(isoString);
-  return date.toLocaleDateString('it-IT', {
+  return date.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',

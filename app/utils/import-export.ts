@@ -2,6 +2,7 @@ import { File, Paths } from 'expo-file-system';
 import { isAvailableAsync, shareAsync } from 'expo-sharing';
 import { DeckExport, DeckWithFlashcards } from '@/types';
 import * as db from './database';
+import i18n from '@/i18n';
 
 /**
  * Export a deck with all its flashcards to JSON format
@@ -9,7 +10,7 @@ import * as db from './database';
 export async function exportDeckToJson(deckId: number): Promise<string> {
 	const deck = await db.getDeckById(deckId);
 	if (!deck) {
-		throw new Error('Deck not found');
+		throw new Error(i18n.t('errors.deckNotFound'));
 	}
 
 	const flashcards = await db.getFlashcardsByDeckId(deckId);
@@ -36,10 +37,10 @@ export async function shareJsonFile(jsonContent: string, filename: string): Prom
 	if (await isAvailableAsync()) {
 		await shareAsync(file.uri, {
 			mimeType: 'application/json',
-			dialogTitle: 'Esporta mazzo',
+			dialogTitle: i18n.t('export.dialogTitle'),
 		});
 	} else {
-		throw new Error('La condivisione non è disponibile su questo dispositivo');
+		throw new Error(i18n.t('errors.sharingNotAvailable'));
 	}
 }
 
@@ -50,7 +51,7 @@ export async function importDeckFromUrl(url: string): Promise<DeckWithFlashcards
 	const response = await fetch(url);
 
 	if (!response.ok) {
-		throw new Error(`Errore nel recupero del file: ${response.status}`);
+		throw new Error(i18n.t('errors.fileDownload', { status: response.status }));
 	}
 
 	const data = await response.json();
@@ -63,27 +64,27 @@ export async function importDeckFromUrl(url: string): Promise<DeckWithFlashcards
 export async function importDeckFromJson(data: unknown): Promise<DeckWithFlashcards> {
 	// Validate structure
 	if (!data || typeof data !== 'object') {
-		throw new Error('Formato JSON non valido');
+		throw new Error(i18n.t('errors.invalidJsonFormat'));
 	}
 
 	const deckData = data as DeckExport;
 
 	if (!deckData.title || typeof deckData.title !== 'string') {
-		throw new Error('Il campo "title" è obbligatorio');
+		throw new Error(i18n.t('errors.titleRequired'));
 	}
 
 	if (!Array.isArray(deckData.flashcards)) {
-		throw new Error('Il campo "flashcards" deve essere un array');
+		throw new Error(i18n.t('errors.flashcardsArrayRequired'));
 	}
 
 	// Validate flashcards
 	for (let i = 0; i < deckData.flashcards.length; i++) {
 		const fc = deckData.flashcards[i];
 		if (!fc.question || typeof fc.question !== 'string') {
-			throw new Error(`Flashcard ${i + 1}: campo "question" mancante`);
+			throw new Error(i18n.t('errors.questionMissing', { index: i + 1 }));
 		}
 		if (!fc.answer || typeof fc.answer !== 'string') {
-			throw new Error(`Flashcard ${i + 1}: campo "answer" mancante`);
+			throw new Error(i18n.t('errors.answerMissing', { index: i + 1 }));
 		}
 	}
 

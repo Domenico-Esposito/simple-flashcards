@@ -1,5 +1,6 @@
 import { Input, View, useTheme } from 'tamagui';
 import { Pressable } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
 interface SearchBarProps {
@@ -11,9 +12,11 @@ interface SearchBarProps {
 /**
  * Reusable search bar component with consistent styling
  */
-export function SearchBar({ value, onChangeText, placeholder = 'Cerca...' }: SearchBarProps) {
+export function SearchBar({ value, onChangeText, placeholder }: SearchBarProps) {
 	const theme = useTheme();
 	const secondaryColor = theme.secondary.val;
+	const { t } = useTranslation();
+	const resolvedPlaceholder = placeholder ?? t('common.search');
 
 	const handleClear = () => {
 		onChangeText('');
@@ -28,7 +31,7 @@ export function SearchBar({ value, onChangeText, placeholder = 'Cerca...' }: Sea
 				size="$4"
 				value={value}
 				onChangeText={onChangeText}
-				placeholder={placeholder}
+				placeholder={resolvedPlaceholder}
 				paddingLeft="$7"
 				paddingRight={value.length > 0 ? '$10' : '$4'}
 				autoCapitalize="none"

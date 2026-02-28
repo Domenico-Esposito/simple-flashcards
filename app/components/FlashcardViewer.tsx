@@ -5,6 +5,7 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS, withDelay } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 
 import { useFlashcardsStore } from '@/store/flashcards';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -53,6 +54,7 @@ export function FlashcardViewer({
 	const insets = useSafeAreaInsets();
 	const router = useRouter();
 	const colorScheme = useColorScheme();
+	const { t } = useTranslation();
 
 	const { shuffledFlashcards, loadFlashcardsForQuiz } = useFlashcardsStore();
 
@@ -233,13 +235,13 @@ export function FlashcardViewer({
 	if (shuffledFlashcards.length === 0) {
 		return (
 			<View flex={1} justifyContent="center" alignItems="center" backgroundColor="$background">
-				<Text color="$secondary">Caricamento...</Text>
+				<Text color="$secondary">{t('common.loading')}</Text>
 			</View>
 		);
 	}
 
 	const defaultHint = (showing: boolean) =>
-		`↑↓ cambia carta • tocco per ${showing ? 'nascondere' : 'mostrare'} risposta`;
+		t('flashcard.navigationHint', { action: showing ? t('flashcard.hideAnswer') : t('flashcard.showAnswer') });
 
 	return (
 		<GestureHandlerRootView style={{ flex: 1 }}>
@@ -297,7 +299,7 @@ export function FlashcardViewer({
 												<View style={{ overflow: 'hidden', flex: 1, justifyContent: isQuestionOverflow ? 'flex-start' : 'center' }}>
 													<YStack paddingVertical="$6" onLayout={(e: LayoutChangeEvent) => setQuestionContentHeight(e.nativeEvent.layout.height)}>
 														<Text fontSize={14} color="$secondary" marginBottom="$2">
-															DOMANDA
+															{t('flashcard.questionLabel')}
 														</Text>
 														<HtmlContent html={currentCard.question} />
 													</YStack>
@@ -306,7 +308,7 @@ export function FlashcardViewer({
 															<GestureDetector gesture={questionReadMoreTap}>
 																<View>
 																	<Button size="$3" theme="active" borderRadius="$10" pointerEvents="none">
-																		Leggi tutto
+																		{t('flashcard.readMore')}
 																	</Button>
 																</View>
 															</GestureDetector>
@@ -339,7 +341,7 @@ export function FlashcardViewer({
 												<View style={{ overflow: 'hidden', flex: 1, justifyContent: isAnswerOverflow ? 'flex-start' : 'center' }}>
 													<YStack paddingVertical="$6" onLayout={(e: LayoutChangeEvent) => setAnswerContentHeight(e.nativeEvent.layout.height)}>
 														<Text fontSize={14} color="$secondary" marginBottom="$2">
-															RISPOSTA
+															{t('flashcard.answerLabel')}
 														</Text>
 														<HtmlContent html={currentCard.answer} />
 													</YStack>
@@ -349,7 +351,7 @@ export function FlashcardViewer({
 														<GestureDetector gesture={answerReadMoreTap}>
 															<View>
 																<Button size="$3" theme="active" borderRadius="$10" pointerEvents="none">
-																	Leggi tutto
+																	{t('flashcard.readMore')}
 																</Button>
 															</View>
 														</GestureDetector>

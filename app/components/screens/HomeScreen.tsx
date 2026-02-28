@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { FlatList, SectionList } from 'react-native';
 import { Text, View, YStack } from 'tamagui';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 import { useFlashcardsStore } from '@/store/flashcards';
 import { DeckCard } from '@/components/DeckCard';
@@ -20,6 +21,7 @@ type SearchResultSection = {
 
 export function HomeScreen() {
 	const router = useRouter();
+	const { t } = useTranslation();
 	const { decks, loadDecks, removeDeck } = useFlashcardsStore();
 	const { showAlert, AlertDialog } = useAppAlert();
 	const [deckCounts, setDeckCounts] = useState<Record<number, number>>({});
@@ -77,30 +79,30 @@ export function HomeScreen() {
 	);
 
 	const handleDeleteDeck = (deck: Deck) => {
-		showAlert('Elimina mazzo', `Sei sicuro di voler eliminare "${deck.title}"?`, [
-			{ text: 'Annulla', style: 'cancel' },
-			{ text: 'Elimina', style: 'destructive', onPress: () => removeDeck(deck.id) },
+		showAlert(t('deck.delete.title'), t('deck.delete.message', { title: deck.title }), [
+			{ text: t('common.cancel'), style: 'cancel' },
+			{ text: t('common.delete'), style: 'destructive', onPress: () => removeDeck(deck.id) },
 		]);
 	};
 
 	return (
 		<View flex={1} backgroundColor="$background">
-			<Header title="I tuoi mazzi" showBackButton={false} actions={[createHeaderAction({ icon: 'add', label: 'Nuovo mazzo', onPress: () => router.push('/deck/new') })]} />
+			<Header title={t('home.title')} showBackButton={false} actions={[createHeaderAction({ icon: 'add', label: t('home.newDeck'), onPress: () => router.push('/deck/new') })]} />
 
 			<YStack flex={1} paddingHorizontal="$4" gap="$4">
 				{/* Search bar */}
-				{decks.length > 0 && <SearchBar value={searchQuery} onChangeText={setSearchQuery} placeholder="Cerca mazzi..." />}
+				{decks.length > 0 && <SearchBar value={searchQuery} onChangeText={setSearchQuery} placeholder={t('home.searchPlaceholder')} />}
 
 				{decks.length === 0 ? (
 					<YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
 						<Text color="$gray10" fontSize={16} textAlign="center">
-							Nessun mazzo ancora.{'\n'}Crea il tuo primo mazzo!
+							{t('home.noDecks')}
 						</Text>
 					</YStack>
 				) : filteredDecks.length === 0 ? (
 					<YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
 						<Text color="$gray10" fontSize={16} textAlign="center">
-							Nessun risultato per &quot;{searchQuery}&quot;
+							{t('home.noSearchResults', { query: searchQuery })}
 						</Text>
 					</YStack>
 				) : searchQuery.trim() && searchResults.length > 0 ? (

@@ -7,6 +7,8 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS, withSe
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
+import { useTranslation } from 'react-i18next';
+
 import { useFlashcardsStore } from '@/store/flashcards';
 import { FlashcardViewer } from '@/components/FlashcardViewer';
 import { QuizCompletionCard, QuizStats } from '@/components/QuizCompletionCard';
@@ -20,6 +22,7 @@ type QuizScreenProps = {
 };
 
 export function QuizScreen({ deckId }: QuizScreenProps) {
+	const { t } = useTranslation();
 	const router = useRouter();
 
 	const { shuffledFlashcards, startQuizSession, endQuizSession, discardQuizSession, recordAnswer, sessionStartTime } = useFlashcardsStore();
@@ -117,19 +120,19 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 					<AlertDialog.Overlay key="overlay" backgroundColor="rgba(0,0,0,0.5)" />
 					<AlertDialog.Content key="content" bordered elevate maxWidth={340} paddingHorizontal="$5" paddingVertical="$5" borderRadius="$6">
 						<YStack gap="$3">
-							<AlertDialog.Title size="$6">Uscire dal quiz?</AlertDialog.Title>
+							<AlertDialog.Title size="$6">{t('quiz.exitTitle')}</AlertDialog.Title>
 							<AlertDialog.Description size="$3" color="$secondary">
-								{`Hai ancora ${totalCount - answeredCount} ${totalCount - answeredCount === 1 ? 'domanda' : 'domande'} senza risposta. Sei sicuro di voler uscire?`}
+								{t('quiz.exitMessage', { count: totalCount - answeredCount, label: (totalCount - answeredCount) === 1 ? t('quiz.exitQuestionSingular') : t('quiz.exitQuestionPlural') })}
 							</AlertDialog.Description>
 							<YStack gap="$2" paddingTop="$2">
 								<AlertDialog.Cancel asChild>
-									<Button borderRadius="$4">Annulla</Button>
+									<Button borderRadius="$4">{t('common.cancel')}</Button>
 								</AlertDialog.Cancel>
 								<AlertDialog.Action asChild>
-									<Button borderRadius="$4" onPress={handleExitKeep}>Esci</Button>
+									<Button borderRadius="$4" onPress={handleExitKeep}>{t('common.exit')}</Button>
 								</AlertDialog.Action>
 								<AlertDialog.Action asChild>
-									<Button theme="red" borderRadius="$4" onPress={handleExitDiscard}>Esci senza salvare</Button>
+									<Button theme="red" borderRadius="$4" onPress={handleExitDiscard}>{t('quiz.exitWithoutSaving')}</Button>
 								</AlertDialog.Action>
 							</YStack>
 						</YStack>
@@ -145,6 +148,7 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 // ---------------------------------------------------------------------------
 
 const ResponseButton = ({ type, onPress, votedType }: { type: 'correct' | 'incorrect'; onPress: () => void; votedType?: 'correct' | 'incorrect' }) => {
+	const { t } = useTranslation();
 	const colorScheme = useColorScheme();
 	const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
 	const scale = useSharedValue(1);
@@ -167,7 +171,7 @@ const ResponseButton = ({ type, onPress, votedType }: { type: 'correct' | 'incor
 	const isCorrect = type === 'correct';
 	const iconName = isCorrect ? 'check' : 'close';
 	const bgColor = isCorrect ? colors.success : colors.error;
-	const label = isCorrect ? 'Ricordo' : 'Non ricordo';
+	const label = isCorrect ? t('quiz.remember') : t('quiz.forgot');
 	const opacity = !votedType ? 1 : votedType === type ? 1 : 0.5;
 	const shadowColor = isCorrect ? colors.successShadow : colors.errorShadow;
 

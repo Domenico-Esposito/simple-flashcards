@@ -3,6 +3,7 @@ import { FlatList, Pressable } from 'react-native';
 import { Text, View, YStack, XStack } from 'tamagui';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useTranslation } from 'react-i18next';
 
 import { useFlashcardsStore } from '@/store/flashcards';
 import { FlashcardListItem } from '@/components/FlashcardListItem';
@@ -18,6 +19,7 @@ type DeckDetailScreenProps = {
 
 export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 	const router = useRouter();
+	const { t } = useTranslation();
 	const colorScheme = useColorScheme();
 	const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
 
@@ -37,16 +39,16 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 	}, [deckId, loadDeck]);
 
 	const handleDeleteFlashcard = (flashcardId: number) => {
-		showAlert('Elimina flashcard', 'Sei sicuro di voler eliminare questa flashcard?', [
-			{ text: 'Annulla', style: 'cancel' },
-			{ text: 'Elimina', style: 'destructive', onPress: () => removeFlashcard(flashcardId) },
+		showAlert(t('flashcard.delete.title'), t('flashcard.delete.message'), [
+			{ text: t('common.cancel'), style: 'cancel' },
+			{ text: t('common.delete'), style: 'destructive', onPress: () => removeFlashcard(flashcardId) },
 		]);
 	};
 
 	if (!currentDeck) {
 		return (
 			<View flex={1} justifyContent="center" alignItems="center" backgroundColor="$background">
-				<Text color="$gray10">Caricamento...</Text>
+				<Text color="$gray10">{t('common.loading')}</Text>
 			</View>
 		);
 	}
@@ -57,8 +59,8 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 				title={currentDeck.title}
 				subtitle={currentDeck.description}
 				actions={[
-					createHeaderAction({ icon: 'bar-chart', label: 'Statistiche', onPress: () => router.push(`/deck/${deckId}/statistics`) }),
-					createHeaderAction({ icon: 'edit', label: 'Modifica', onPress: () => router.push(`/deck/${deckId}/edit`) }),
+					createHeaderAction({ icon: 'bar-chart', label: t('deck.statistics'), onPress: () => router.push(`/deck/${deckId}/statistics`) }),
+					createHeaderAction({ icon: 'edit', label: t('deck.edit'), onPress: () => router.push(`/deck/${deckId}/edit`) }),
 				]}
 			/>
 
@@ -69,7 +71,7 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 						<View backgroundColor="$primary" borderRadius="$4" padding="$4" alignItems="center" justifyContent="center" gap="$2">
 							<MaterialIcons name="add" size={24} color={colors.onAccent} />
 							<Text fontSize={14} fontWeight="600" color={colors.onAccent}>
-								Aggiungi
+								{t('deck.add')}
 							</Text>
 						</View>
 					</Pressable>
@@ -78,7 +80,7 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 							<View backgroundColor="$backgroundStrong" borderRadius="$4" padding="$4" alignItems="center" justifyContent="center" gap="$2">
 								<MaterialIcons name="menu-book" size={24} color={colors.accent} />
 								<Text fontSize={14} fontWeight="600" color="$color">
-									Studio
+									{t('deck.study')}
 								</Text>
 							</View>
 						</Pressable>
@@ -88,7 +90,7 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 							<View backgroundColor="$backgroundStrong" borderRadius="$4" padding="$4" alignItems="center" justifyContent="center" gap="$2">
 								<MaterialIcons name="play-arrow" size={24} color={colors.success} />
 								<Text fontSize={14} fontWeight="600" color="$color">
-									Avvia Quiz
+									{t('deck.startQuiz')}
 								</Text>
 							</View>
 						</Pressable>
@@ -96,12 +98,12 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 				</XStack>
 
 				{/* Search bar */}
-				{flashcards.length > 0 && <SearchBar value={searchQuery} onChangeText={setSearchQuery} placeholder="Cerca flashcard..." />}
+				{flashcards.length > 0 && <SearchBar value={searchQuery} onChangeText={setSearchQuery} placeholder={t('deck.searchPlaceholder')} />}
 
 				{/* Section title */}
 				{flashcards.length > 0 && (
 					<Text fontSize={18} fontWeight="600" color="$color" marginTop="$2">
-						Flashcard ({flashcards.length})
+						{t('deck.flashcardCount', { count: flashcards.length })}
 					</Text>
 				)}
 
@@ -109,13 +111,13 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 				{flashcards.length === 0 ? (
 					<YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
 						<Text color="$gray10" fontSize={16} textAlign="center">
-							Nessuna flashcard in questo mazzo.{'\n'}Aggiungine una!
+							{t('deck.noFlashcards')}
 						</Text>
 					</YStack>
 				) : filteredFlashcards.length === 0 ? (
 					<YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
 						<Text color="$gray10" fontSize={16} textAlign="center">
-							Nessuna flashcard trovata per &quot;{searchQuery}&quot;
+							{t('deck.noSearchResults', { query: searchQuery })}
 						</Text>
 					</YStack>
 				) : (

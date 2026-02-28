@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, TextInput as RNTextInput } from 'react-native';
 import { Button, Text, TextArea, View, YStack, useTheme } from 'tamagui';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 import { useFlashcardsStore } from '@/store/flashcards';
 import { Header } from '@/components/Header';
@@ -20,6 +21,7 @@ type DeckFormScreenProps = {
 export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
 	const isEditing = deckId != null;
 	const router = useRouter();
+	const { t } = useTranslation();
 	const theme = useTheme();
 	const { showAlert, AlertDialog } = useAppAlert();
 
@@ -53,7 +55,7 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
 
 	const handleSave = async () => {
 		if (!title.trim()) {
-			setError('Il titolo è obbligatorio');
+			setError(t('form.titleRequired'));
 			return;
 		}
 
@@ -67,10 +69,10 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
 
 	const handleDelete = () => {
 		if (!isEditing) return;
-		showAlert('Elimina mazzo', 'Sei sicuro di voler eliminare questo mazzo e tutte le sue flashcard?', [
-			{ text: 'Annulla', style: 'cancel' },
+		showAlert(t('deck.delete.title'), t('deck.delete.confirmMessage'), [
+			{ text: t('common.cancel'), style: 'cancel' },
 			{
-				text: 'Elimina',
+				text: t('common.delete'),
 				style: 'destructive',
 				onPress: async () => {
 					await removeDeck(deckId);
@@ -83,7 +85,7 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
 	return (
 		<KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 			<View flex={1} backgroundColor="$background">
-				<Header title={isEditing ? 'Modifica Mazzo' : 'Nuovo Mazzo'} isModal={isEditing} />
+				<Header title={isEditing ? t('deck.editTitle') : t('deck.createTitle')} isModal={isEditing} />
 				<ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
 					<YStack gap="$4" flex={1} padding="$4">
 						<YStack gap="$2">
@@ -94,7 +96,7 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
 									setTitle(text);
 									setError('');
 								}}
-								placeholder="Titolo"
+								placeholder={t('form.titlePlaceholder')}
 								multiline
 								scrollEnabled={false}
 								style={{
@@ -121,7 +123,7 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
 								flex={1}
 								defaultValue={description}
 								onChangeText={setDescription}
-								placeholder="Corpo del testo (facoltativo)"
+								placeholder={t('form.descriptionPlaceholder')}
 								borderWidth={0}
 								backgroundColor="transparent"
 								paddingHorizontal={0}
@@ -134,15 +136,15 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
 
 						<YStack gap="$3">
 							<Button size="$4" onPress={handleSave} themeInverse>
-								Salva
+								{t('common.save')}
 							</Button>
 							{isEditing && (
 								<Button size="$4" onPress={handleDelete} theme="red">
-									Elimina mazzo
+									{t('deck.delete.title')}
 								</Button>
 							)}
 							<Button size="$4" onPress={() => router.back()} chromeless>
-								Annulla
+								{t('common.cancel')}
 							</Button>
 						</YStack>
 					</YStack>

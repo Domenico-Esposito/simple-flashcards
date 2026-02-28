@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MarkdownToolbar } from '@domenico-esposito/react-native-markdown-editor';
 import type { MarkdownToolbarButtonState } from '@domenico-esposito/react-native-markdown-editor';
+import { useTranslation } from 'react-i18next';
 
 import { useFlashcardsStore } from '@/store/flashcards';
 import { Header } from '@/components/Header';
@@ -22,6 +23,7 @@ type FlashcardFormScreenProps = {
 
 export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardFormScreenProps) {
 	const router = useRouter();
+	const { t } = useTranslation();
 	const colorScheme = useColorScheme() ?? 'light';
 	const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
 	const { addFlashcard, editFlashcard, removeFlashcard } = useFlashcardsStore();
@@ -74,12 +76,12 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 		let hasError = false;
 
 		if (!questionText.trim()) {
-			setQuestionError('La domanda è obbligatoria');
+			setQuestionError(t('flashcard.questionRequired'));
 			hasError = true;
 		}
 
 		if (!answerText.trim()) {
-			setAnswerError('La risposta è obbligatoria');
+			setAnswerError(t('flashcard.answerRequired'));
 			hasError = true;
 		}
 
@@ -97,10 +99,10 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 	const handleDelete = () => {
 		if (mode !== 'edit' || flashcardId === undefined) return;
 
-		showAlert('Elimina flashcard', 'Sei sicuro di voler eliminare questa flashcard?', [
-			{ text: 'Annulla', style: 'cancel' },
+		showAlert(t('flashcard.delete.title'), t('flashcard.delete.message'), [
+			{ text: t('common.cancel'), style: 'cancel' },
 			{
-				text: 'Elimina',
+				text: t('common.delete'),
 				style: 'destructive',
 				onPress: async () => {
 					await removeFlashcard(flashcardId);
@@ -113,7 +115,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 	if (isLoading) {
 		return (
 			<View flex={1} justifyContent="center" alignItems="center" backgroundColor="$background">
-				<Text color="$secondary">Caricamento...</Text>
+				<Text color="$secondary">{t('common.loading')}</Text>
 			</View>
 		);
 	}
@@ -121,7 +123,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 	return (
 		<KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 			<View flex={1} backgroundColor="$background">
-				<Header title={mode === 'new' ? 'Nuova Flashcard' : 'Modifica Flashcard'} isModal />
+				<Header title={mode === 'new' ? t('flashcard.createTitle') : t('flashcard.editTitle')} isModal />
 				<ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, paddingBottom: keyboardHeight > 0 ? 80 : 0 }} keyboardShouldPersistTaps="handled">
 					<YStack gap="$4" flex={1} paddingHorizontal="$4">
 						<XStack gap="$2" padding="$1" borderRadius="$4" backgroundColor="$color2">
@@ -132,7 +134,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 								borderWidth={0}
 								backgroundColor={activeSection === 'question' ? '$background' : 'transparent'}
 								pressStyle={{ backgroundColor: '$background' }}>
-								Domanda
+								{t('flashcard.question')}
 							</Button>
 							<Button
 								size="$3"
@@ -141,13 +143,13 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 								borderWidth={0}
 								backgroundColor={activeSection === 'answer' ? '$background' : 'transparent'}
 								pressStyle={{ backgroundColor: '$background' }}>
-								Risposta
+								{t('flashcard.answer')}
 							</Button>
 						</XStack>
 
 						{/* Question Editor - always mounted, hidden when not active */}
 						<YStack gap="$1" flex={1} display={activeSection === 'question' ? 'flex' : 'none'}>
-							<RichTextEditor editor={questionEditor} placeholder="Scrivi la domanda..." />
+							<RichTextEditor editor={questionEditor} placeholder={t('flashcard.questionPlaceholder')} />
 							{!!questionError && (
 								<Text fontSize={12} color="$red10">
 									{questionError}
@@ -157,7 +159,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 
 						{/* Answer Editor - always mounted, hidden when not active */}
 						<YStack gap="$1" flex={1} display={activeSection === 'answer' ? 'flex' : 'none'}>
-							<RichTextEditor editor={answerEditor} placeholder="Scrivi la risposta..." />
+							<RichTextEditor editor={answerEditor} placeholder={t('flashcard.answerPlaceholder')} />
 							{!!answerError && (
 								<Text fontSize={12} color="$red10">
 									{answerError}
@@ -167,15 +169,15 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 
 						<YStack gap="$3">
 							<Button size="$4" onPress={handleSave} themeInverse>
-								Salva
+								{t('common.save')}
 							</Button>
 							{mode === 'edit' && (
 								<Button size="$4" onPress={handleDelete} theme="red">
-									Elimina
+									{t('common.delete')}
 								</Button>
 							)}
 							<Button size="$4" onPress={() => router.back()} chromeless>
-								Annulla
+								{t('common.cancel')}
 							</Button>
 						</YStack>
 					</YStack>
@@ -228,7 +230,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 								style={{ paddingHorizontal: 12 }}
 								hitSlop={8}>
 								<Text color={colors.accent} fontWeight="600">
-									Fatto
+									{t('common.done')}
 								</Text>
 							</Pressable>
 						</XStack>

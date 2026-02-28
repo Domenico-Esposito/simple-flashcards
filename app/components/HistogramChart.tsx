@@ -4,6 +4,7 @@ import { StatsSeries } from '@/types';
 import { useTheme, View, Text } from 'tamagui';
 import { chartColors, getColors } from '@/constants/colors';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   data: StatsSeries[];
@@ -16,11 +17,12 @@ export function HistogramChart({ data, width, height = 200 }: Props) {
   const colorScheme = useColorScheme();
   const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
   const screenWidth = Dimensions.get('window').width;
+  const { t } = useTranslation();
 
   if (!data || data.length === 0) {
     return (
         <View height={height} alignItems="center" justifyContent="center">
-            <Text color="$gray10" fontSize={14}>Nessun dato disponibile</Text>
+            <Text color="$gray10" fontSize={14}>{t('stats.noData')}</Text>
         </View>
     );
   }
