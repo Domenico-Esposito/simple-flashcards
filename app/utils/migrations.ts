@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite';
+import { isFts5Supported } from './fts';
 
 /**
  * Migration definition interface
@@ -13,13 +14,9 @@ export interface Migration {
 /**
  * All database migrations in sequential order.
  * Each migration should be idempotent and handle edge cases gracefully.
- *
- * IMPORTANT: Never modify existing migrations once they're in production.
- * Always create new migrations for schema changes.
  */
 export const migrations: Migration[] = [
-	// Migration 1: Initial schema (baseline)
-	// This captures the current state as version 1
+	// Migration 1: Initial schema – consolidated from the development migrations.
 	{
 		version: 1,
 		name: 'initial_schema',
@@ -29,10 +26,9 @@ export const migrations: Migration[] = [
 					id INTEGER PRIMARY KEY AUTOINCREMENT,
 					title TEXT NOT NULL,
 					description TEXT,
-					emoji TEXT,
 					createdAt TEXT NOT NULL
 				);
-				
+
 				CREATE TABLE IF NOT EXISTS flashcards (
 					id INTEGER PRIMARY KEY AUTOINCREMENT,
 					question TEXT NOT NULL,
@@ -59,53 +55,56 @@ export const migrations: Migration[] = [
 					FOREIGN KEY (sessionId) REFERENCES quiz_sessions(id) ON DELETE CASCADE,
 					FOREIGN KEY (flashcardId) REFERENCES flashcards(id) ON DELETE CASCADE
 				);
-
-				-- FTS5 virtual table for full-text search with trigram tokenizer
-				CREATE VIRTUAL TABLE IF NOT EXISTS flashcards_fts USING fts5(
-					question,
-					answer,
-					content='flashcards',
-					content_rowid='id',
-					tokenize='trigram'
-				);
-
-				-- FTS5 virtual table for deck search
-				CREATE VIRTUAL TABLE IF NOT EXISTS decks_fts USING fts5(
-					title,
-					description,
-					content='decks',
-					content_rowid='id',
-					tokenize='trigram'
-				);
-
-				-- Triggers to keep FTS index in sync with flashcards table
-				CREATE TRIGGER IF NOT EXISTS flashcards_ai AFTER INSERT ON flashcards BEGIN
-					INSERT INTO flashcards_fts(rowid, question, answer) VALUES (new.id, new.question, new.answer);
-				END;
-
-				CREATE TRIGGER IF NOT EXISTS flashcards_ad AFTER DELETE ON flashcards BEGIN
-					INSERT INTO flashcards_fts(flashcards_fts, rowid, question, answer) VALUES('delete', old.id, old.question, old.answer);
-				END;
-
-				CREATE TRIGGER IF NOT EXISTS flashcards_au AFTER UPDATE ON flashcards BEGIN
-					INSERT INTO flashcards_fts(flashcards_fts, rowid, question, answer) VALUES('delete', old.id, old.question, old.answer);
-					INSERT INTO flashcards_fts(rowid, question, answer) VALUES (new.id, new.question, new.answer);
-				END;
-
-				-- Triggers to keep FTS index in sync with decks table
-				CREATE TRIGGER IF NOT EXISTS decks_ai AFTER INSERT ON decks BEGIN
-					INSERT INTO decks_fts(rowid, title, description) VALUES (new.id, new.title, COALESCE(new.description, ''));
-				END;
-
-				CREATE TRIGGER IF NOT EXISTS decks_ad AFTER DELETE ON decks BEGIN
-					INSERT INTO decks_fts(decks_fts, rowid, title, description) VALUES('delete', old.id, old.title, COALESCE(old.description, ''));
-				END;
-
-				CREATE TRIGGER IF NOT EXISTS decks_au AFTER UPDATE ON decks BEGIN
-					INSERT INTO decks_fts(decks_fts, rowid, title, description) VALUES('delete', old.id, old.title, COALESCE(old.description, ''));
-					INSERT INTO decks_fts(rowid, title, description) VALUES (new.id, new.title, COALESCE(new.description, ''));
-				END;
 			`);
+
+			// FTS5 is not available on web/WASM, skip FTS tables and triggers
+			if (isFts5Supported()) {
+				await db.execAsync(`
+					CREATE VIRTUAL TABLE IF NOT EXISTS flashcards_fts USING fts5(
+						question,
+						answer,
+						content='flashcards',
+						content_rowid='id',
+						tokenize='trigram'
+					);
+
+					CREATE VIRTUAL TABLE IF NOT EXISTS decks_fts USING fts5(
+						title,
+						description,
+						content='decks',
+						content_rowid='id',
+						tokenize='trigram'
+					);
+
+					-- Triggers to keep FTS index in sync with flashcards table
+					CREATE TRIGGER IF NOT EXISTS flashcards_ai AFTER INSERT ON flashcards BEGIN
+						INSERT INTO flashcards_fts(rowid, question, answer) VALUES (new.id, new.question, new.answer);
+					END;
+
+					CREATE TRIGGER IF NOT EXISTS flashcards_ad AFTER DELETE ON flashcards BEGIN
+						INSERT INTO flashcards_fts(flashcards_fts, rowid, question, answer) VALUES('delete', old.id, old.question, old.answer);
+					END;
+
+					CREATE TRIGGER IF NOT EXISTS flashcards_au AFTER UPDATE ON flashcards BEGIN
+						INSERT INTO flashcards_fts(flashcards_fts, rowid, question, answer) VALUES('delete', old.id, old.question, old.answer);
+						INSERT INTO flashcards_fts(rowid, question, answer) VALUES (new.id, new.question, new.answer);
+					END;
+
+					-- Triggers to keep FTS index in sync with decks table
+					CREATE TRIGGER IF NOT EXISTS decks_ai AFTER INSERT ON decks BEGIN
+						INSERT INTO decks_fts(rowid, title, description) VALUES (new.id, new.title, COALESCE(new.description, ''));
+					END;
+
+					CREATE TRIGGER IF NOT EXISTS decks_ad AFTER DELETE ON decks BEGIN
+						INSERT INTO decks_fts(decks_fts, rowid, title, description) VALUES('delete', old.id, old.title, COALESCE(old.description, ''));
+					END;
+
+					CREATE TRIGGER IF NOT EXISTS decks_au AFTER UPDATE ON decks BEGIN
+						INSERT INTO decks_fts(decks_fts, rowid, title, description) VALUES('delete', old.id, old.title, COALESCE(old.description, ''));
+						INSERT INTO decks_fts(rowid, title, description) VALUES (new.id, new.title, COALESCE(new.description, ''));
+					END;
+				`);
+			}
 		},
 		down: async (db) => {
 			await db.execAsync(`
@@ -128,57 +127,6 @@ export const migrations: Migration[] = [
 	// ============================================================
 	// ADD NEW MIGRATIONS BELOW THIS LINE
 	// ============================================================
-	
-	// Migration 2: Remove emoji column from decks table
-	{
-		version: 2,
-		name: 'remove_emoji_from_decks',
-		up: async (db) => {
-			// SQLite doesn't support DROP COLUMN directly, need table recreation
-			await db.execAsync(`
-				-- Create temporary table without emoji column
-				CREATE TABLE decks_new (
-					id INTEGER PRIMARY KEY AUTOINCREMENT,
-					title TEXT NOT NULL,
-					description TEXT,
-					createdAt TEXT NOT NULL
-				);
-				
-				-- Copy data from old table
-				INSERT INTO decks_new (id, title, description, createdAt)
-				SELECT id, title, description, createdAt FROM decks;
-				
-				-- Drop old table
-				DROP TABLE decks;
-				
-				-- Rename new table
-				ALTER TABLE decks_new RENAME TO decks;
-				
-				-- Rebuild FTS indexes for decks
-				INSERT INTO decks_fts(decks_fts) VALUES('rebuild');
-			`);
-		},
-		down: async (db) => {
-			// Add emoji column back if needed to rollback
-			await db.execAsync(`
-				CREATE TABLE decks_new (
-					id INTEGER PRIMARY KEY AUTOINCREMENT,
-					title TEXT NOT NULL,
-					description TEXT,
-					emoji TEXT,
-					createdAt TEXT NOT NULL
-				);
-				
-				INSERT INTO decks_new (id, title, description, createdAt)
-				SELECT id, title, description, createdAt FROM decks;
-				
-				DROP TABLE decks;
-				ALTER TABLE decks_new RENAME TO decks;
-				
-				INSERT INTO decks_fts(decks_fts) VALUES('rebuild');
-			`);
-		},
-	},
 ];
 
 /**

@@ -1,10 +1,9 @@
 import * as SQLite from 'expo-sqlite';
-import { Directory, File, Paths } from 'expo-file-system';
-import { Deck, Flashcard, QuizSession, QuizAnswer, StatsSeries } from '@/types';
+import { Deck, Flashcard, StatsSeries } from '@/types';
 import { runMigrations } from './migrationRunner';
+import { detectFts5Support, isFts5Supported, resetFts5Detection } from './fts';
 
 const DATABASE_NAME = 'flashcards.db';
-const BACKUP_DIRECTORY_NAME = 'flashcards-backups';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -14,11 +13,16 @@ let db: SQLite.SQLiteDatabase | null = null;
 export async function initDatabase(): Promise<void> {
 	db = await SQLite.openDatabaseAsync(DATABASE_NAME);
 
+	// Detect FTS5 support from the actual SQLite engine before running migrations
+	await detectFts5Support(db);
+
 	// Run all pending migrations
 	await runMigrations(db);
 
 	// Rebuild FTS indexes to ensure they're in sync with existing data
-	await rebuildFtsIndexes();
+	if (isFts5Supported()) {
+		await rebuildFtsIndexes();
+	}
 }
 
 /**
@@ -36,6 +40,7 @@ export async function closeDatabase(): Promise<void> {
  */
 export async function reinitializeDatabase(): Promise<void> {
 	await closeDatabase();
+	resetFts5Detection();
 	await initDatabase();
 }
 
@@ -49,17 +54,21 @@ function getDb(): SQLite.SQLiteDatabase {
 	return db;
 }
 
-function getBackupDirectory(): Directory {
-	const backupDirectory = new Directory(Paths.document, BACKUP_DIRECTORY_NAME);
-	backupDirectory.create({ idempotent: true });
-	return backupDirectory;
+/**
+ * Serialize the database to a Uint8Array (works on all platforms)
+ */
+export async function backupDatabaseToBytes(): Promise<Uint8Array> {
+	return await getDb().serializeAsync();
 }
 
 /**
- * Backup the database into a file on disk
+ * Backup the database into a file on disk (native only)
  */
-export async function backupDatabaseToFile(): Promise<File> {
-	const backupDirectory = getBackupDirectory();
+export async function backupDatabaseToFile(): Promise<import('expo-file-system').File> {
+	const { Directory, File, Paths } = await import('expo-file-system');
+	const backupDirectory = new Directory(Paths.document, 'flashcards-backups');
+	backupDirectory.create({ idempotent: true });
+
 	const filename = `flashcards_backup_${Date.now()}.db`;
 	const backupFile = new File(backupDirectory, filename);
 
@@ -75,10 +84,29 @@ export async function backupDatabaseToFile(): Promise<File> {
 }
 
 /**
- * Restore the database from a backup file
+ * Restore the database from raw bytes (works on all platforms)
  */
-export async function restoreDatabaseFromFile(file: File): Promise<void> {
-	const backupDirectory = getBackupDirectory();
+export async function restoreDatabaseFromBytes(data: Uint8Array): Promise<void> {
+	const sourceDb = await SQLite.deserializeDatabaseAsync(data);
+	try {
+		await SQLite.backupDatabaseAsync({
+			sourceDatabase: sourceDb,
+			destDatabase: getDb(),
+		});
+	} finally {
+		await sourceDb.closeAsync();
+	}
+	await reinitializeDatabase();
+}
+
+/**
+ * Restore the database from a backup file (native only)
+ */
+export async function restoreDatabaseFromFile(file: import('expo-file-system').File): Promise<void> {
+	const { Directory, File, Paths } = await import('expo-file-system');
+	const backupDirectory = new Directory(Paths.document, 'flashcards-backups');
+	backupDirectory.create({ idempotent: true });
+
 	const tempFile = new File(backupDirectory, `restore_${Date.now()}.db`);
 
 	if (tempFile.exists) {
@@ -92,20 +120,11 @@ export async function restoreDatabaseFromFile(file: File): Promise<void> {
 	file.copy(tempFile);
 
 	const serialized = await tempFile.bytes();
-	const sourceDb = await SQLite.deserializeDatabaseAsync(serialized);
-	try {
-		await SQLite.backupDatabaseAsync({
-			sourceDatabase: sourceDb,
-			destDatabase: getDb(),
-		});
-	} finally {
-		await sourceDb.closeAsync();
-		if (tempFile.exists) {
-			tempFile.delete();
-		}
-	}
+	await restoreDatabaseFromBytes(serialized);
 
-	await reinitializeDatabase();
+	if (tempFile.exists) {
+		tempFile.delete();
+	}
 }
 
 // ==================== DECK OPERATIONS ====================
@@ -157,14 +176,6 @@ export async function deleteDeck(id: number): Promise<void> {
 }
 
 // ==================== FLASHCARD OPERATIONS ====================
-
-/**
- * Get all flashcards
- */
-export async function getAllFlashcards(): Promise<Flashcard[]> {
-	const result = await getDb().getAllAsync<Flashcard>('SELECT * FROM flashcards');
-	return result;
-}
 
 /**
  * Get all flashcards for a deck
@@ -239,7 +250,7 @@ async function rebuildFtsIndexes(): Promise<void> {
 }
 
 /**
- * Search decks using FTS5 with trigram tokenizer
+ * Search decks using FTS5 (native) or LIKE fallback (web)
  * Returns deck IDs that match the query
  */
 export async function searchDecks(query: string): Promise<number[]> {
@@ -248,24 +259,35 @@ export async function searchDecks(query: string): Promise<number[]> {
 		return allDecks.map((d) => d.id);
 	}
 
-	// Escape special FTS5 characters and wrap in quotes for literal matching
-	const escapedQuery = query.replace(/"/g, '""');
+	if (isFts5Supported()) {
+		// FTS5 search with trigram tokenizer
+		const escapedQuery = query.replace(/"/g, '""');
+		const result = await getDb().getAllAsync<{ id: number }>(
+			`SELECT DISTINCT d.id FROM decks d
+		 LEFT JOIN flashcards f ON f.deckId = d.id
+		 WHERE d.id IN (SELECT rowid FROM decks_fts WHERE decks_fts MATCH ?)
+			OR f.id IN (SELECT rowid FROM flashcards_fts WHERE flashcards_fts MATCH ?)
+		 ORDER BY d.createdAt DESC`,
+			[`"${escapedQuery}"`, `"${escapedQuery}"`],
+		);
+		return result.map((r) => r.id);
+	}
 
-	// Search in deck title/description OR in flashcard question/answer
+	// LIKE fallback for web
+	const likeQuery = `%${query}%`;
 	const result = await getDb().getAllAsync<{ id: number }>(
 		`SELECT DISTINCT d.id FROM decks d
-     LEFT JOIN flashcards f ON f.deckId = d.id
-     WHERE d.id IN (SELECT rowid FROM decks_fts WHERE decks_fts MATCH ?)
-        OR f.id IN (SELECT rowid FROM flashcards_fts WHERE flashcards_fts MATCH ?)
-     ORDER BY d.createdAt DESC`,
-		[`"${escapedQuery}"`, `"${escapedQuery}"`],
+		 LEFT JOIN flashcards f ON f.deckId = d.id
+		 WHERE d.title LIKE ? OR d.description LIKE ?
+			OR f.question LIKE ? OR f.answer LIKE ?
+		 ORDER BY d.createdAt DESC`,
+		[likeQuery, likeQuery, likeQuery, likeQuery],
 	);
-
 	return result.map((r) => r.id);
 }
 
 /**
- * Search flashcards using FTS5 with trigram tokenizer
+ * Search flashcards using FTS5 (native) or LIKE fallback (web)
  * Returns flashcards grouped by deck ID
  */
 export async function searchFlashcards(query: string): Promise<Record<number, Flashcard[]>> {
@@ -273,15 +295,26 @@ export async function searchFlashcards(query: string): Promise<Record<number, Fl
 		return {};
 	}
 
-	// Escape special FTS5 characters and wrap in quotes for literal matching
-	const escapedQuery = query.replace(/"/g, '""');
+	let result: Flashcard[];
 
-	const result = await getDb().getAllAsync<Flashcard>(
-		`SELECT f.* FROM flashcards f
-     WHERE f.id IN (SELECT rowid FROM flashcards_fts WHERE flashcards_fts MATCH ?)
-     ORDER BY f.deckId, f.id`,
-		[`"${escapedQuery}"`],
-	);
+	if (isFts5Supported()) {
+		const escapedQuery = query.replace(/"/g, '""');
+		result = await getDb().getAllAsync<Flashcard>(
+			`SELECT f.* FROM flashcards f
+		 WHERE f.id IN (SELECT rowid FROM flashcards_fts WHERE flashcards_fts MATCH ?)
+		 ORDER BY f.deckId, f.id`,
+			[`"${escapedQuery}"`],
+		);
+	} else {
+		// LIKE fallback for web
+		const likeQuery = `%${query}%`;
+		result = await getDb().getAllAsync<Flashcard>(
+			`SELECT f.* FROM flashcards f
+		 WHERE f.question LIKE ? OR f.answer LIKE ?
+		 ORDER BY f.deckId, f.id`,
+			[likeQuery, likeQuery],
+		);
+	}
 
 	// Group by deckId
 	const grouped: Record<number, Flashcard[]> = {};
@@ -295,7 +328,7 @@ export async function searchFlashcards(query: string): Promise<Record<number, Fl
 	return grouped;
 }
 
-export interface SearchResult {
+interface SearchResult {
 	matchingDeckIds: number[];
 	flashcardsByDeck: Record<number, Flashcard[]>;
 }
@@ -326,20 +359,32 @@ export async function search(query: string): Promise<SearchResult> {
 
 // ==================== QUIZ OPERATIONS ====================
 
+/**
+ * Create a new quiz session for a deck and return its ID
+ */
 export async function createQuizSession(deckId: number): Promise<number> {
 	const startedAt = new Date().toISOString();
 	const result = await getDb().runAsync('INSERT INTO quiz_sessions (deckId, startedAt) VALUES (?, ?)', [deckId, startedAt]);
 	return result.lastInsertRowId;
 }
 
+/**
+ * Update a quiz session with the end time and total time spent
+ */
 export async function updateQuizSession(id: number, endedAt: string, totalTimeSpent: number): Promise<void> {
 	await getDb().runAsync('UPDATE quiz_sessions SET endedAt = ?, totalTimeSpent = ? WHERE id = ?', [endedAt, totalTimeSpent, id]);
 }
 
+/**
+ * Delete a quiz session and its associated answers
+ */
 export async function deleteQuizSession(id: number): Promise<void> {
 	await getDb().runAsync('DELETE FROM quiz_sessions WHERE id = ?', [id]);
 }
 
+/**
+ * Record a user's answer to a flashcard during a quiz session
+ */
 export async function createQuizAnswer(sessionId: number, flashcardId: number, responseType: string): Promise<void> {
 	const answeredAt = new Date().toISOString();
 	await getDb().runAsync('INSERT INTO quiz_answers (sessionId, flashcardId, responseType, answeredAt) VALUES (?, ?, ?, ?)', [sessionId, flashcardId, responseType, answeredAt]);
@@ -361,7 +406,7 @@ export async function getStats(interval: 'day' | 'month' | 'quarter' | 'semester
 	}
 
 	let whereClause = '1=1';
-	const params: any[] = [];
+	const params: (string | number)[] = [];
 
 	if (deckId) {
 		whereClause += ' AND s.deckId = ?';
@@ -398,8 +443,8 @@ export async function getKPIs(deckId?: number): Promise<{
 }> {
 	let whereSession = '1=1';
 	let whereAnswer = '1=1';
-	const paramsSession: any[] = [];
-	const paramsAnswer: any[] = [];
+	const paramsSession: (string | number)[] = [];
+	const paramsAnswer: (string | number)[] = [];
 
 	if (deckId) {
 		whereSession += ' AND deckId = ?';
@@ -425,10 +470,10 @@ export async function getKPIs(deckId?: number): Promise<{
         WHERE ${whereAnswer}
     `;
 
-	const [sessionResult, answerResult] = await Promise.all([
-		getDb().getFirstAsync<{ totalQuizzes: number; totalTime: number }>(sessionQuery, paramsSession),
-		getDb().getFirstAsync<{ totalAnswers: number; correctAnswers: number }>(answerQuery, paramsAnswer),
-	]);
+	// Run queries sequentially to avoid NullPointerException on Android
+	// when multiple prepareAsync calls happen concurrently on the same connection
+	const sessionResult = await getDb().getFirstAsync<{ totalQuizzes: number; totalTime: number }>(sessionQuery, paramsSession);
+	const answerResult = await getDb().getFirstAsync<{ totalAnswers: number; correctAnswers: number }>(answerQuery, paramsAnswer);
 
 	const totalQuizzes = sessionResult?.totalQuizzes || 0;
 	const totalTime = sessionResult?.totalTime || 0;
@@ -450,4 +495,32 @@ export async function getKPIs(deckId?: number): Promise<{
 export async function resetAllStats(): Promise<void> {
 	await getDb().runAsync('DELETE FROM quiz_answers');
 	await getDb().runAsync('DELETE FROM quiz_sessions');
+}
+
+/**
+ * Reset all application data by dropping every table (including schema_version)
+ * and re-running migrations from scratch
+ */
+export async function resetAllData(): Promise<void> {
+	const database = getDb();
+
+	// Drop triggers first, then FTS tables, then data tables, then schema_version
+	await database.execAsync(`
+		DROP TRIGGER IF EXISTS decks_au;
+		DROP TRIGGER IF EXISTS decks_ad;
+		DROP TRIGGER IF EXISTS decks_ai;
+		DROP TRIGGER IF EXISTS flashcards_au;
+		DROP TRIGGER IF EXISTS flashcards_ad;
+		DROP TRIGGER IF EXISTS flashcards_ai;
+		DROP TABLE IF EXISTS decks_fts;
+		DROP TABLE IF EXISTS flashcards_fts;
+		DROP TABLE IF EXISTS quiz_answers;
+		DROP TABLE IF EXISTS quiz_sessions;
+		DROP TABLE IF EXISTS flashcards;
+		DROP TABLE IF EXISTS decks;
+		DROP TABLE IF EXISTS schema_version;
+	`);
+
+	// Re-run migrations from version 0
+	await reinitializeDatabase();
 }

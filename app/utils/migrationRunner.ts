@@ -2,14 +2,6 @@ import * as SQLite from 'expo-sqlite';
 import { migrations, getLatestVersion, type Migration } from './migrations';
 
 /**
- * Schema version record stored in the database
- */
-interface SchemaVersionRecord {
-	version: number;
-	applied_at: string;
-}
-
-/**
  * Create the schema_version table if it doesn't exist
  */
 async function ensureSchemaVersionTable(db: SQLite.SQLiteDatabase): Promise<void> {
@@ -93,10 +85,11 @@ export async function runMigrations(db: SQLite.SQLiteDatabase): Promise<number> 
 	const latestVersion = getLatestVersion();
 
 	// Handle existing databases without schema_version
-	// If database has tables but no version, mark version 1 as applied
+	// Run migration 1 to ensure all tables exist (it's idempotent via IF NOT EXISTS),
+	// then continue with remaining migrations.
 	if (currentVersion === 0 && (await isExistingDatabase(db))) {
-		console.log('Existing database detected, setting baseline version to 1');
-		await recordMigration(db, 1);
+		console.log('Existing database detected, running baseline migration');
+		await executeMigration(db, migrations[0], 'up');
 		const updatedVersion = await getCurrentVersion(db);
 		return runMigrationsFromVersion(db, updatedVersion);
 	}
@@ -126,57 +119,4 @@ async function runMigrationsFromVersion(db: SQLite.SQLiteDatabase, fromVersion: 
 
 	console.log(`Migrations complete. Database now at version ${getLatestVersion()}`);
 	return pendingMigrations.length;
-}
-
-/**
- * Rollback migrations to a specific version
- * Returns the number of migrations rolled back
- */
-export async function rollbackToVersion(db: SQLite.SQLiteDatabase, targetVersion: number): Promise<number> {
-	await ensureSchemaVersionTable(db);
-
-	const currentVersion = await getCurrentVersion(db);
-
-	if (targetVersion >= currentVersion) {
-		console.log(`Target version ${targetVersion} >= current version ${currentVersion}, nothing to rollback`);
-		return 0;
-	}
-
-	// Get migrations to rollback in reverse order
-	const migrationsToRollback = migrations.filter((m) => m.version > targetVersion && m.version <= currentVersion).sort((a, b) => b.version - a.version);
-
-	console.log(`Rolling back ${migrationsToRollback.length} migration(s) to version ${targetVersion}...`);
-
-	for (const migration of migrationsToRollback) {
-		if (!migration.down) {
-			throw new Error(`Cannot rollback: Migration ${migration.version} (${migration.name}) has no down handler`);
-		}
-		await executeMigration(db, migration, 'down');
-	}
-
-	console.log(`Rollback complete. Database now at version ${targetVersion}`);
-	return migrationsToRollback.length;
-}
-
-/**
- * Get migration status information
- */
-export async function getMigrationStatus(db: SQLite.SQLiteDatabase): Promise<{
-	currentVersion: number;
-	latestVersion: number;
-	pendingMigrations: number;
-	appliedMigrations: SchemaVersionRecord[];
-}> {
-	await ensureSchemaVersionTable(db);
-
-	const currentVersion = await getCurrentVersion(db);
-	const latestVersion = getLatestVersion();
-	const appliedMigrations = await db.getAllAsync<SchemaVersionRecord>('SELECT * FROM schema_version ORDER BY version ASC');
-
-	return {
-		currentVersion,
-		latestVersion,
-		pendingMigrations: migrations.filter((m) => m.version > currentVersion).length,
-		appliedMigrations,
-	};
 }
