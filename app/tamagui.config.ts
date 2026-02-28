@@ -1,5 +1,21 @@
 import { defaultConfig } from '@tamagui/config/v4';
+import { createInterFont } from '@tamagui/font-inter';
 import { createTamagui } from 'tamagui';
+
+// Map font weights to the loaded Inter font variants (registered in _layout.tsx via useFonts)
+const interFace = {
+	100: { normal: 'InterThin' },
+	200: { normal: 'InterExtraLight' },
+	300: { normal: 'InterLight' },
+	400: { normal: 'InterRegular' },
+	500: { normal: 'InterMedium' },
+	600: { normal: 'InterSemiBold' },
+	700: { normal: 'InterBold' },
+	800: { normal: 'InterExtraBold' },
+	900: { normal: 'InterBlack' },
+} as const;
+
+const interFont = createInterFont({ face: interFace }, { sizeLineHeight: (size) => Math.round(size * 1.5) });
 
 const lightTheme = {
 	background: '#FFFFFF',
@@ -75,6 +91,11 @@ const darkTheme = {
 
 const config = createTamagui({
 	...defaultConfig,
+	fonts: {
+		...defaultConfig.fonts,
+		body: interFont,
+		heading: interFont,
+	},
 	themes: {
 		...defaultConfig.themes,
 		light: {

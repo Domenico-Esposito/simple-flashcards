@@ -1,7 +1,9 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { TamaguiProvider, Theme } from '@tamagui/core';
 import { PortalProvider } from '@tamagui/portal';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -10,6 +12,8 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useFlashcardsStore } from '@/store/flashcards';
 import config from '../tamagui.config';
+
+SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
 	anchor: '(tabs)',
@@ -21,11 +25,25 @@ export default function RootLayout() {
 	const [isReady, setIsReady] = useState(false);
 	const initialize = useFlashcardsStore((state) => state.initialize);
 
+	const [fontsLoaded] = useFonts({
+		Inter: require('@tamagui/font-inter/otf/Inter-Regular.otf'),
+		InterLight: require('@tamagui/font-inter/otf/Inter-Light.otf'),
+		InterMedium: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
+		InterSemiBold: require('@tamagui/font-inter/otf/Inter-SemiBold.otf'),
+		InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
+	});
+
 	useEffect(() => {
 		initialize().then(() => setIsReady(true));
 	}, [initialize]);
 
-	if (!isReady) {
+	useEffect(() => {
+		if (isReady && fontsLoaded) {
+			SplashScreen.hideAsync();
+		}
+	}, [isReady, fontsLoaded]);
+
+	if (!isReady || !fontsLoaded) {
 		return (
 			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
 				<ActivityIndicator size="large" />
