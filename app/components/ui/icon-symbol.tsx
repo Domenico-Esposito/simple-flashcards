@@ -15,6 +15,7 @@ const SF_TO_MATERIAL_MAP: Record<string, MaterialIconName> = {
 	'chevron.left': 'chevron-left',
 	'chevron.right': 'chevron-right',
 	'xmark': 'close',
+	'xmark.circle.fill': 'cancel',
 	'plus': 'add',
 	'trash': 'delete',
 	'pencil': 'edit',
