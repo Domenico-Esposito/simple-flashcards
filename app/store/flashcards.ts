@@ -54,6 +54,7 @@ interface FlashcardsState {
     avgTimePerQuiz: number;
   }>;
   resetStats: () => Promise<void>;
+  resetAllData: () => Promise<void>;
 }
 
 export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
@@ -234,5 +235,18 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
 
   resetStats: async () => {
     await db.resetAllStats();
+  },
+
+  resetAllData: async () => {
+    await db.resetAllData();
+    set({
+      decks: [],
+      currentDeck: null,
+      flashcards: [],
+      shuffledFlashcards: [],
+      currentSessionId: null,
+      sessionStartTime: null,
+      answeredFlashcardIds: new Set(),
+    });
   },
 }));
