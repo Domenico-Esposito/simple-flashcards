@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
+import '@/i18n';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useFlashcardsStore } from '@/store/flashcards';

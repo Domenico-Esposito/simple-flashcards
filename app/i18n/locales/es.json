@@ -1,0 +1,202 @@
+{
+	"common": {
+		"cancel": "Cancelar",
+		"delete": "Eliminar",
+		"save": "Guardar",
+		"loading": "Cargando...",
+		"error": "Error",
+		"completed": "Completado",
+		"search": "Buscar...",
+		"importing": "Importando...",
+		"exit": "Salir",
+		"done": "Hecho",
+		"deleteAll": "Eliminar todo"
+	},
+	"tab": {
+		"decks": "Mazos",
+		"statistics": "Estadísticas",
+		"settings": "Ajustes"
+	},
+	"home": {
+		"title": "Tus mazos",
+		"newDeck": "Nuevo mazo",
+		"searchPlaceholder": "Buscar mazos...",
+		"noDecks": "Aún no hay mazos.\n¡Crea tu primer mazo!",
+		"noSearchResults": "Sin resultados para \"{{query}}\""
+	},
+	"deck": {
+		"statistics": "Estadísticas",
+		"edit": "Editar",
+		"add": "Añadir",
+		"study": "Estudio",
+		"startQuiz": "Iniciar Quiz",
+		"searchPlaceholder": "Buscar flashcards...",
+		"flashcardCount": "Flashcards ({{count}})",
+		"noFlashcards": "No hay flashcards en este mazo.\n¡Añade una!",
+		"noSearchResults": "No se encontraron flashcards para \"{{query}}\"",
+		"cardCount_one": "{{count}} carta",
+		"cardCount_other": "{{count}} cartas",
+		"delete": {
+			"title": "Eliminar mazo",
+			"message": "¿Estás seguro de que quieres eliminar \"{{title}}\"?",
+			"confirmMessage": "¿Estás seguro de que quieres eliminar este mazo y todas sus flashcards?"
+		},
+		"editTitle": "Editar Mazo",
+		"createTitle": "Nuevo Mazo"
+	},
+	"flashcard": {
+		"question": "Pregunta",
+		"answer": "Respuesta",
+		"questionLabel": "PREGUNTA",
+		"answerLabel": "RESPUESTA",
+		"readMore": "Leer más",
+		"questionPlaceholder": "Escribe la pregunta...",
+		"answerPlaceholder": "Escribe la respuesta...",
+		"createTitle": "Nueva Flashcard",
+		"editTitle": "Editar Flashcard",
+		"questionRequired": "La pregunta es obligatoria",
+		"answerRequired": "La respuesta es obligatoria",
+		"delete": {
+			"title": "Eliminar flashcard",
+			"message": "¿Estás seguro de que quieres eliminar esta flashcard?"
+		},
+		"navigationHint": "↑↓ cambiar carta • toca para {{action}} respuesta",
+		"showAnswer": "mostrar",
+		"hideAnswer": "ocultar"
+	},
+	"form": {
+		"titlePlaceholder": "Título",
+		"descriptionPlaceholder": "Cuerpo del texto (opcional)",
+		"titleRequired": "El título es obligatorio"
+	},
+	"quiz": {
+		"exitTitle": "¿Salir del quiz?",
+		"exitMessage": "Aún tienes {{count}} {{label}} sin responder. ¿Estás seguro de que quieres salir?",
+		"exitQuestionSingular": "pregunta",
+		"exitQuestionPlural": "preguntas",
+		"exitWithoutSaving": "Salir sin guardar",
+		"remember": "Recuerdo",
+		"forgot": "No recuerdo",
+		"completionTitle": "¡Quiz completado!",
+		"completionSubtitle": "Has respondido todas las preguntas",
+		"successRate": "Tasa de éxito",
+		"correct": "Correctas",
+		"incorrect": "Incorrectas",
+		"totalTime": "Tiempo total",
+		"closeButton": "Cerrar quiz"
+	},
+	"settings": {
+		"title": "Ajustes",
+		"import": "Importar datos",
+		"export": "Exportar datos",
+		"backup": "Copia de seguridad y restauración",
+		"resetStats": "Restablecer estadísticas",
+		"resetData": "Restablecer contenido",
+		"info": "Información"
+	},
+	"import": {
+		"title": "Importar datos",
+		"fromUrl": "Desde URL",
+		"fromJson": "Desde JSON",
+		"urlDescription": "Importa un mazo desde un archivo JSON alojado en la web.",
+		"urlLabel": "URL del archivo JSON",
+		"urlPlaceholder": "https://ejemplo.com/mazo.json",
+		"fromUrlButton": "Importar desde URL",
+		"jsonDescription": "Pega directamente el JSON del mazo a importar.",
+		"jsonLabel": "JSON del mazo",
+		"jsonPlaceholder": "{\n  \"title\": \"Nombre del mazo\",\n  \"flashcards\": [...]\n}",
+		"fromJsonButton": "Importar JSON",
+		"hideFormat": "Ocultar formato JSON",
+		"showFormat": "Mostrar formato JSON",
+		"formatTitle": "Formato JSON",
+		"formatExample": "{\n  \"title\": \"Nombre del mazo\",\n  \"description\": \"Descripción opcional\",\n  \"flashcards\": [\n    {\n      \"question\": \"Pregunta 1\",\n      \"answer\": \"Respuesta 1\"\n    }\n  ]\n}",
+		"fieldsLabel": "Campos:",
+		"titleField": "• title (obligatorio): Nombre del mazo",
+		"descriptionField": "• description (opcional): Descripción",
+		"flashcardsField": "• flashcards (obligatorio): Array de flashcards",
+		"questionField": "• question: Texto de la pregunta (Markdown)",
+		"answerField": "• answer: Texto de la respuesta (Markdown)",
+		"invalidUrl": "Introduce una URL válida",
+		"missingJson": "Introduce el JSON del mazo",
+		"invalidJson": "JSON no válido. Comprueba la sintaxis.",
+		"error": "Error durante la importación",
+		"successTitle": "Importación completada",
+		"successMessage": "Mazo \"{{title}}\" importado con {{count}} flashcards."
+	},
+	"export": {
+		"title": "Exportar datos",
+		"selectDeck": "Selecciona un mazo para exportar",
+		"description": "Toca un mazo para exportarlo en formato JSON.",
+		"noDecks": "No hay mazos disponibles para exportar",
+		"error": "Error durante la exportación",
+		"dialogTitle": "Exportar mazo"
+	},
+	"backup": {
+		"title": "Copia de seguridad y restauración",
+		"description": "Crea una copia de seguridad completa de la base de datos o restaura desde un archivo.",
+		"createButton": "Crear copia de seguridad",
+		"restoreButton": "Restaurar copia",
+		"dialogTitle": "Copia de seguridad de la base de datos",
+		"restoreTitle": "Restaurar copia",
+		"restoreWarning": "La restauración sobrescribirá todos los datos actuales. ¿Quieres continuar?",
+		"restore": "Restaurar",
+		"restoreSuccess": "Copia de seguridad restaurada correctamente.",
+		"restoreError": "Error durante la restauración",
+		"error": "Error durante la copia de seguridad",
+		"noFileSelected": "Ningún archivo seleccionado",
+		"sharingNotAvailable": "La función de compartir no está disponible en este dispositivo"
+	},
+	"resetData": {
+		"title": "Restablecer contenido",
+		"confirmMessage": "¿Estás seguro de que quieres eliminar todos los datos? Mazos, flashcards y estadísticas serán eliminados. Esta acción es irreversible.",
+		"success": "Todos los datos han sido eliminados.",
+		"description1": "Esta acción eliminará todos los datos de la aplicación: mazos, flashcards y estadísticas de los quiz completados.",
+		"description2": "La base de datos se reinicializará desde cero. La operación es irreversible.",
+		"buttonLabel": "Restablecer contenido"
+	},
+	"resetStats": {
+		"title": "Restablecer estadísticas",
+		"confirmMessage": "¿Estás seguro de que quieres eliminar todas las estadísticas? Esta acción es irreversible.",
+		"success": "Las estadísticas han sido eliminadas.",
+		"description": "Esta acción eliminará todas las estadísticas de los quiz completados. Los mazos y flashcards no serán eliminados.",
+		"irreversible": "La operación es irreversible.",
+		"buttonLabel": "Restablecer estadísticas"
+	},
+	"info": {
+		"title": "Información",
+		"version": "Versión",
+		"developedWith": "Desarrollado con",
+		"tagline": "Minimal Flashcards - Estudia de forma sencilla y eficaz",
+		"themeSysFollow": "El tema sigue los ajustes del sistema.",
+		"currentTheme": "Tema actual: {{theme}}",
+		"darkTheme": "Oscuro",
+		"lightTheme": "Claro"
+	},
+	"stats": {
+		"interval7days": "7D",
+		"interval6months": "6M",
+		"intervalQuarter": "Trim.",
+		"intervalSemester": "Sem.",
+		"intervalYear": "Año",
+		"answerTrend": "Tendencia de Respuestas",
+		"correct": "Correctas",
+		"incorrect": "Incorrectas",
+		"summary": "Resumen",
+		"quizzesCompleted": "Quiz Completados",
+		"accuracy": "Precisión",
+		"totalAnswers": "Respuestas Totales",
+		"totalTime": "Tiempo Total",
+		"avgTimePerQuiz": "Tiempo Medio por Quiz",
+		"noData": "No hay datos disponibles"
+	},
+	"errors": {
+		"deckNotFound": "Mazo no encontrado",
+		"fileDownload": "Error al descargar el archivo: {{status}}",
+		"invalidJsonFormat": "Formato JSON no válido",
+		"titleRequired": "El campo \"title\" es obligatorio",
+		"flashcardsArrayRequired": "El campo \"flashcards\" debe ser un array",
+		"questionMissing": "Flashcard {{index}}: falta el campo \"question\"",
+		"answerMissing": "Flashcard {{index}}: falta el campo \"answer\"",
+		"sharingNotAvailable": "La función de compartir no está disponible en este dispositivo"
+	}
+}
