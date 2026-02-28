@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { FlatList, Alert, Share, Pressable } from 'react-native';
+import { FlatList, Pressable } from 'react-native';
 import { Text, View, YStack, XStack } from 'tamagui';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -8,7 +8,9 @@ import { useFlashcardsStore } from '@/store/flashcards';
 import { FlashcardListItem } from '@/components/FlashcardListItem';
 import { Header, createHeaderAction } from '@/components/Header';
 import { SearchBar } from '@/components/SearchBar';
-import { exportDeckToJson } from '@/utils/import-export';
+import { useAppAlert } from '@/hooks/useAppAlert';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { getColors } from '@/constants/colors';
 
 type DeckDetailScreenProps = {
 	deckId: number;
@@ -16,8 +18,11 @@ type DeckDetailScreenProps = {
 
 export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 	const router = useRouter();
+	const colorScheme = useColorScheme();
+	const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
 
 	const { currentDeck, flashcards, loadDeck, removeFlashcard } = useFlashcardsStore();
+	const { showAlert, AlertDialog } = useAppAlert();
 	const [searchQuery, setSearchQuery] = useState('');
 
 	// Filter flashcards based on search query
@@ -32,22 +37,10 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 	}, [deckId, loadDeck]);
 
 	const handleDeleteFlashcard = (flashcardId: number) => {
-		Alert.alert('Elimina flashcard', 'Sei sicuro di voler eliminare questa flashcard?', [
+		showAlert('Elimina flashcard', 'Sei sicuro di voler eliminare questa flashcard?', [
 			{ text: 'Annulla', style: 'cancel' },
 			{ text: 'Elimina', style: 'destructive', onPress: () => removeFlashcard(flashcardId) },
 		]);
-	};
-
-	const handleExport = async () => {
-		try {
-			const json = await exportDeckToJson(deckId);
-			await Share.share({
-				message: json,
-				title: `${currentDeck?.title}.json`,
-			});
-		} catch {
-			Alert.alert('Errore', 'Impossibile esportare il mazzo');
-		}
 	};
 
 	if (!currentDeck) {
@@ -74,8 +67,8 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 				<XStack gap="$3">
 					<Pressable onPress={() => router.push(`/deck/${deckId}/flashcard/new`)} style={{ flex: 1 }}>
 						<View backgroundColor="$primary" borderRadius="$4" padding="$4" alignItems="center" justifyContent="center" gap="$2">
-							<MaterialIcons name="add" size={24} color="#FFFFFF" />
-							<Text fontSize={14} fontWeight="600" color="#FFFFFF">
+							<MaterialIcons name="add" size={24} color={colors.onAccent} />
+							<Text fontSize={14} fontWeight="600" color={colors.onAccent}>
 								Aggiungi
 							</Text>
 						</View>
@@ -83,7 +76,7 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 					{flashcards.length > 0 && (
 						<Pressable onPress={() => router.push(`/deck/${deckId}/study`)} style={{ flex: 1 }}>
 							<View backgroundColor="$backgroundStrong" borderRadius="$4" padding="$4" alignItems="center" justifyContent="center" gap="$2">
-								<MaterialIcons name="menu-book" size={24} color="#3B82F6" />
+								<MaterialIcons name="menu-book" size={24} color={colors.accent} />
 								<Text fontSize={14} fontWeight="600" color="$color">
 									Studio
 								</Text>
@@ -93,7 +86,7 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 					{flashcards.length > 0 && (
 						<Pressable onPress={() => router.push(`/deck/${deckId}/quiz`)} style={{ flex: 1 }}>
 							<View backgroundColor="$backgroundStrong" borderRadius="$4" padding="$4" alignItems="center" justifyContent="center" gap="$2">
-								<MaterialIcons name="play-arrow" size={24} color="#4CD964" />
+								<MaterialIcons name="play-arrow" size={24} color={colors.success} />
 								<Text fontSize={14} fontWeight="600" color="$color">
 									Avvia Quiz
 								</Text>
@@ -142,6 +135,6 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 					/>
 				)}
 			</YStack>
+			{AlertDialog}
 		</View>
-	);
-}
+	);}

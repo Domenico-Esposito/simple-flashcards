@@ -1,8 +1,9 @@
-import React from 'react';
 import { Pressable } from 'react-native';
 import { Text, View, XStack, YStack } from 'tamagui';
 import { Deck } from '@/types';
 import { formatDate } from '@/utils';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { getColors } from '@/constants/colors';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 interface DeckCardProps {
@@ -16,12 +17,15 @@ interface DeckCardProps {
  * Card component displaying a deck summary
  */
 export function DeckCard({ deck, flashcardCount, onPress, onLongPress }: DeckCardProps) {
+	const colorScheme = useColorScheme();
+	const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
+
 	return (
 		<Pressable onPress={onPress} onLongPress={onLongPress}>
 			{({ pressed }) => (
 				<View backgroundColor={pressed ? '$backgroundPress' : '$backgroundStrong'} borderRadius="$4" padding="$4">
 					<XStack gap="$4" alignItems="center">
-						<MaterialIcons name="style" size={34} color="#3B82F6" />
+						<MaterialIcons name="style" size={34} color={colors.accent} />
 						<YStack flex={1} gap="$1.5">
 							<Text fontSize={17} fontWeight="600" numberOfLines={1} color="$color">
 								{deck.title}
@@ -33,20 +37,20 @@ export function DeckCard({ deck, flashcardCount, onPress, onLongPress }: DeckCar
 							)}
 							<XStack gap="$3" marginTop="$2">
 								<XStack alignItems="center" gap="$1">
-									<MaterialIcons name="layers" size={14} color="#888888" />
+									<MaterialIcons name="layers" size={14} color={colors.muted} />
 									<Text fontSize={12} color="$gray9">
 										{flashcardCount} {flashcardCount === 1 ? 'carta' : 'carte'}
 									</Text>
 								</XStack>
 								<XStack alignItems="center" gap="$1">
-									<MaterialIcons name="schedule" size={14} color="#888888" />
+									<MaterialIcons name="schedule" size={14} color={colors.muted} />
 									<Text fontSize={12} color="$gray9">
 										{formatDate(deck.createdAt)}
 									</Text>
 								</XStack>
 							</XStack>
 						</YStack>
-						<MaterialIcons name="chevron-right" size={24} color="#888888" />
+						<MaterialIcons name="chevron-right" size={24} color={colors.muted} />
 					</XStack>
 				</View>
 			)}

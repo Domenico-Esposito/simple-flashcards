@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { Platform } from 'react-native';
 import { Button, Heading, Popover, Stack, Text, XStack, YStack, ZStack, useTheme } from 'tamagui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 export interface HeaderActionItem {
-	icon: React.ComponentProps<typeof MaterialIcons>['name'];
+	icon: ComponentProps<typeof MaterialIcons>['name'];
 	label: string;
 	onPress: () => void;
 }
@@ -131,7 +131,7 @@ export function Header({ title, subtitle, showBackButton = true, actions = [], o
 }
 
 interface HeaderActionProps {
-	icon: React.ComponentProps<typeof MaterialIcons>['name'];
+	icon: ComponentProps<typeof MaterialIcons>['name'];
 	label: string;
 	onPress: () => void;
 }

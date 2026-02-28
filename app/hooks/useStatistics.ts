@@ -40,13 +40,13 @@ export function useStatistics(deckId?: number, initialInterval: Interval = 'day'
         startDate = d.toISOString();
       }
 
-      const statsPromise = deckId 
-        ? getDeckStats(deckId, interval, startDate)
-        : getGlobalStats(interval, startDate);
+      // Run sequentially to avoid NullPointerException on Android
+      // when multiple prepareAsync calls happen concurrently
+      const statsResult = deckId 
+        ? await getDeckStats(deckId, interval, startDate)
+        : await getGlobalStats(interval, startDate);
         
-      const kpisPromise = getKPIs(deckId);
-      
-      const [statsResult, kpisResult] = await Promise.all([statsPromise, kpisPromise]);
+      const kpisResult = await getKPIs(deckId);
       
       setData(statsResult);
       setKpis(kpisResult);

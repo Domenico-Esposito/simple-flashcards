@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { Header } from '@/components/Header';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { getColors } from '@/constants/colors';
 
 type SettingsItem = {
 	title: string;
@@ -16,11 +18,14 @@ const settingsItems: SettingsItem[] = [
 	{ title: 'Esporta dati', icon: 'file-upload', route: '/settings/export' },
 	{ title: 'Backup e ripristino', icon: 'backup', route: '/settings/backup' },
 	{ title: 'Reset statistiche', icon: 'delete-outline', route: '/settings/reset-stats' },
+	{ title: 'Reset contenuti', icon: 'delete-forever', route: '/settings/reset-data' },
 	{ title: 'Informazioni', icon: 'info-outline', route: '/settings/info' },
 ];
 
 export function SettingsScreen() {
 	const router = useRouter();
+	const colorScheme = useColorScheme();
+	const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
 
 	return (
 		<View flex={1} backgroundColor="$background">
@@ -37,12 +42,12 @@ export function SettingsScreen() {
 							justifyContent="space-between"
 						>
 							<XStack alignItems="center" gap="$3">
-								<MaterialIcons name={item.icon} size={24} color="gray" />
+								<MaterialIcons name={item.icon} size={24} color={colors.muted} />
 								<Text fontSize={16} color="$color">
 									{item.title}
 								</Text>
 							</XStack>
-							<MaterialIcons name="chevron-right" size={24} color="gray" />
+							<MaterialIcons name="chevron-right" size={24} color={colors.muted} />
 						</XStack>
 					</Pressable>
 				))}

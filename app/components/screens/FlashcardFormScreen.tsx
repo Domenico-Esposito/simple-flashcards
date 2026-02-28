@@ -1,15 +1,18 @@
-import { useEffect, useState, useRef } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Alert, Keyboard, View as RNView } from 'react-native';
+import { useEffect, useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, Keyboard, View as RNView, Pressable } from 'react-native';
 import { Button, Text, View, XStack, YStack } from 'tamagui';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MarkdownToolbar } from '@domenico-esposito/react-native-markdown-editor';
+import type { MarkdownToolbarButtonState } from '@domenico-esposito/react-native-markdown-editor';
 
 import { useFlashcardsStore } from '@/store/flashcards';
 import { Header } from '@/components/Header';
 import { getFlashcardById } from '@/utils/database';
-import { RichTextEditor, RichTextEditorRef, FormattingToolbar, useKeyboardHeight } from '@/components/ui/RichTextEditor';
-import type { OnChangeStateEvent } from '@/components/ui/RichTextEditor';
+import { RichTextEditor, useKeyboardHeight, useMarkdownEditor } from '@/components/ui/RichTextEditor';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAppAlert } from '@/hooks/useAppAlert';
+import { getColors } from '@/constants/colors';
 
 type FlashcardFormScreenProps = {
 	mode: 'new' | 'edit';
@@ -20,26 +23,37 @@ type FlashcardFormScreenProps = {
 export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardFormScreenProps) {
 	const router = useRouter();
 	const colorScheme = useColorScheme() ?? 'light';
+	const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
 	const { addFlashcard, editFlashcard, removeFlashcard } = useFlashcardsStore();
+	const { showAlert, AlertDialog } = useAppAlert();
 	const keyboardHeight = useKeyboardHeight();
 	const insets = useSafeAreaInsets();
 
-	const questionEditorRef = useRef<RichTextEditorRef>(null);
-	const answerEditorRef = useRef<RichTextEditorRef>(null);
-
-	const [initialQuestion, setInitialQuestion] = useState('');
-	const [initialAnswer, setInitialAnswer] = useState('');
-	// Track current HTML content in refs to avoid re-renders that reset cursor
-	const questionHtmlRef = useRef('');
-	const answerHtmlRef = useRef('');
+	const [questionText, setQuestionText] = useState('');
+	const [answerText, setAnswerText] = useState('');
 	const [questionError, setQuestionError] = useState('');
 	const [answerError, setAnswerError] = useState('');
 	const [isLoading, setIsLoading] = useState(mode === 'edit');
 	const [activeSection, setActiveSection] = useState<'question' | 'answer'>('question');
-	const [stylesState, setStylesState] = useState<OnChangeStateEvent | null>(null);
 
-	// Get the active editor ref
-	const activeEditorRef = activeSection === 'question' ? questionEditorRef : answerEditorRef;
+	const questionEditor = useMarkdownEditor({
+		value: questionText,
+		onChangeText: (text) => {
+			setQuestionText(text);
+			setQuestionError('');
+		},
+	});
+
+	const answerEditor = useMarkdownEditor({
+		value: answerText,
+		onChangeText: (text) => {
+			setAnswerText(text);
+			setAnswerError('');
+		},
+	});
+
+	// Get the active editor
+	const activeEditor = activeSection === 'question' ? questionEditor : answerEditor;
 
 	// Load existing flashcard data when in edit mode
 	useEffect(() => {
@@ -47,10 +61,8 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 			const loadFlashcard = async () => {
 				const fc = await getFlashcardById(flashcardId);
 				if (fc) {
-					setInitialQuestion(fc.question);
-					setInitialAnswer(fc.answer);
-					questionHtmlRef.current = fc.question;
-					answerHtmlRef.current = fc.answer;
+					setQuestionText(fc.question);
+					setAnswerText(fc.answer);
 				}
 				setIsLoading(false);
 			};
@@ -58,21 +70,15 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 		}
 	}, [mode, flashcardId]);
 
-	// Helper to strip HTML tags and check if content is empty
-	const isHtmlEmpty = (html: string): boolean => {
-		const stripped = html.replace(/<[^>]*>/g, '').trim();
-		return stripped.length === 0;
-	};
-
 	const handleSave = async () => {
 		let hasError = false;
 
-		if (isHtmlEmpty(questionHtmlRef.current)) {
+		if (!questionText.trim()) {
 			setQuestionError('La domanda è obbligatoria');
 			hasError = true;
 		}
 
-		if (isHtmlEmpty(answerHtmlRef.current)) {
+		if (!answerText.trim()) {
 			setAnswerError('La risposta è obbligatoria');
 			hasError = true;
 		}
@@ -80,9 +86,9 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 		if (hasError) return;
 
 		if (mode === 'new' && deckId !== undefined) {
-			await addFlashcard(deckId, questionHtmlRef.current, answerHtmlRef.current);
+			await addFlashcard(deckId, questionText, answerText);
 		} else if (mode === 'edit' && flashcardId !== undefined) {
-			await editFlashcard(flashcardId, questionHtmlRef.current, answerHtmlRef.current);
+			await editFlashcard(flashcardId, questionText, answerText);
 		}
 
 		router.back();
@@ -91,7 +97,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 	const handleDelete = () => {
 		if (mode !== 'edit' || flashcardId === undefined) return;
 
-		Alert.alert('Elimina flashcard', 'Sei sicuro di voler eliminare questa flashcard?', [
+		showAlert('Elimina flashcard', 'Sei sicuro di voler eliminare questa flashcard?', [
 			{ text: 'Annulla', style: 'cancel' },
 			{
 				text: 'Elimina',
@@ -116,7 +122,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 		<KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 			<View flex={1} backgroundColor="$background">
 				<Header title={mode === 'new' ? 'Nuova Flashcard' : 'Modifica Flashcard'} isModal />
-				<ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+				<ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, paddingBottom: keyboardHeight > 0 ? 80 : 0 }} keyboardShouldPersistTaps="handled">
 					<YStack gap="$4" flex={1} paddingHorizontal="$4">
 						<XStack gap="$2" padding="$1" borderRadius="$4" backgroundColor="$color2">
 							<Button
@@ -141,17 +147,8 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 
 						{/* Question Editor - always mounted, hidden when not active */}
 						<YStack gap="$1" flex={1} display={activeSection === 'question' ? 'flex' : 'none'}>
-							<RichTextEditor
-								ref={questionEditorRef}
-								placeholder="Scrivi la domanda..."
-								initialValue={initialQuestion}
-								onChangeHtml={(html) => {
-									questionHtmlRef.current = html;
-									setQuestionError('');
-								}}
-								onChangeState={activeSection === 'question' ? setStylesState : undefined}
-							/>
-							{questionError && (
+							<RichTextEditor editor={questionEditor} placeholder="Scrivi la domanda..." />
+							{!!questionError && (
 								<Text fontSize={12} color="$red10">
 									{questionError}
 								</Text>
@@ -160,17 +157,8 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 
 						{/* Answer Editor - always mounted, hidden when not active */}
 						<YStack gap="$1" flex={1} display={activeSection === 'answer' ? 'flex' : 'none'}>
-							<RichTextEditor
-								ref={answerEditorRef}
-								placeholder="Scrivi la risposta..."
-								initialValue={initialAnswer}
-								onChangeHtml={(html) => {
-									answerHtmlRef.current = html;
-									setAnswerError('');
-								}}
-								onChangeState={activeSection === 'answer' ? setStylesState : undefined}
-							/>
-							{answerError && (
+							<RichTextEditor editor={answerEditor} placeholder="Scrivi la risposta..." />
+							{!!answerError && (
 								<Text fontSize={12} color="$red10">
 									{answerError}
 								</Text>
@@ -198,36 +186,56 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
 					<RNView
 						style={{
 							position: 'absolute',
-							bottom: insets.bottom + 15,
+							bottom: Platform.OS === 'ios' ? insets.bottom + 38 : 8,
 							left: 0,
 							right: 0,
 							zIndex: 100,
 						}}>
-						<FormattingToolbar
-							stylesState={stylesState}
-							onToggleBold={() => activeEditorRef.current?.toggleBold()}
-							onToggleItalic={() => activeEditorRef.current?.toggleItalic()}
-							onToggleUnderline={() => activeEditorRef.current?.toggleUnderline()}
-							onToggleStrikeThrough={() => activeEditorRef.current?.toggleStrikeThrough()}
-							onToggleInlineCode={() => activeEditorRef.current?.toggleInlineCode()}
-							onToggleBlockQuote={() => activeEditorRef.current?.toggleBlockQuote()}
-							onToggleUnorderedList={() => activeEditorRef.current?.toggleUnorderedList()}
-							onToggleOrderedList={() => activeEditorRef.current?.toggleOrderedList()}
-							onToggleH1={() => activeEditorRef.current?.toggleH1()}
-							onToggleH2={() => activeEditorRef.current?.toggleH2()}
-							onToggleH3={() => activeEditorRef.current?.toggleH3()}
-							onToggleH4={() => activeEditorRef.current?.toggleH4()}
-							onToggleH5={() => activeEditorRef.current?.toggleH5()}
-							onToggleH6={() => activeEditorRef.current?.toggleH6()}
-							onDismiss={() => {
-								activeEditorRef.current?.blur();
-								Keyboard.dismiss();
-							}}
-							colorScheme={colorScheme}
-						/>
+						<XStack
+							borderRadius="$4"
+							paddingVertical="$2"
+							backgroundColor={colors.toolbarBg}
+							borderTopColor="$borderColor"
+							alignItems="center"
+							marginHorizontal="$4">
+							<ScrollView
+								horizontal
+								showsHorizontalScrollIndicator={false}
+								contentContainerStyle={{ paddingHorizontal: 8 }}
+								keyboardShouldPersistTaps="always"
+								style={{ flex: 1 }}>
+								<MarkdownToolbar
+									editor={activeEditor}
+									style={{ flexWrap: 'nowrap', marginBottom: 0, gap: 2 }}
+									buttonStyle={(state: MarkdownToolbarButtonState) => ({
+										borderWidth: 0,
+										borderRadius: 6,
+										paddingHorizontal: 12,
+										backgroundColor: state.active ? colors.toolbarActiveBg : 'transparent',
+									})}
+									buttonTextStyle={(state: MarkdownToolbarButtonState) => ({
+										color: state.active ? colors.toolbarActive : colors.toolbarInactive,
+										fontSize: 14,
+										fontWeight: '600',
+									})}
+								/>
+							</ScrollView>
+							<Pressable
+								onPress={() => {
+									activeEditor.inputRef.current?.blur();
+									Keyboard.dismiss();
+								}}
+								style={{ paddingHorizontal: 12 }}
+								hitSlop={8}>
+								<Text color={colors.accent} fontWeight="600">
+									Fatto
+								</Text>
+							</Pressable>
+						</XStack>
 					</RNView>
 				)}
 			</View>
+			{AlertDialog}
 		</KeyboardAvoidingView>
 	);
 }

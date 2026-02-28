@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { FlatList, Alert, SectionList } from 'react-native';
+import { FlatList, SectionList } from 'react-native';
 import { Text, View, YStack } from 'tamagui';
 import { useRouter, useFocusEffect } from 'expo-router';
 
@@ -10,6 +10,7 @@ import { Header, createHeaderAction } from '@/components/Header';
 import { SearchBar } from '@/components/SearchBar';
 import { getFlashcardCount, search } from '@/utils/database';
 import { Deck, Flashcard } from '@/types';
+import { useAppAlert } from '@/hooks/useAppAlert';
 
 type SearchResultSection = {
 	deckId: number;
@@ -20,6 +21,7 @@ type SearchResultSection = {
 export function HomeScreen() {
 	const router = useRouter();
 	const { decks, loadDecks, removeDeck } = useFlashcardsStore();
+	const { showAlert, AlertDialog } = useAppAlert();
 	const [deckCounts, setDeckCounts] = useState<Record<number, number>>({});
 	const [searchQuery, setSearchQuery] = useState('');
 	const [filteredDecks, setFilteredDecks] = useState<Deck[]>([]);
@@ -75,7 +77,7 @@ export function HomeScreen() {
 	);
 
 	const handleDeleteDeck = (deck: Deck) => {
-		Alert.alert('Elimina mazzo', `Sei sicuro di voler eliminare "${deck.title}"?`, [
+		showAlert('Elimina mazzo', `Sei sicuro di voler eliminare "${deck.title}"?`, [
 			{ text: 'Annulla', style: 'cancel' },
 			{ text: 'Elimina', style: 'destructive', onPress: () => removeDeck(deck.id) },
 		]);
@@ -137,6 +139,6 @@ export function HomeScreen() {
 					/>
 				)}
 			</YStack>
+			{AlertDialog}
 		</View>
-	);
-}
+	);}

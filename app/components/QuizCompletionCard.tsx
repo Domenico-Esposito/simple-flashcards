@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { Dimensions } from 'react-native';
 import { Text, View, YStack, Button } from 'tamagui';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, withSequence, withDelay, Easing, interpolate } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, withDelay } from 'react-native-reanimated';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { SkiaCardShadow } from '@/components/ui/SkiaCardShadow';
+import { getColors } from '@/constants/colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -32,7 +34,6 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 	const statsTranslateY = useSharedValue(20);
 	const buttonOpacity = useSharedValue(0);
 	const buttonTranslateY = useSharedValue(20);
-	const confettiOpacity = useSharedValue(0);
 
 	// Derived stats
 	const { correctCount, incorrectCount, totalCount, totalTimeMs } = stats;
@@ -50,9 +51,6 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 		// Checkmark animation after card appears
 		checkmarkScale.value = withDelay(300, withSpring(1, { damping: 8, stiffness: 150 }));
 		checkmarkRotation.value = withDelay(300, withSpring(0, { damping: 10, stiffness: 100 }));
-
-		// Confetti pulse
-		confettiOpacity.value = withDelay(400, withSequence(withTiming(1, { duration: 200 }), withTiming(0.6, { duration: 400 }), withTiming(1, { duration: 400 })));
 
 		// Stats fade in
 		statsOpacity.value = withDelay(500, withTiming(1, { duration: 400 }));
@@ -72,10 +70,6 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 		transform: [{ scale: checkmarkScale.value }, { rotate: `${checkmarkRotation.value}deg` }],
 	}));
 
-	const confettiAnimatedStyle = useAnimatedStyle(() => ({
-		opacity: confettiOpacity.value,
-	}));
-
 	const statsAnimatedStyle = useAnimatedStyle(() => ({
 		opacity: statsOpacity.value,
 		transform: [{ translateY: statsTranslateY.value }],
@@ -87,12 +81,10 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 	}));
 
 	const isDark = colorScheme === 'dark';
-	const cardBg = isDark ? '#171717' : '#FFFFFF';
+	const colors = getColors(isDark ? 'dark' : 'light');
+	const cardBg = colors.cardBg;
 	const textPrimary = isDark ? '#FFFFFF' : '#171717';
 	const textSecondary = isDark ? '#A3A3A3' : '#737373';
-	const successColor = '#4CD964';
-	const errorColor = '#FF3B30';
-	const accentColor = isDark ? '#60A5FA' : '#3B82F6';
 
 	return (
 		<View
@@ -111,17 +103,15 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 					{
 						width: SCREEN_WIDTH - 48,
 						maxWidth: 360,
-						backgroundColor: cardBg,
-						borderRadius: 24,
-						padding: 32,
-						shadowColor: '#000',
-						shadowOffset: { width: 0, height: 10 },
-						shadowOpacity: 0.3,
-						shadowRadius: 20,
-						elevation: 15,
+						overflow: 'visible',
 					},
 					cardAnimatedStyle,
 				]}>
+				<SkiaCardShadow
+					borderRadius={24}
+					backgroundColor={cardBg}
+					shadows={[{ dx: 0, dy: 10, blur: 20, color: 'rgba(0,0,0,0.3)' }]}
+					style={{ padding: 32 }}>
 				{/* Checkmark icon */}
 				<View alignItems="center" marginBottom="$4">
 					<Animated.View
@@ -149,8 +139,8 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 				<Animated.View style={statsAnimatedStyle}>
 					<YStack gap="$3" marginBottom="$5">
 						{/* Success rate - highlighted */}
-						<View backgroundColor={isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(59, 130, 246, 0.1)'} borderRadius={16} padding="$4" alignItems="center">
-							<Text fontSize={40} fontWeight="800" color={accentColor}>
+						<View backgroundColor={colors.accentBgTint} borderRadius={16} padding="$4" alignItems="center">
+							<Text fontSize={40} fontWeight="800" color={colors.accent}>
 								{successRate}%
 							</Text>
 							<Text fontSize={13} color={textSecondary} marginTop="$1">
@@ -162,13 +152,13 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 						<View flexDirection="row" gap="$3">
 							<View
 								flex={1}
-								backgroundColor={isDark ? 'rgba(76, 217, 100, 0.15)' : 'rgba(76, 217, 100, 0.1)'}
+								backgroundColor={colors.successBgTint}
 								borderRadius={12}
 								padding="$3"
 								alignItems="center">
 								<View flexDirection="row" alignItems="center" gap="$1">
-									<MaterialIcons name="check-circle" size={20} color={successColor} />
-									<Text fontSize={24} fontWeight="700" color={successColor}>
+									<MaterialIcons name="check-circle" size={20} color={colors.success} />
+									<Text fontSize={24} fontWeight="700" color={colors.success}>
 										{correctCount}
 									</Text>
 								</View>
@@ -179,13 +169,13 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 
 							<View
 								flex={1}
-								backgroundColor={isDark ? 'rgba(255, 59, 48, 0.15)' : 'rgba(255, 59, 48, 0.1)'}
+								backgroundColor={colors.errorBgTint}
 								borderRadius={12}
 								padding="$3"
 								alignItems="center">
 								<View flexDirection="row" alignItems="center" gap="$1">
-									<MaterialIcons name="cancel" size={20} color={errorColor} />
-									<Text fontSize={24} fontWeight="700" color={errorColor}>
+									<MaterialIcons name="cancel" size={20} color={colors.error} />
+									<Text fontSize={24} fontWeight="700" color={colors.error}>
 										{incorrectCount}
 									</Text>
 								</View>
@@ -196,7 +186,7 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 						</View>
 
 						{/* Time row */}
-						<View backgroundColor={isDark ? '#262626' : '#F5F5F5'} borderRadius={12} padding="$3" alignItems="center">
+						<View backgroundColor={colors.chipBg} borderRadius={12} padding="$3" alignItems="center">
 							<View flexDirection="row" alignItems="center" gap="$2">
 								<MaterialIcons name="timer" size={20} color={textSecondary} />
 								<Text fontSize={20} fontWeight="600" color={textPrimary}>
@@ -216,6 +206,7 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 						Chiudi quiz
 					</Button>
 				</Animated.View>
+				</SkiaCardShadow>
 			</Animated.View>
 		</View>
 	);

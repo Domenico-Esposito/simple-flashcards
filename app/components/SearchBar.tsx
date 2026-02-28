@@ -1,4 +1,5 @@
-import { Input, XStack, Button, View } from 'tamagui';
+import { Input, View, useTheme } from 'tamagui';
+import { Pressable } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
 interface SearchBarProps {
@@ -11,6 +12,9 @@ interface SearchBarProps {
  * Reusable search bar component with consistent styling
  */
 export function SearchBar({ value, onChangeText, placeholder = 'Cerca...' }: SearchBarProps) {
+	const theme = useTheme();
+	const secondaryColor = theme.secondary.val;
+
 	const handleClear = () => {
 		onChangeText('');
 	};
@@ -18,7 +22,7 @@ export function SearchBar({ value, onChangeText, placeholder = 'Cerca...' }: Sea
 	return (
 		<View position="relative">
 			<View position="absolute" left="$3" top={0} bottom={0} justifyContent="center" zIndex={1} pointerEvents="none">
-				<IconSymbol name="magnifyingglass" size={18} color="$secondary" />
+				<IconSymbol name="magnifyingglass" size={18} color={secondaryColor} />
 			</View>
 			<Input
 				size="$4"
@@ -33,9 +37,9 @@ export function SearchBar({ value, onChangeText, placeholder = 'Cerca...' }: Sea
 			/>
 			{value.length > 0 && (
 				<View position="absolute" right="$3" top={0} bottom={0} justifyContent="center" zIndex={1}>
-					<Button onPress={handleClear} unstyled>
-						<IconSymbol name="xmark.circle.fill" size={18} color="$secondary" />
-					</Button>
+					<Pressable onPress={handleClear}>
+						<IconSymbol name="xmark.circle.fill" size={18} color={secondaryColor} />
+					</Pressable>
 				</View>
 			)}
 		</View>

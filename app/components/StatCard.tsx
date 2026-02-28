@@ -1,5 +1,6 @@
 import { Text, View, YStack } from 'tamagui';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { kpiColors } from '@/constants/colors';
 
 type StatCardProps = {
   title: string;
@@ -10,7 +11,7 @@ type StatCardProps = {
   fullWidth?: boolean;
 };
 
-export function StatCard({ title, value, subtitle, icon, iconColor = '#3B82F6', fullWidth = false }: StatCardProps) {
+export function StatCard({ title, value, subtitle, icon, iconColor = kpiColors.quizzes, fullWidth = false }: StatCardProps) {
   return (
     <View
       flex={fullWidth ? undefined : 1}

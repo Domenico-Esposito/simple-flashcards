@@ -2,6 +2,8 @@ import { StackedBarChart } from 'react-native-chart-kit';
 import { Dimensions } from 'react-native';
 import { StatsSeries } from '@/types';
 import { useTheme, View, Text } from 'tamagui';
+import { chartColors, getColors } from '@/constants/colors';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 type Props = {
   data: StatsSeries[];
@@ -11,6 +13,8 @@ type Props = {
 
 export function HistogramChart({ data, width, height = 200 }: Props) {
   const theme = useTheme();
+  const colorScheme = useColorScheme();
+  const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
   const screenWidth = Dimensions.get('window').width;
 
   if (!data || data.length === 0) {
@@ -29,7 +33,7 @@ export function HistogramChart({ data, width, height = 200 }: Props) {
     }),
     legend: [],
     data: data.map(d => [d.correct, d.incorrect]),
-    barColors: ["#4CD964", "#FF3B30"]
+    barColors: chartColors.barColors
   };
 
   const chartConfig = {
@@ -40,7 +44,7 @@ export function HistogramChart({ data, width, height = 200 }: Props) {
     backgroundGradientToOpacity: 0,
     decimalPlaces: 0,
     color: (opacity = 1) => `rgba(150, 150, 150, ${opacity * 0.5})`,
-    labelColor: () => (theme.gray10?.val as string) || '#888888',
+    labelColor: () => (theme.gray10?.val as string) || colors.muted,
     style: {
       borderRadius: 16
     },
@@ -52,6 +56,7 @@ export function HistogramChart({ data, width, height = 200 }: Props) {
 
   return (
     <View alignItems="center" justifyContent="center" marginLeft={-16}>
+        {/* @ts-expect-error react-native-chart-kit class types incompatible with React 18 JSX */}
         <StackedBarChart
           data={chartData}
           width={width || screenWidth - 48}
