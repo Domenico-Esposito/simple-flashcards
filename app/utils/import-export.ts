@@ -4,13 +4,6 @@ import { DeckExport, DeckWithFlashcards } from '@/types';
 import * as db from './database';
 
 /**
- * Wrap HTML content with <html> tags for storage
- */
-function wrapHtml(content: string): string {
-	return `<html>${content}</html>`;
-}
-
-/**
  * Export a deck with all its flashcards to JSON format
  */
 export async function exportDeckToJson(deckId: number): Promise<string> {
@@ -29,28 +22,6 @@ export async function exportDeckToJson(deckId: number): Promise<string> {
 			answer: fc.answer,
 		})),
 	};
-
-	return JSON.stringify(exportData, null, 2);
-}
-
-/**
- * Export all decks to a single JSON array
- */
-export async function exportAllDecksToJson(): Promise<string> {
-	const decks = await db.getAllDecks();
-	const exportData: DeckExport[] = [];
-
-	for (const deck of decks) {
-		const flashcards = await db.getFlashcardsByDeckId(deck.id);
-		exportData.push({
-			title: deck.title,
-			description: deck.description,
-			flashcards: flashcards.map((fc) => ({
-				question: fc.question,
-				answer: fc.answer,
-			})),
-		});
-	}
 
 	return JSON.stringify(exportData, null, 2);
 }
@@ -119,12 +90,10 @@ export async function importDeckFromJson(data: unknown): Promise<DeckWithFlashca
 	// Create deck
 	const deck = await db.createDeck(deckData.title, deckData.description);
 
-	// Create flashcards - wrap HTML content
+	// Create flashcards - store markdown content directly
 	const flashcards = [];
 	for (const fc of deckData.flashcards) {
-		const questionHtml = wrapHtml(fc.question);
-		const answerHtml = wrapHtml(fc.answer);
-		const flashcard = await db.createFlashcard(deck.id, questionHtml, answerHtml);
+		const flashcard = await db.createFlashcard(deck.id, fc.question, fc.answer);
 		flashcards.push(flashcard);
 	}
 
@@ -133,44 +102,3 @@ export async function importDeckFromJson(data: unknown): Promise<DeckWithFlashca
 		flashcards,
 	};
 }
-
-/**
- * JSON format documentation
- */
-export const JSON_FORMAT_DOCS = `
-## Formato JSON per Import/Export
-
-\`\`\`json
-{
-  "title": "Nome del mazzo",
-  "description": "Descrizione opzionale",
-  "flashcards": [
-    {
-      "question": "Qual è la capitale d'Italia?",
-      "answer": "La capitale d'Italia è <b>Roma</b>."
-    },
-    {
-      "question": "<h3>Domanda con heading</h3><p>Testo della domanda</p>",
-      "answer": "Risposta con <i>corsivo</i> e <code>codice</code>"
-    }
-  ]
-}
-\`\`\`
-
-### Campi:
-- **title** (obbligatorio): Nome del mazzo
-- **description** (opzionale): Descrizione del mazzo
-- **flashcards** (obbligatorio): Array di flashcard
-  - **question** (obbligatorio): Testo della domanda (HTML)
-  - **answer** (obbligatorio): Testo della risposta (HTML)
-
-### Formattazione HTML supportata:
-- **Grassetto**: \`<b>testo</b>\` o \`<strong>testo</strong>\`
-- *Corsivo*: \`<i>testo</i>\` o \`<em>testo</em>\`
-- ~~Barrato~~: \`<s>testo</s>\` o \`<del>testo</del>\`
-- \`Codice inline\`: \`<code>codice</code>\`
-- Heading: \`<h1>\`, \`<h2>\`, \`<h3>\`
-- Liste: \`<ul><li>item</li></ul>\` o \`<ol><li>item</li></ol>\`
-- Paragrafi: \`<p>testo</p>\`
-- A capo: \`<br>\`
-`;
