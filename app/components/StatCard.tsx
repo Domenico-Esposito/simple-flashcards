@@ -15,8 +15,8 @@ export function StatCard({ title, value, subtitle, icon, iconColor = kpiColors.q
   return (
     <View
       flex={fullWidth ? undefined : 1}
+      flexBasis={fullWidth ? undefined : 0}
       width={fullWidth ? '100%' : undefined}
-      minWidth={fullWidth ? undefined : 140}
       backgroundColor="$backgroundStrong"
       borderRadius="$4"
       padding="$4"

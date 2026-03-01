@@ -1,10 +1,10 @@
 import { StackedBarChart } from 'react-native-chart-kit';
-import { Dimensions } from 'react-native';
 import { StatsSeries } from '@/types';
 import { useTheme, View, Text } from 'tamagui';
 import { chartColors, getColors } from '@/constants/colors';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 
 type Props = {
   data: StatsSeries[];
@@ -16,8 +16,10 @@ export function HistogramChart({ data, width, height = 200 }: Props) {
   const theme = useTheme();
   const colorScheme = useColorScheme();
   const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
-  const screenWidth = Dimensions.get('window').width;
+  const [containerWidth, setContainerWidth] = useState(0);
   const { t } = useTranslation();
+
+  const chartWidth = width || containerWidth;
 
   if (!data || data.length === 0) {
     return (
@@ -34,7 +36,7 @@ export function HistogramChart({ data, width, height = 200 }: Props) {
         return d.period;
     }),
     legend: [],
-    data: data.map(d => [d.correct, d.incorrect]),
+    data: data.map(d => [d.easy, d.medium, d.hard]),
     barColors: chartColors.barColors
   };
 
@@ -57,18 +59,27 @@ export function HistogramChart({ data, width, height = 200 }: Props) {
   };
 
   return (
-    <View alignItems="center" justifyContent="center" marginLeft={-16}>
-        {/* @ts-expect-error react-native-chart-kit class types incompatible with React 18 JSX */}
-        <StackedBarChart
-          data={chartData}
-          width={width || screenWidth - 48}
-          height={height}
-          chartConfig={chartConfig}
-          hideLegend={true}
-          style={{
-            borderRadius: 16,
-          }}
-        />
+    <View
+      alignItems="center"
+      justifyContent="center"
+      marginLeft={-16}
+      onLayout={(e: any) => setContainerWidth(e.nativeEvent.layout.width)}
+    >
+        {chartWidth > 0 && (
+          <>
+            {/* @ts-expect-error react-native-chart-kit class types incompatible with React 18 JSX */}
+            <StackedBarChart
+              data={chartData}
+              width={chartWidth}
+              height={height}
+              chartConfig={chartConfig}
+              hideLegend={true}
+              style={{
+                borderRadius: 16,
+              }}
+            />
+          </>
+        )}
     </View>
   );
 }

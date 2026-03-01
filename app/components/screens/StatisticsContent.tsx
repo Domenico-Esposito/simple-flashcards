@@ -87,7 +87,7 @@ export function StatisticsContent({ deckId, title, showBackButton = false }: Sta
 
           {/* Chart Section */}
           <YStack gap="$3">
-            <Text fontSize={18} fontWeight="600" color="$color">{t('stats.answerTrend')}</Text>
+            <Text fontSize={18} fontWeight="600" color="$color">{t('stats.difficultyTrend')}</Text>
             <View 
               backgroundColor="$backgroundStrong" 
               borderRadius="$4" 
@@ -107,12 +107,16 @@ export function StatisticsContent({ deckId, title, showBackButton = false }: Sta
             {/* Legend */}
             <XStack justifyContent="center" gap="$6" paddingTop="$2">
               <XStack alignItems="center" gap="$2">
-                <View width={12} height={12} borderRadius={3} backgroundColor={chartColors.correct} />
-                <Text fontSize={13} color="$gray10">{t('stats.correct')}</Text>
+                <View width={12} height={12} borderRadius={3} backgroundColor={chartColors.easy} />
+                <Text fontSize={13} color="$gray10">{t('stats.easy')}</Text>
               </XStack>
               <XStack alignItems="center" gap="$2">
-                <View width={12} height={12} borderRadius={3} backgroundColor={chartColors.incorrect} />
-                <Text fontSize={13} color="$gray10">{t('stats.incorrect')}</Text>
+                <View width={12} height={12} borderRadius={3} backgroundColor={chartColors.medium} />
+                <Text fontSize={13} color="$gray10">{t('stats.medium')}</Text>
+              </XStack>
+              <XStack alignItems="center" gap="$2">
+                <View width={12} height={12} borderRadius={3} backgroundColor={chartColors.hard} />
+                <Text fontSize={13} color="$gray10">{t('stats.hard')}</Text>
               </XStack>
             </XStack>
           </YStack>
@@ -131,35 +135,44 @@ export function StatisticsContent({ deckId, title, showBackButton = false }: Sta
                 iconColor={kpiColors.quizzes}
               />
               <StatCard 
-                title={t('stats.accuracy')} 
-                value={`${kpis.accuracy.toFixed(1)}%`}
-                icon="check-circle"
-                iconColor={kpiColors.accuracy}
+                title={t('stats.totalCards')} 
+                value={kpis.totalCards}
+                icon="style"
+                iconColor={kpiColors.totalCards}
               />
             </XStack>
             
-            <XStack gap="$3">
-              <StatCard 
-                title={t('stats.totalAnswers')} 
-                value={kpis.totalAnswers}
-                icon="question-answer"
-                iconColor={kpiColors.answers}
-              />
-              <StatCard 
-                title={t('stats.totalTime')} 
-                value={formatTime(kpis.totalTime)}
-                icon="schedule"
-                iconColor={kpiColors.totalTime}
-              />
-            </XStack>
-            
-            <StatCard 
-              title={t('stats.avgTimePerQuiz')} 
-              value={formatTime(kpis.avgTimePerQuiz)}
-              icon="timer"
-              iconColor={kpiColors.avgTime}
-              fullWidth
-            />
+            {deckId ? (
+              <XStack gap="$3">
+                <StatCard 
+                  title={t('stats.easy')} 
+                  value={kpis.easyCount}
+                  icon="sentiment-satisfied"
+                  iconColor={kpiColors.easy}
+                />
+                <StatCard 
+                  title={t('stats.hard')} 
+                  value={kpis.hardCount}
+                  icon="sentiment-dissatisfied"
+                  iconColor={kpiColors.hard}
+                />
+              </XStack>
+            ) : (
+              <XStack gap="$3">
+                <StatCard 
+                  title={t('stats.totalTime')} 
+                  value={formatTime(kpis.totalTime)}
+                  icon="schedule"
+                  iconColor={kpiColors.totalTime}
+                />
+                <StatCard 
+                  title={t('stats.totalDecks')} 
+                  value={kpis.totalDecks}
+                  icon="folder"
+                  iconColor={kpiColors.totalDecks}
+                />
+              </XStack>
+            )}
           </YStack>
         </YStack>
       </ScrollView>
