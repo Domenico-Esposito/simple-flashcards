@@ -1,27 +1,65 @@
 import { useEffect, useState, useMemo } from 'react';
-import { FlatList, Pressable } from 'react-native';
+import { FlatList, Pressable, ScrollView } from 'react-native';
 import { Text, View, YStack, XStack } from 'tamagui';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTranslation } from 'react-i18next';
 
 import { useFlashcardsStore } from '@/store/flashcards';
+import { Flashcard } from '@/types';
 import { FlashcardListItem } from '@/components/FlashcardListItem';
 import { Header, createHeaderAction } from '@/components/Header';
 import { SearchBar } from '@/components/SearchBar';
 import { useAppAlert } from '@/hooks/useAppAlert';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getColors } from '@/constants/colors';
+import { useIsLargeScreen } from '@/hooks/useLargeScreen';
 
 type DeckDetailScreenProps = {
 	deckId: number;
 };
+
+type FlashcardListContentProps = {
+	flashcards: Flashcard[];
+	onEdit: (flashcardId: number) => void;
+	onDelete: (flashcardId: number) => void;
+};
+
+/** Large screen: grid layout for flashcard items */
+function FlashcardGrid({ flashcards, onEdit, onDelete }: FlashcardListContentProps) {
+	return (
+		<ScrollView contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
+			<View flexDirection="row" flexWrap="wrap" margin={-6}>
+				{flashcards.map((item) => (
+					<View key={item.id} width="50%" padding={6}>
+						<FlashcardListItem flashcard={item} onPress={() => onEdit(item.id)} onLongPress={() => onDelete(item.id)} />
+					</View>
+				))}
+			</View>
+		</ScrollView>
+	);
+}
+
+/** Mobile: flat list for flashcard items */
+function FlashcardMobileList({ flashcards, onEdit, onDelete }: FlashcardListContentProps) {
+	return (
+		<FlatList
+			data={flashcards}
+			keyExtractor={(item) => item.id.toString()}
+			renderItem={({ item }) => <FlashcardListItem flashcard={item} onPress={() => onEdit(item.id)} onLongPress={() => onDelete(item.id)} />}
+			contentContainerStyle={{ paddingBottom: 20 }}
+			ItemSeparatorComponent={() => <View height={10} />}
+			showsVerticalScrollIndicator={false}
+		/>
+	);
+}
 
 export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 	const router = useRouter();
 	const { t } = useTranslation();
 	const colorScheme = useColorScheme();
 	const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
+	const isLargeScreen = useIsLargeScreen();
 
 	const { currentDeck, flashcards, loadDeck, removeFlashcard } = useFlashcardsStore();
 	const { showAlert, AlertDialog } = useAppAlert();
@@ -37,6 +75,10 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 	useEffect(() => {
 		loadDeck(deckId);
 	}, [deckId, loadDeck]);
+
+	const handleEditFlashcard = (flashcardId: number) => {
+		router.push(`/deck/${deckId}/flashcard/${flashcardId}/edit`);
+	};
 
 	const handleDeleteFlashcard = (flashcardId: number) => {
 		showAlert(t('flashcard.delete.title'), t('flashcard.delete.message'), [
@@ -120,21 +162,10 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 							{t('deck.noSearchResults', { query: searchQuery })}
 						</Text>
 					</YStack>
+				) : isLargeScreen ? (
+					<FlashcardGrid flashcards={filteredFlashcards} onEdit={handleEditFlashcard} onDelete={handleDeleteFlashcard} />
 				) : (
-					<FlatList
-						data={filteredFlashcards}
-						keyExtractor={(item) => item.id.toString()}
-						renderItem={({ item }) => (
-							<FlashcardListItem
-								flashcard={item}
-								onPress={() => router.push(`/deck/${deckId}/flashcard/${item.id}/edit`)}
-								onLongPress={() => handleDeleteFlashcard(item.id)}
-							/>
-						)}
-						contentContainerStyle={{ paddingBottom: 20 }}
-						ItemSeparatorComponent={() => <View height={10} />}
-						showsVerticalScrollIndicator={false}
-					/>
+					<FlashcardMobileList flashcards={filteredFlashcards} onEdit={handleEditFlashcard} onDelete={handleDeleteFlashcard} />
 				)}
 			</YStack>
 			{AlertDialog}

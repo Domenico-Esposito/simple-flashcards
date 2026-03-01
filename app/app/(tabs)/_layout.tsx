@@ -1,14 +1,21 @@
-import { Tabs } from 'expo-router';
+import { Tabs, Slot } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useIsLargeScreen } from '@/hooks/useLargeScreen';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { t } = useTranslation();
+  const isLargeScreen = useIsLargeScreen();
+
+  // On large screens, the sidebar lives in the root layout; just render the focused child
+  if (isLargeScreen) {
+    return <Slot />;
+  }
 
   return (
     <Tabs
