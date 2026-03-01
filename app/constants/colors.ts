@@ -19,6 +19,12 @@ const palette = {
     success: '#4CD964',
     /** Error red (incorrect answers, destructive actions) */
     error: '#FF3B30',
+    /** Warning orange (medium difficulty) */
+    warning: '#FF9500',
+    /** Warning shadow */
+    warningShadow: 'rgba(255,149,0,0.4)',
+    /** Warning background tint */
+    warningBgTint: 'rgba(255,149,0,0.1)',
     /** Muted icon/text color */
     muted: '#888888',
     /** Card background */
@@ -66,6 +72,12 @@ const palette = {
     accent: '#60A5FA',
     success: '#4CD964',
     error: '#FF3B30',
+    /** Warning orange (medium difficulty) */
+    warning: '#FF9500',
+    /** Warning shadow */
+    warningShadow: 'rgba(255,149,0,0.4)',
+    /** Warning background tint */
+    warningBgTint: 'rgba(255,149,0,0.15)',
     muted: '#888888',
     cardBg: '#171717',
     shadow: 'rgba(100,100,100,0.2)',
@@ -104,16 +116,18 @@ export function getColors(scheme: ColorScheme) {
 
 /** Chart-specific colors (scheme-independent) */
 export const chartColors = {
-  correct: '#4CD964',
-  incorrect: '#FF3B30',
-  barColors: ['#4CD964', '#FF3B30'] as [string, string],
+  easy: '#4CD964',
+  medium: '#FF9500',
+  hard: '#FF3B30',
+  barColors: ['#4CD964', '#FF9500', '#FF3B30'] as [string, string, string],
 };
 
 /** KPI icon colors (scheme-independent) */
 export const kpiColors = {
   quizzes: '#3B82F6',
-  accuracy: '#4CD964',
-  answers: '#FF9500',
+  totalCards: '#FF9500',
+  easy: '#4CD964',
+  hard: '#FF3B30',
   totalTime: '#AF52DE',
-  avgTime: '#FF2D55',
+  totalDecks: '#AF52DE',
 };

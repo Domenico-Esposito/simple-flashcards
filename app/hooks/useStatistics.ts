@@ -9,10 +9,11 @@ export function useStatistics(deckId?: number, initialInterval: Interval = 'day'
   const [data, setData] = useState<StatsSeries[]>([]);
   const [kpis, setKpis] = useState({
     totalQuizzes: 0,
-    accuracy: 0,
-    totalAnswers: 0,
+    totalCards: 0,
+    easyCount: 0,
+    hardCount: 0,
     totalTime: 0,
-    avgTimePerQuiz: 0,
+    totalDecks: 0,
   });
   const [loading, setLoading] = useState(false);
 

@@ -369,10 +369,20 @@ export async function createQuizSession(deckId: number): Promise<number> {
 }
 
 /**
- * Update a quiz session with the end time and total time spent
+ * Update a quiz session with the end time, total time spent, and card counts
  */
-export async function updateQuizSession(id: number, endedAt: string, totalTimeSpent: number): Promise<void> {
-	await getDb().runAsync('UPDATE quiz_sessions SET endedAt = ?, totalTimeSpent = ? WHERE id = ?', [endedAt, totalTimeSpent, id]);
+export async function updateQuizSession(
+	id: number,
+	endedAt: string,
+	totalTimeSpent: number,
+	totalCards: number,
+	easyCount: number,
+	hardCount: number,
+): Promise<void> {
+	await getDb().runAsync(
+		'UPDATE quiz_sessions SET endedAt = ?, totalTimeSpent = ?, totalCards = ?, easyCount = ?, hardCount = ? WHERE id = ?',
+		[endedAt, totalTimeSpent, totalCards, easyCount, hardCount, id],
+	);
 }
 
 /**
@@ -393,19 +403,19 @@ export async function createQuizAnswer(sessionId: number, flashcardId: number, r
 // ==================== STATS OPERATIONS ====================
 
 export async function getStats(interval: 'day' | 'month' | 'quarter' | 'semester' | 'year', deckId?: number, startDate?: string): Promise<StatsSeries[]> {
-	let periodExpr = "strftime('%Y-%m-%d', a.answeredAt)";
+	let periodExpr = "strftime('%Y-%m-%d', s.startedAt)";
 
 	if (interval === 'month') {
-		periodExpr = "strftime('%Y-%m', a.answeredAt)";
+		periodExpr = "strftime('%Y-%m', s.startedAt)";
 	} else if (interval === 'year') {
-		periodExpr = "strftime('%Y', a.answeredAt)";
+		periodExpr = "strftime('%Y', s.startedAt)";
 	} else if (interval === 'quarter') {
-		periodExpr = "strftime('%Y', a.answeredAt) || '-Q' || ((CAST(strftime('%m', a.answeredAt) AS INTEGER) - 1) / 3 + 1)";
+		periodExpr = "strftime('%Y', s.startedAt) || '-Q' || ((CAST(strftime('%m', s.startedAt) AS INTEGER) - 1) / 3 + 1)";
 	} else if (interval === 'semester') {
-		periodExpr = "strftime('%Y', a.answeredAt) || '-S' || ((CAST(strftime('%m', a.answeredAt) AS INTEGER) - 1) / 6 + 1)";
+		periodExpr = "strftime('%Y', s.startedAt) || '-S' || ((CAST(strftime('%m', s.startedAt) AS INTEGER) - 1) / 6 + 1)";
 	}
 
-	let whereClause = '1=1';
+	let whereClause = 's.endedAt IS NOT NULL';
 	const params: (string | number)[] = [];
 
 	if (deckId) {
@@ -414,17 +424,17 @@ export async function getStats(interval: 'day' | 'month' | 'quarter' | 'semester
 	}
 
 	if (startDate) {
-		whereClause += ' AND a.answeredAt >= ?';
+		whereClause += ' AND s.startedAt >= ?';
 		params.push(startDate);
 	}
 
 	const query = `
       SELECT 
         ${periodExpr} as period,
-        SUM(CASE WHEN a.responseType = 'correct' THEN 1 ELSE 0 END) as correct,
-        SUM(CASE WHEN a.responseType = 'incorrect' THEN 1 ELSE 0 END) as incorrect
-      FROM quiz_answers a
-      JOIN quiz_sessions s ON a.sessionId = s.id
+        SUM(s.easyCount) as easy,
+        SUM(s.totalCards - s.easyCount - s.hardCount) as medium,
+        SUM(s.hardCount) as hard
+      FROM quiz_sessions s
       WHERE ${whereClause}
       GROUP BY period
       ORDER BY period ASC
@@ -436,56 +446,48 @@ export async function getStats(interval: 'day' | 'month' | 'quarter' | 'semester
 
 export async function getKPIs(deckId?: number): Promise<{
 	totalQuizzes: number;
-	accuracy: number;
-	totalAnswers: number;
+	totalCards: number;
+	easyCount: number;
+	hardCount: number;
 	totalTime: number;
-	avgTimePerQuiz: number;
+	totalDecks: number;
 }> {
-	let whereSession = '1=1';
-	let whereAnswer = '1=1';
-	const paramsSession: (string | number)[] = [];
-	const paramsAnswer: (string | number)[] = [];
+	let whereClause = 'endedAt IS NOT NULL';
+	const params: (string | number)[] = [];
 
 	if (deckId) {
-		whereSession += ' AND deckId = ?';
-		paramsSession.push(deckId);
-
-		whereAnswer += ' AND sessionId IN (SELECT id FROM quiz_sessions WHERE deckId = ?)';
-		paramsAnswer.push(deckId);
+		whereClause += ' AND deckId = ?';
+		params.push(deckId);
 	}
 
-	const sessionQuery = `
+	const query = `
         SELECT 
             COUNT(*) as totalQuizzes,
-            SUM(totalTimeSpent) as totalTime
+            SUM(totalTimeSpent) as totalTime,
+            SUM(totalCards) as totalCards,
+            SUM(easyCount) as easyCount,
+            SUM(hardCount) as hardCount,
+            COUNT(DISTINCT deckId) as totalDecks
         FROM quiz_sessions
-        WHERE ${whereSession} AND endedAt IS NOT NULL
+        WHERE ${whereClause}
     `;
 
-	const answerQuery = `
-        SELECT
-            COUNT(*) as totalAnswers,
-            SUM(CASE WHEN responseType = 'correct' THEN 1 ELSE 0 END) as correctAnswers
-        FROM quiz_answers
-        WHERE ${whereAnswer}
-    `;
-
-	// Run queries sequentially to avoid NullPointerException on Android
-	// when multiple prepareAsync calls happen concurrently on the same connection
-	const sessionResult = await getDb().getFirstAsync<{ totalQuizzes: number; totalTime: number }>(sessionQuery, paramsSession);
-	const answerResult = await getDb().getFirstAsync<{ totalAnswers: number; correctAnswers: number }>(answerQuery, paramsAnswer);
-
-	const totalQuizzes = sessionResult?.totalQuizzes || 0;
-	const totalTime = sessionResult?.totalTime || 0;
-	const totalAnswers = answerResult?.totalAnswers || 0;
-	const correctAnswers = answerResult?.correctAnswers || 0;
+	const result = await getDb().getFirstAsync<{
+		totalQuizzes: number;
+		totalTime: number;
+		totalCards: number;
+		easyCount: number;
+		hardCount: number;
+		totalDecks: number;
+	}>(query, params);
 
 	return {
-		totalQuizzes,
-		totalTime,
-		totalAnswers,
-		accuracy: totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0,
-		avgTimePerQuiz: totalQuizzes > 0 ? totalTime / totalQuizzes : 0,
+		totalQuizzes: result?.totalQuizzes || 0,
+		totalTime: result?.totalTime || 0,
+		totalCards: result?.totalCards || 0,
+		easyCount: result?.easyCount || 0,
+		hardCount: result?.hardCount || 0,
+		totalDecks: result?.totalDecks || 0,
 	};
 }
 

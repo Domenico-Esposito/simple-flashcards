@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Deck, Flashcard, StatsSeries } from '@/types';
+import { Deck, Flashcard, StatsSeries, DifficultyRating } from '@/types';
 import * as db from '@/utils/database';
 import { shuffleArray } from '@/utils';
 
@@ -14,6 +14,7 @@ interface FlashcardsState {
   currentSessionId: number | null;
   sessionStartTime: number | null;
   answeredFlashcardIds: Set<number>;
+  cardDifficulty: Record<number, DifficultyRating>;
   
   // Actions - Initialization
   initialize: () => Promise<void>;
@@ -30,6 +31,7 @@ interface FlashcardsState {
   loadFlashcards: (deckId: number) => Promise<void>;
   loadFlashcardsForQuiz: (deckId: number) => Promise<void>;
   reshuffleFlashcards: () => void;
+  appendQuizCard: (card: Flashcard) => void;
   addFlashcard: (deckId: number, question: string, answer: string) => Promise<Flashcard>;
   editFlashcard: (id: number, question: string, answer: string) => Promise<void>;
   removeFlashcard: (id: number) => Promise<void>;
@@ -39,7 +41,8 @@ interface FlashcardsState {
 
   // Actions - Quiz Session
   startQuizSession: (deckId: number) => Promise<number>;
-  recordAnswer: (flashcardId: number, responseType: 'correct' | 'incorrect') => Promise<void>;
+  recordAnswer: (flashcardId: number, responseType: DifficultyRating) => Promise<void>;
+  setCardDifficulty: (flashcardId: number, rating: DifficultyRating) => void;
   endQuizSession: () => Promise<void>;
   discardQuizSession: () => Promise<void>;
 
@@ -48,10 +51,11 @@ interface FlashcardsState {
   getDeckStats: (deckId: number, interval: 'day' | 'month' | 'quarter' | 'semester' | 'year', startDate?: string) => Promise<StatsSeries[]>;
   getKPIs: (deckId?: number) => Promise<{
     totalQuizzes: number;
-    accuracy: number;
-    totalAnswers: number;
+    totalCards: number;
+    easyCount: number;
+    hardCount: number;
     totalTime: number;
-    avgTimePerQuiz: number;
+    totalDecks: number;
   }>;
   resetStats: () => Promise<void>;
   resetAllData: () => Promise<void>;
@@ -67,6 +71,7 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
   currentSessionId: null,
   sessionStartTime: null,
   answeredFlashcardIds: new Set(),
+  cardDifficulty: {},
   
   initialize: async () => {
     if (get().isInitialized) return;
@@ -102,6 +107,7 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
       currentSessionId: null,
       sessionStartTime: null,
       answeredFlashcardIds: new Set(),
+      cardDifficulty: {},
     });
     await get().loadDecks();
   },
@@ -148,6 +154,10 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
     const shuffled = shuffleArray(flashcards);
     set({ shuffledFlashcards: shuffled });
   },
+
+  appendQuizCard: (card: Flashcard) => {
+    set((state) => ({ shuffledFlashcards: [...state.shuffledFlashcards, card] }));
+  },
   
   addFlashcard: async (deckId: number, question: string, answer: string) => {
     const flashcard = await db.createFlashcard(deckId, question, answer);
@@ -188,11 +198,11 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
 
   startQuizSession: async (deckId: number) => {
     const sessionId = await db.createQuizSession(deckId);
-    set({ currentSessionId: sessionId, sessionStartTime: Date.now(), answeredFlashcardIds: new Set() });
+    set({ currentSessionId: sessionId, sessionStartTime: Date.now(), answeredFlashcardIds: new Set(), cardDifficulty: {}, shuffledFlashcards: [] });
     return sessionId;
   },
 
-  recordAnswer: async (flashcardId: number, responseType: 'correct' | 'incorrect') => {
+  recordAnswer: async (flashcardId: number, responseType: DifficultyRating) => {
     const { currentSessionId, answeredFlashcardIds } = get();
     if (!currentSessionId) return;
     await db.createQuizAnswer(currentSessionId, flashcardId, responseType);
@@ -202,15 +212,25 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
     set({ answeredFlashcardIds: newSet });
   },
 
+  setCardDifficulty: (flashcardId: number, rating: DifficultyRating) => {
+    set((state) => ({
+      cardDifficulty: { ...state.cardDifficulty, [flashcardId]: rating },
+    }));
+  },
+
   endQuizSession: async () => {
-    const { currentSessionId, sessionStartTime } = get();
+    const { currentSessionId, sessionStartTime, cardDifficulty } = get();
     if (!currentSessionId || !sessionStartTime) return;
 
     const endTime = Date.now();
     const totalTimeSpent = endTime - sessionStartTime;
+    const ratings = Object.values(cardDifficulty);
+    const totalCards = ratings.length;
+    const easyCount = ratings.filter((r) => r === 'easy').length;
+    const hardCount = ratings.filter((r) => r === 'hard').length;
 
-    await db.updateQuizSession(currentSessionId, new Date().toISOString(), totalTimeSpent);
-    set({ currentSessionId: null, sessionStartTime: null, answeredFlashcardIds: new Set() });
+    await db.updateQuizSession(currentSessionId, new Date().toISOString(), totalTimeSpent, totalCards, easyCount, hardCount);
+    set({ currentSessionId: null, sessionStartTime: null, answeredFlashcardIds: new Set(), cardDifficulty: {} });
   },
 
   discardQuizSession: async () => {
@@ -218,7 +238,7 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
     if (!currentSessionId) return;
 
     await db.deleteQuizSession(currentSessionId);
-    set({ currentSessionId: null, sessionStartTime: null, answeredFlashcardIds: new Set() });
+    set({ currentSessionId: null, sessionStartTime: null, answeredFlashcardIds: new Set(), cardDifficulty: {} });
   },
 
   getGlobalStats: async (interval, startDate) => {
@@ -247,6 +267,7 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
       currentSessionId: null,
       sessionStartTime: null,
       answeredFlashcardIds: new Set(),
+      cardDifficulty: {},
     });
   },
 }));

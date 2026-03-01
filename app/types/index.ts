@@ -42,10 +42,16 @@ export type DeckExport = {
 };
 
 /**
+ * Difficulty rating for quiz responses
+ */
+export type DifficultyRating = 'easy' | 'medium' | 'hard';
+
+/**
  * Statistics data series for charts
  */
 export type StatsSeries = {
   period: string;
-  correct: number;
-  incorrect: number;
+  easy: number;
+  medium: number;
+  hard: number;
 };

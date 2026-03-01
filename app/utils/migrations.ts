@@ -43,6 +43,9 @@ export const migrations: Migration[] = [
 					startedAt TEXT NOT NULL,
 					endedAt TEXT,
 					totalTimeSpent INTEGER,
+					totalCards INTEGER DEFAULT 0,
+					easyCount INTEGER DEFAULT 0,
+					hardCount INTEGER DEFAULT 0,
 					FOREIGN KEY (deckId) REFERENCES decks(id) ON DELETE CASCADE
 				);
 
