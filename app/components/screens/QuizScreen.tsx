@@ -14,8 +14,9 @@ import { FlashcardViewer } from '@/components/FlashcardViewer';
 import { QuizCompletionCard, QuizStats } from '@/components/QuizCompletionCard';
 import { SkiaCardShadow } from '@/components/ui/SkiaCardShadow';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Flashcard } from '@/types';
+import { Flashcard, DifficultyRating } from '@/types';
 import { getColors } from '@/constants/colors';
+import { pickWeightedCard } from '@/utils';
 
 type QuizScreenProps = {
 	deckId: number;
@@ -25,51 +26,97 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 	const { t } = useTranslation();
 	const router = useRouter();
 
-	const { shuffledFlashcards, startQuizSession, endQuizSession, discardQuizSession, recordAnswer, sessionStartTime } = useFlashcardsStore();
+	const {
+		flashcards,
+		shuffledFlashcards,
+		startQuizSession,
+		endQuizSession,
+		discardQuizSession,
+		recordAnswer,
+		setCardDifficulty,
+		cardDifficulty,
+		sessionStartTime,
+		appendQuizCard,
+		loadFlashcards,
+	} = useFlashcardsStore();
 
-	const [votes, setVotes] = useState<Record<number, 'correct' | 'incorrect'>>({});
 	const [showCompletionCard, setShowCompletionCard] = useState(false);
 	const [showExitDialog, setShowExitDialog] = useState(false);
+	const [showAllEasyDialog, setShowAllEasyDialog] = useState(false);
+	const [allEasyDismissed, setAllEasyDismissed] = useState(false);
+	const [initialized, setInitialized] = useState(false);
 
 	useEffect(() => {
-		startQuizSession(deckId);
+		const init = async () => {
+			await startQuizSession(deckId);
+			await loadFlashcards(deckId);
+			setInitialized(true);
+		};
+		init();
 		return () => {
 			endQuizSession();
 		};
 	}, [deckId]);
 
-	const answeredCount = Object.keys(votes).length;
-	const totalCount = shuffledFlashcards.length;
-	const allAnswered = answeredCount >= totalCount;
+	// Pick and append the first card once flashcards are loaded
+	useEffect(() => {
+		if (initialized && flashcards.length > 0 && shuffledFlashcards.length === 0) {
+			const firstCard = pickWeightedCard(flashcards, cardDifficulty);
+			appendQuizCard(firstCard);
+		}
+	}, [initialized, flashcards.length, shuffledFlashcards.length]);
+
+	const totalAnswered = Object.keys(cardDifficulty).length;
 
 	const handleResponse = useCallback(
-		async (cardId: number, type: 'correct' | 'incorrect') => {
-			const newVotes = { ...votes, [cardId]: type };
-			setVotes(newVotes);
-			await recordAnswer(cardId, type);
+		async (cardId: number, rating: DifficultyRating) => {
+			setCardDifficulty(cardId, rating);
+			await recordAnswer(cardId, rating);
 
-			const isNowComplete = Object.keys(newVotes).length >= shuffledFlashcards.length;
-			if (isNowComplete) {
-				setTimeout(() => setShowCompletionCard(true), 250);
+			// Check if all cards are rated easy (read fresh state from store)
+			const { cardDifficulty: latestDifficulty, flashcards: allCards } = useFlashcardsStore.getState();
+			const updatedDifficulty = { ...latestDifficulty, [cardId]: rating };
+			if (!allEasyDismissed && allCards.length > 0) {
+				const allEasy = allCards.every((fc) => updatedDifficulty[fc.id] === 'easy');
+				if (allEasy) {
+					setTimeout(() => setShowAllEasyDialog(true), 300);
+				}
 			}
 		},
-		[votes, recordAnswer, shuffledFlashcards.length],
+		[recordAnswer, setCardDifficulty, allEasyDismissed],
 	);
 
+	// Read latest state directly from the store to avoid stale closures
+	// (the gesture/animation callback chain may hold outdated references)
+	const handleRequestNextCard = useCallback(() => {
+		const { flashcards: cards, cardDifficulty: difficulty, appendQuizCard: append } = useFlashcardsStore.getState();
+		if (cards.length === 0) return;
+		const nextCard = pickWeightedCard(cards, difficulty);
+		append(nextCard);
+	}, []);
+
 	const getQuizStats = useCallback((): QuizStats => {
-		const correctCount = Object.values(votes).filter((v) => v === 'correct').length;
-		const incorrectCount = Object.values(votes).filter((v) => v === 'incorrect').length;
+		const ratings = Object.values(cardDifficulty);
+		const easyCount = ratings.filter((r) => r === 'easy').length;
+		const mediumCount = ratings.filter((r) => r === 'medium').length;
+		const hardCount = ratings.filter((r) => r === 'hard').length;
 		const totalTimeMs = sessionStartTime ? Date.now() - sessionStartTime : 0;
-		return { correctCount, incorrectCount, totalCount: shuffledFlashcards.length, totalTimeMs };
-	}, [votes, sessionStartTime, shuffledFlashcards.length]);
+		return { easyCount, mediumCount, hardCount, totalCount: ratings.length, totalTimeMs };
+	}, [cardDifficulty, sessionStartTime]);
 
 	const handleExit = useCallback(() => {
-		if (allAnswered) {
+		if (totalAnswered === 0) {
+			discardQuizSession();
 			router.back();
 		} else {
 			setShowExitDialog(true);
 		}
-	}, [allAnswered, router]);
+	}, [totalAnswered, router, discardQuizSession]);
+
+	const handleExitWithSave = useCallback(() => {
+		setShowExitDialog(false);
+		setShowCompletionCard(true);
+	}, []);
 
 	const handleExitDiscard = useCallback(async () => {
 		setShowExitDialog(false);
@@ -77,31 +124,41 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 		router.back();
 	}, [discardQuizSession, router]);
 
-	const handleExitKeep = useCallback(() => {
-		setShowExitDialog(false);
-		router.back();
-	}, [router]);
+	const handleAllEasyContinue = useCallback(() => {
+		setShowAllEasyDialog(false);
+		setAllEasyDismissed(true);
+	}, []);
+
+	const handleAllEasyExit = useCallback(() => {
+		setShowAllEasyDialog(false);
+		setShowCompletionCard(true);
+	}, []);
 
 	const renderAnswerFooter = useCallback(
 		(currentCard: Flashcard) => (
 			<GestureDetector gesture={Gesture.Tap()}>
-				<View position="absolute" bottom={16} left={0} right={0} paddingHorizontal="$6">
-					<View flexDirection="row" gap="$3" width="100%">
-						<ResponseButton
-							type="incorrect"
-							onPress={() => handleResponse(currentCard.id, 'incorrect')}
-							votedType={votes[currentCard.id]}
+				<View position="absolute" bottom={16} left={0} right={0} paddingHorizontal="$4">
+					<View flexDirection="row" gap="$2" width="100%">
+						<DifficultyButton
+							type="hard"
+							onPress={() => handleResponse(currentCard.id, 'hard')}
+							currentRating={cardDifficulty[currentCard.id]}
 						/>
-						<ResponseButton
-							type="correct"
-							onPress={() => handleResponse(currentCard.id, 'correct')}
-							votedType={votes[currentCard.id]}
+						<DifficultyButton
+							type="medium"
+							onPress={() => handleResponse(currentCard.id, 'medium')}
+							currentRating={cardDifficulty[currentCard.id]}
+						/>
+						<DifficultyButton
+							type="easy"
+							onPress={() => handleResponse(currentCard.id, 'easy')}
+							currentRating={cardDifficulty[currentCard.id]}
 						/>
 					</View>
 				</View>
 			</GestureDetector>
 		),
-		[handleResponse, votes],
+		[handleResponse, cardDifficulty],
 	);
 
 	return (
@@ -111,6 +168,8 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 				onExit={handleExit}
 				answerFooter={renderAnswerFooter}
 				answerBottomPadding={72}
+				infiniteMode
+				onRequestNextCard={handleRequestNextCard}
 				overlay={showCompletionCard ? <QuizCompletionCard stats={getQuizStats()} onClose={() => router.back()} /> : undefined}
 			/>
 
@@ -122,18 +181,41 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 						<YStack gap="$3">
 							<AlertDialog.Title size="$6">{t('quiz.exitTitle')}</AlertDialog.Title>
 							<AlertDialog.Description size="$3" color="$secondary">
-								{t('quiz.exitMessage', { count: totalCount - answeredCount, label: (totalCount - answeredCount) === 1 ? t('quiz.exitQuestionSingular') : t('quiz.exitQuestionPlural') })}
+								{t('quiz.exitMessage')}
 							</AlertDialog.Description>
 							<YStack gap="$2" paddingTop="$2">
 								<AlertDialog.Cancel asChild>
 									<Button borderRadius="$4">{t('common.cancel')}</Button>
 								</AlertDialog.Cancel>
 								<AlertDialog.Action asChild>
-									<Button borderRadius="$4" onPress={handleExitKeep}>{t('common.exit')}</Button>
+									<Button borderRadius="$4" onPress={handleExitWithSave}>{t('common.exit')}</Button>
 								</AlertDialog.Action>
 								<AlertDialog.Action asChild>
 									<Button theme="red" borderRadius="$4" onPress={handleExitDiscard}>{t('quiz.exitWithoutSaving')}</Button>
 								</AlertDialog.Action>
+							</YStack>
+						</YStack>
+					</AlertDialog.Content>
+				</AlertDialog.Portal>
+			</AlertDialog>
+
+			{/* All cards easy dialog */}
+			<AlertDialog open={showAllEasyDialog} onOpenChange={setShowAllEasyDialog}>
+				<AlertDialog.Portal>
+					<AlertDialog.Overlay key="overlay" backgroundColor="rgba(0,0,0,0.5)" />
+					<AlertDialog.Content key="content" bordered elevate maxWidth={340} paddingHorizontal="$5" paddingVertical="$5" borderRadius="$6">
+						<YStack gap="$3">
+							<AlertDialog.Title size="$6">{t('quiz.allEasyTitle')}</AlertDialog.Title>
+							<AlertDialog.Description size="$3" color="$secondary">
+								{t('quiz.allEasyMessage')}
+							</AlertDialog.Description>
+							<YStack gap="$2" paddingTop="$2">
+								<AlertDialog.Action asChild>
+									<Button theme="active" borderRadius="$4" onPress={handleAllEasyExit}>{t('quiz.closeButton')}</Button>
+								</AlertDialog.Action>
+								<AlertDialog.Cancel asChild>
+									<Button borderRadius="$4" onPress={handleAllEasyContinue}>{t('quiz.continue')}</Button>
+								</AlertDialog.Cancel>
 							</YStack>
 						</YStack>
 					</AlertDialog.Content>
@@ -144,10 +226,16 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Response button with press animation
+// Difficulty button with press animation
 // ---------------------------------------------------------------------------
 
-const ResponseButton = ({ type, onPress, votedType }: { type: 'correct' | 'incorrect'; onPress: () => void; votedType?: 'correct' | 'incorrect' }) => {
+const BUTTON_CONFIG: Record<DifficultyRating, { icon: 'sentiment-dissatisfied' | 'sentiment-neutral' | 'sentiment-satisfied'; colorKey: 'error' | 'warning' | 'success'; shadowKey: 'errorShadow' | 'warningShadow' | 'successShadow'; labelKey: string }> = {
+	hard: { icon: 'sentiment-dissatisfied', colorKey: 'error', shadowKey: 'errorShadow', labelKey: 'quiz.hard' },
+	medium: { icon: 'sentiment-neutral', colorKey: 'warning', shadowKey: 'warningShadow', labelKey: 'quiz.medium' },
+	easy: { icon: 'sentiment-satisfied', colorKey: 'success', shadowKey: 'successShadow', labelKey: 'quiz.easy' },
+};
+
+const DifficultyButton = ({ type, onPress, currentRating }: { type: DifficultyRating; onPress: () => void; currentRating?: DifficultyRating }) => {
 	const { t } = useTranslation();
 	const colorScheme = useColorScheme();
 	const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
@@ -168,12 +256,11 @@ const ResponseButton = ({ type, onPress, votedType }: { type: 'correct' | 'incor
 		);
 	};
 
-	const isCorrect = type === 'correct';
-	const iconName = isCorrect ? 'check' : 'close';
-	const bgColor = isCorrect ? colors.success : colors.error;
-	const label = isCorrect ? t('quiz.remember') : t('quiz.forgot');
-	const opacity = !votedType ? 1 : votedType === type ? 1 : 0.5;
-	const shadowColor = isCorrect ? colors.successShadow : colors.errorShadow;
+	const config = BUTTON_CONFIG[type];
+	const bgColor = colors[config.colorKey];
+	const shadowColor = colors[config.shadowKey];
+	const label = t(config.labelKey);
+	const opacity = !currentRating ? 1 : currentRating === type ? 1 : 0.4;
 
 	return (
 		<Pressable onPress={handlePress} style={{ flex: 1 }}>
@@ -183,9 +270,9 @@ const ResponseButton = ({ type, onPress, votedType }: { type: 'correct' | 'incor
 					backgroundColor={bgColor}
 					shadows={[{ dx: 0, dy: 4, blur: 8, color: shadowColor }]}
 					style={{ height: 48 }}>
-					<View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-						<MaterialIcons name={iconName} size={22} color={colors.onAccent} />
-						<Text color={colors.onAccent} fontWeight="600" fontSize={15}>
+					<View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+						<MaterialIcons name={config.icon} size={20} color={colors.onAccent} />
+						<Text color={colors.onAccent} fontWeight="600" fontSize={13}>
 							{label}
 						</Text>
 					</View>

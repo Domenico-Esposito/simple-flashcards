@@ -35,6 +35,10 @@ type FlashcardViewerProps = {
 	overlay?: ReactNode;
 	/** Navigation hint text shown at the bottom */
 	hintText?: (showingAnswer: boolean) => string;
+	/** Infinite mode: hides progress dots/counter, disables swipe back */
+	infiniteMode?: boolean;
+	/** Called before navigating forward in infinite mode; parent should append next card */
+	onRequestNextCard?: () => void;
 };
 
 /**
@@ -50,6 +54,8 @@ export function FlashcardViewer({
 	onAllCardsSeen,
 	overlay,
 	hintText,
+	infiniteMode = false,
+	onRequestNextCard,
 }: FlashcardViewerProps) {
 	const insets = useSafeAreaInsets();
 	const router = useRouter();
@@ -92,8 +98,10 @@ export function FlashcardViewer({
 	}, [currentIndex, contentOpacity]);
 
 	useEffect(() => {
-		loadFlashcardsForQuiz(deckId);
-	}, [deckId, loadFlashcardsForQuiz]);
+		if (!infiniteMode) {
+			loadFlashcardsForQuiz(deckId);
+		}
+	}, [deckId, loadFlashcardsForQuiz, infiniteMode]);
 
 	const currentCard = shuffledFlashcards[currentIndex];
 
@@ -111,18 +119,27 @@ export function FlashcardViewer({
 
 	/** Navigate to the next card */
 	const goNext = useCallback(() => {
+		if (infiniteMode && onRequestNextCard) {
+			onRequestNextCard();
+		}
 		setShowAnswer(false);
 		flipRotation.value = 0;
 		isShowingAnswer.value = 0;
-		const cardsLength = shuffledCardsRef.current.length;
-		setCurrentIndex((prev) => {
-			const next = prev + 1 < cardsLength ? prev + 1 : prev;
-			if (next === cardsLength - 1) {
-				onAllCardsSeen?.();
-			}
-			return next;
-		});
-	}, [flipRotation, isShowingAnswer, onAllCardsSeen]);
+
+		if (infiniteMode) {
+			// Always advance — a new card was just appended by onRequestNextCard
+			setCurrentIndex((prev) => prev + 1);
+		} else {
+			const cardsLength = shuffledCardsRef.current.length;
+			setCurrentIndex((prev) => {
+				const next = prev + 1 < cardsLength ? prev + 1 : prev;
+				if (next === cardsLength - 1) {
+					onAllCardsSeen?.();
+				}
+				return next;
+			});
+		}
+	}, [flipRotation, isShowingAnswer, onAllCardsSeen, infiniteMode, onRequestNextCard]);
 
 	/** Navigate to the previous card */
 	const goPrev = useCallback(() => {
@@ -141,8 +158,8 @@ export function FlashcardViewer({
 			const idx = currentIndexRef.current;
 			const cardsLength = shuffledCardsRef.current.length;
 
-			const canGoNext = idx < cardsLength - 1;
-			const canGoPrev = idx > 0;
+			const canGoNext = infiniteMode || idx < cardsLength - 1;
+			const canGoPrev = !infiniteMode && idx > 0;
 
 			if (translationY < -SWIPE_THRESHOLD && canGoNext) {
 				contentOpacity.value = withTiming(0, { duration: 100 });
@@ -164,7 +181,7 @@ export function FlashcardViewer({
 				resetPosition();
 			}
 		},
-		[translateY, goNext, goPrev, resetPosition, contentOpacity],
+		[translateY, goNext, goPrev, resetPosition, contentOpacity, infiniteMode],
 	);
 
 	const questionReadMoreTap = Gesture.Tap()
@@ -232,7 +249,7 @@ export function FlashcardViewer({
 	const dotActiveColor = colors.dotActive;
 	const dotInactiveColor = colors.dotInactive;
 
-	if (shuffledFlashcards.length === 0) {
+	if (shuffledFlashcards.length === 0 || !currentCard) {
 		return (
 			<View flex={1} justifyContent="center" alignItems="center" backgroundColor="$background">
 				<Text color="$secondary">{t('common.loading')}</Text>
@@ -251,21 +268,27 @@ export function FlashcardViewer({
 					<Pressable onPress={onExit} style={{ padding: 8 }}>
 						<IconSymbol name="xmark" size={24} color={closeIconColor} />
 					</Pressable>
-					<View flexDirection="row" gap="$1" flex={1} justifyContent="center" marginHorizontal="$4">
-						{shuffledFlashcards.map((_, index) => (
-							<View
-								key={index}
-								width={8}
-								height={8}
-								borderRadius={4}
-								backgroundColor={index === currentIndex ? dotActiveColor : dotInactiveColor}
-							/>
-						))}
-					</View>
-					{headerRight ?? (
-						<Text color="$secondary" fontSize={14}>
-							{currentIndex + 1}/{shuffledFlashcards.length}
-						</Text>
+					{!infiniteMode && (
+						<View flexDirection="row" gap="$1" flex={1} justifyContent="center" marginHorizontal="$4">
+							{shuffledFlashcards.map((_, index) => (
+								<View
+									key={index}
+									width={8}
+									height={8}
+									borderRadius={4}
+									backgroundColor={index === currentIndex ? dotActiveColor : dotInactiveColor}
+								/>
+							))}
+						</View>
+					)}
+					{infiniteMode ? (
+						<View flex={1} />
+					) : (
+						headerRight ?? (
+							<Text color="$secondary" fontSize={14}>
+								{currentIndex + 1}/{shuffledFlashcards.length}
+							</Text>
+						)
 					)}
 				</View>
 

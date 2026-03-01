@@ -13,8 +13,9 @@ import { getColors } from '@/constants/colors';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export type QuizStats = {
-	correctCount: number;
-	incorrectCount: number;
+	easyCount: number;
+	mediumCount: number;
+	hardCount: number;
 	totalCount: number;
 	totalTimeMs: number;
 };
@@ -39,8 +40,7 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 	const buttonTranslateY = useSharedValue(20);
 
 	// Derived stats
-	const { correctCount, incorrectCount, totalCount, totalTimeMs } = stats;
-	const successRate = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+	const { easyCount, mediumCount, hardCount, totalCount, totalTimeMs } = stats;
 	const totalSeconds = Math.floor(totalTimeMs / 1000);
 	const minutes = Math.floor(totalSeconds / 60);
 	const seconds = totalSeconds % 60;
@@ -135,24 +135,24 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 					{t('quiz.completionTitle')}
 				</Text>
 				<Text fontSize={14} color={textSecondary} textAlign="center" marginBottom="$5">
-					{t('quiz.completionSubtitle')}
+					{t('quiz.completionSubtitle', { count: totalCount })}
 				</Text>
 
 				{/* Stats grid */}
 				<Animated.View style={statsAnimatedStyle}>
 					<YStack gap="$3" marginBottom="$5">
-						{/* Success rate - highlighted */}
+						{/* Total cards - highlighted */}
 						<View backgroundColor={colors.accentBgTint} borderRadius={16} padding="$4" alignItems="center">
 							<Text fontSize={40} fontWeight="800" color={colors.accent}>
-								{successRate}%
+								{totalCount}
 							</Text>
 							<Text fontSize={13} color={textSecondary} marginTop="$1">
-								{t('quiz.successRate')}
+								{t('quiz.totalCards')}
 							</Text>
 						</View>
 
-						{/* Correct / Incorrect row */}
-						<View flexDirection="row" gap="$3">
+						{/* Easy / Medium / Hard row */}
+						<View flexDirection="row" gap="$2">
 							<View
 								flex={1}
 								backgroundColor={colors.successBgTint}
@@ -160,13 +160,30 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 								padding="$3"
 								alignItems="center">
 								<View flexDirection="row" alignItems="center" gap="$1">
-									<MaterialIcons name="check-circle" size={20} color={colors.success} />
-									<Text fontSize={24} fontWeight="700" color={colors.success}>
-										{correctCount}
+									<MaterialIcons name="sentiment-satisfied" size={18} color={colors.success} />
+									<Text fontSize={22} fontWeight="700" color={colors.success}>
+										{easyCount}
 									</Text>
 								</View>
-								<Text fontSize={12} color={textSecondary} marginTop="$1">
-									{t('quiz.correct')}
+								<Text fontSize={11} color={textSecondary} marginTop="$1">
+									{t('quiz.easy')}
+								</Text>
+							</View>
+
+							<View
+								flex={1}
+								backgroundColor={colors.warningBgTint}
+								borderRadius={12}
+								padding="$3"
+								alignItems="center">
+								<View flexDirection="row" alignItems="center" gap="$1">
+									<MaterialIcons name="sentiment-neutral" size={18} color={colors.warning} />
+									<Text fontSize={22} fontWeight="700" color={colors.warning}>
+										{mediumCount}
+									</Text>
+								</View>
+								<Text fontSize={11} color={textSecondary} marginTop="$1">
+									{t('quiz.medium')}
 								</Text>
 							</View>
 
@@ -177,13 +194,13 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 								padding="$3"
 								alignItems="center">
 								<View flexDirection="row" alignItems="center" gap="$1">
-									<MaterialIcons name="cancel" size={20} color={colors.error} />
-									<Text fontSize={24} fontWeight="700" color={colors.error}>
-										{incorrectCount}
+									<MaterialIcons name="sentiment-dissatisfied" size={18} color={colors.error} />
+									<Text fontSize={22} fontWeight="700" color={colors.error}>
+										{hardCount}
 									</Text>
 								</View>
-								<Text fontSize={12} color={textSecondary} marginTop="$1">
-									{t('quiz.incorrect')}
+								<Text fontSize={11} color={textSecondary} marginTop="$1">
+									{t('quiz.hard')}
 								</Text>
 							</View>
 						</View>
