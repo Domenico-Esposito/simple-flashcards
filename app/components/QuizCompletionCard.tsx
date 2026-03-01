@@ -1,16 +1,13 @@
 import { useEffect } from 'react';
-import { Dimensions } from 'react-native';
 import { Text, View, YStack, Button } from 'tamagui';
+import { Portal } from '@tamagui/portal';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, withDelay } from 'react-native-reanimated';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { useTranslation } from 'react-i18next';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { SkiaCardShadow } from '@/components/ui/SkiaCardShadow';
 import { getColors } from '@/constants/colors';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export type QuizStats = {
 	easyCount: number;
@@ -90,144 +87,145 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 	const textSecondary = isDark ? '#A3A3A3' : '#737373';
 
 	return (
-		<View
-			position="absolute"
-			top={0}
-			left={0}
-			right={0}
-			bottom={0}
-			backgroundColor="rgba(0,0,0,0.5)"
-			justifyContent="center"
-			alignItems="center"
-			paddingHorizontal="$4"
-			zIndex={100}>
-			<Animated.View
-				style={[
-					{
-						width: SCREEN_WIDTH - 48,
-						maxWidth: 360,
-						overflow: 'visible',
-					},
-					cardAnimatedStyle,
-				]}>
-				<SkiaCardShadow
-					borderRadius={24}
-					backgroundColor={cardBg}
-					shadows={[{ dx: 0, dy: 10, blur: 20, color: 'rgba(0,0,0,0.3)' }]}
-					style={{ padding: 32 }}>
-				{/* Checkmark icon */}
-				<View alignItems="center" marginBottom="$4">
-					<Animated.View
-						style={[
-							{
-								marginTop: -80,
-								justifyContent: 'center',
-								alignItems: 'center',
-							},
-							checkmarkAnimatedStyle,
-						]}>
-						<Text fontSize={80}>🎉</Text>
+		<Portal>
+			<View
+				position="absolute"
+				top={0}
+				left={0}
+				right={0}
+				bottom={0}
+				backgroundColor="rgba(0,0,0,0.5)"
+				justifyContent="center"
+				alignItems="center"
+				paddingHorizontal="$4"
+				zIndex={100}>
+				<Animated.View
+					style={[
+						{
+							width: '100%',
+							maxWidth: 360,
+						},
+						cardAnimatedStyle,
+					]}>
+					<View
+						backgroundColor={cardBg}
+						borderRadius={24}
+						padding="$6"
+						elevation={10}>
+					{/* Checkmark icon */}
+					<View alignItems="center" marginBottom="$4">
+						<Animated.View
+							style={[
+								{
+									marginTop: -80,
+									justifyContent: 'center',
+									alignItems: 'center',
+								},
+								checkmarkAnimatedStyle,
+							]}>
+							<Text fontSize={80}>🎉</Text>
+						</Animated.View>
+					</View>
+
+					{/* Title */}
+					<Text fontSize={24} fontWeight="700" color={textPrimary} textAlign="center" marginBottom="$2">
+						{t('quiz.completionTitle')}
+					</Text>
+					<Text fontSize={14} color={textSecondary} textAlign="center" marginBottom="$5">
+						{t('quiz.completionSubtitle', { count: totalCount })}
+					</Text>
+
+					{/* Stats grid */}
+					<Animated.View style={statsAnimatedStyle}>
+						<YStack gap="$3" marginBottom="$5">
+							{/* Total cards - highlighted */}
+							<View backgroundColor={colors.accentBgTint} borderRadius={16} padding="$4" alignItems="center">
+								<Text fontSize={40} fontWeight="800" color={colors.accent}>
+									{totalCount}
+								</Text>
+								<Text fontSize={13} color={textSecondary} marginTop="$1">
+									{t('quiz.totalCards')}
+								</Text>
+							</View>
+
+							{/* Easy / Medium / Hard row */}
+							<View flexDirection="row" gap="$2">
+								<View
+									flex={1}
+									backgroundColor={colors.successBgTint}
+									borderRadius={12}
+									padding="$3"
+									alignItems="center">
+									<View flexDirection="row" alignItems="center" gap="$1">
+										<MaterialIcons name="sentiment-satisfied" size={18} color={colors.success} />
+										<Text fontSize={22} fontWeight="700" color={colors.success}>
+											{easyCount}
+										</Text>
+									</View>
+									<Text fontSize={11} color={textSecondary} marginTop="$1">
+										{t('quiz.easy')}
+									</Text>
+								</View>
+
+								<View
+									flex={1}
+									backgroundColor={colors.warningBgTint}
+									borderRadius={12}
+									padding="$3"
+									alignItems="center">
+									<View flexDirection="row" alignItems="center" gap="$1">
+										<MaterialIcons name="sentiment-neutral" size={18} color={colors.warning} />
+										<Text fontSize={22} fontWeight="700" color={colors.warning}>
+											{mediumCount}
+										</Text>
+									</View>
+									<Text fontSize={11} color={textSecondary} marginTop="$1">
+										{t('quiz.medium')}
+									</Text>
+								</View>
+
+								<View
+									flex={1}
+									backgroundColor={colors.errorBgTint}
+									borderRadius={12}
+									padding="$3"
+									alignItems="center">
+									<View flexDirection="row" alignItems="center" gap="$1">
+										<MaterialIcons name="sentiment-dissatisfied" size={18} color={colors.error} />
+										<Text fontSize={22} fontWeight="700" color={colors.error}>
+											{hardCount}
+										</Text>
+									</View>
+									<Text fontSize={11} color={textSecondary} marginTop="$1">
+										{t('quiz.hard')}
+									</Text>
+								</View>
+							</View>
+
+							{/* Time row */}
+							<View backgroundColor={colors.chipBg} borderRadius={12} padding="$3" alignItems="center">
+								<View flexDirection="row" alignItems="center" gap="$2">
+									<MaterialIcons name="timer" size={20} color={textSecondary} />
+									<Text fontSize={20} fontWeight="600" color={textPrimary}>
+										{timeString}
+									</Text>
+								</View>
+								<Text fontSize={12} color={textSecondary} marginTop="$1">
+									{t('quiz.totalTime')}
+								</Text>
+							</View>
+						</YStack>
 					</Animated.View>
-				</View>
 
-				{/* Title */}
-				<Text fontSize={24} fontWeight="700" color={textPrimary} textAlign="center" marginBottom="$2">
-					{t('quiz.completionTitle')}
-				</Text>
-				<Text fontSize={14} color={textSecondary} textAlign="center" marginBottom="$5">
-					{t('quiz.completionSubtitle', { count: totalCount })}
-				</Text>
-
-				{/* Stats grid */}
-				<Animated.View style={statsAnimatedStyle}>
-					<YStack gap="$3" marginBottom="$5">
-						{/* Total cards - highlighted */}
-						<View backgroundColor={colors.accentBgTint} borderRadius={16} padding="$4" alignItems="center">
-							<Text fontSize={40} fontWeight="800" color={colors.accent}>
-								{totalCount}
-							</Text>
-							<Text fontSize={13} color={textSecondary} marginTop="$1">
-								{t('quiz.totalCards')}
-							</Text>
-						</View>
-
-						{/* Easy / Medium / Hard row */}
-						<View flexDirection="row" gap="$2">
-							<View
-								flex={1}
-								backgroundColor={colors.successBgTint}
-								borderRadius={12}
-								padding="$3"
-								alignItems="center">
-								<View flexDirection="row" alignItems="center" gap="$1">
-									<MaterialIcons name="sentiment-satisfied" size={18} color={colors.success} />
-									<Text fontSize={22} fontWeight="700" color={colors.success}>
-										{easyCount}
-									</Text>
-								</View>
-								<Text fontSize={11} color={textSecondary} marginTop="$1">
-									{t('quiz.easy')}
-								</Text>
-							</View>
-
-							<View
-								flex={1}
-								backgroundColor={colors.warningBgTint}
-								borderRadius={12}
-								padding="$3"
-								alignItems="center">
-								<View flexDirection="row" alignItems="center" gap="$1">
-									<MaterialIcons name="sentiment-neutral" size={18} color={colors.warning} />
-									<Text fontSize={22} fontWeight="700" color={colors.warning}>
-										{mediumCount}
-									</Text>
-								</View>
-								<Text fontSize={11} color={textSecondary} marginTop="$1">
-									{t('quiz.medium')}
-								</Text>
-							</View>
-
-							<View
-								flex={1}
-								backgroundColor={colors.errorBgTint}
-								borderRadius={12}
-								padding="$3"
-								alignItems="center">
-								<View flexDirection="row" alignItems="center" gap="$1">
-									<MaterialIcons name="sentiment-dissatisfied" size={18} color={colors.error} />
-									<Text fontSize={22} fontWeight="700" color={colors.error}>
-										{hardCount}
-									</Text>
-								</View>
-								<Text fontSize={11} color={textSecondary} marginTop="$1">
-									{t('quiz.hard')}
-								</Text>
-							</View>
-						</View>
-
-						{/* Time row */}
-						<View backgroundColor={colors.chipBg} borderRadius={12} padding="$3" alignItems="center">
-							<View flexDirection="row" alignItems="center" gap="$2">
-								<MaterialIcons name="timer" size={20} color={textSecondary} />
-								<Text fontSize={20} fontWeight="600" color={textPrimary}>
-									{timeString}
-								</Text>
-							</View>
-							<Text fontSize={12} color={textSecondary} marginTop="$1">
-								{t('quiz.totalTime')}
-							</Text>
-						</View>
-					</YStack>
+					{/* Close button */}
+					<Animated.View style={buttonAnimatedStyle}>
+						<Button size="$5" theme="active" borderRadius="$10" onPress={onClose} fontWeight="600">
+							{t('quiz.closeButton')}
+						</Button>
+					</Animated.View>
+					</View>
 				</Animated.View>
-
-				{/* Close button */}
-				<Animated.View style={buttonAnimatedStyle}>
-					<Button size="$5" theme="active" borderRadius="$10" onPress={onClose} fontWeight="600">
-						{t('quiz.closeButton')}
-					</Button>
-				</Animated.View>
-				</SkiaCardShadow>
-			</Animated.View>
-		</View>
+			</View>
+		</Portal>
 	);
 }

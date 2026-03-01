@@ -31,8 +31,6 @@ type FlashcardViewerProps = {
 	onExit: () => void;
 	/** Called after a forward navigation completes and all cards have been seen */
 	onAllCardsSeen?: () => void;
-	/** Override: render a custom overlay (e.g. completion card) */
-	overlay?: ReactNode;
 	/** Navigation hint text shown at the bottom */
 	hintText?: (showingAnswer: boolean) => string;
 	/** Infinite mode: hides progress dots/counter, disables swipe back */
@@ -52,7 +50,6 @@ export function FlashcardViewer({
 	headerRight,
 	onExit,
 	onAllCardsSeen,
-	overlay,
 	hintText,
 	infiniteMode = false,
 	onRequestNextCard,
@@ -397,7 +394,6 @@ export function FlashcardViewer({
 					</Text>
 				</View>
 
-				{overlay}
 			</View>
 		</GestureHandlerRootView>
 	);

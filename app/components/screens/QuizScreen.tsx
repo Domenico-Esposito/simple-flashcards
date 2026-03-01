@@ -170,8 +170,12 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 				answerBottomPadding={72}
 				infiniteMode
 				onRequestNextCard={handleRequestNextCard}
-				overlay={showCompletionCard ? <QuizCompletionCard stats={getQuizStats()} onClose={() => router.back()} /> : undefined}
 			/>
+
+			{/* Quiz completion card rendered via Portal to cover the entire screen (including sidebar on large screens) */}
+			{showCompletionCard && (
+				<QuizCompletionCard stats={getQuizStats()} onClose={() => router.back()} />
+			)}
 
 			{/* Exit confirmation dialog */}
 			<AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
