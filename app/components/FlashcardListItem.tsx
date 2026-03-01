@@ -31,10 +31,10 @@ export function FlashcardListItem({ flashcard, onPress, onLongPress }: Flashcard
 				>
 					<XStack gap="$3" alignItems="center">
 						<YStack flex={1} gap="$2">
-							<Text fontSize={15} fontWeight="600" numberOfLines={2} color="$color">
+							<Text fontSize={15} lineHeight={20} fontWeight="600" numberOfLines={2} height={40} color="$color">
 								{questionPreview}
 							</Text>
-							<Text fontSize={13} color="$gray10" numberOfLines={2}>
+							<Text fontSize={13} lineHeight={18} color="$gray10" numberOfLines={2} height={36}>
 								{answerPreview}
 							</Text>
 						</YStack>
