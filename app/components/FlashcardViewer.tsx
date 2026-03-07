@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useFlashcardsStore } from '@/store/flashcards';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { HtmlContent } from '@/components/ui/HtmlContent';
+import { MarkdownContent } from '@/components/ui/MarkdownContent';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { SkiaCardShadow } from '@/components/ui/SkiaCardShadow';
 import { Flashcard } from '@/types';
@@ -343,7 +343,7 @@ export function FlashcardViewer({
                             <Text fontSize={14} color="$secondary" marginBottom="$2">
                               {t('flashcard.questionLabel')}
                             </Text>
-                            <HtmlContent html={currentCard.question} />
+                            <MarkdownContent markdown={currentCard.question} />
                           </YStack>
                           {isQuestionOverflow && (
                             <View
@@ -418,7 +418,7 @@ export function FlashcardViewer({
                             <Text fontSize={14} color="$secondary" marginBottom="$2">
                               {t('flashcard.answerLabel')}
                             </Text>
-                            <HtmlContent html={currentCard.answer} />
+                            <MarkdownContent markdown={currentCard.answer} />
                           </YStack>
                         </View>
                         {isAnswerOverflow && (

@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { Header } from '@/components/Header';
-import { HtmlContent } from '@/components/ui/HtmlContent';
+import { MarkdownContent } from '@/components/ui/MarkdownContent';
 
 type ReadMoreScreenProps = {
   type: 'question' | 'answer';
@@ -24,7 +24,7 @@ export function ReadMoreScreen({ type, content }: ReadMoreScreenProps) {
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: insets.bottom }}>
         <Stack gap="$4" flex={1} paddingHorizontal="$4" paddingVertical="$2">
-          <HtmlContent html={content || ''} />
+          <MarkdownContent markdown={content || ''} />
         </Stack>
       </ScrollView>
     </View>
