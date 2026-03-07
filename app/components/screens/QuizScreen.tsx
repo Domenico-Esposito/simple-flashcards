@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Pressable } from 'react-native';
 import { Text, View, YStack, Button, AlertDialog } from 'tamagui';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -51,18 +51,40 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
   const [showAllEasyDialog, setShowAllEasyDialog] = useState(false);
   const [allEasyDismissed, setAllEasyDismissed] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const latestQuizStateRef = useRef({
+    flashcards,
+    cardDifficulty,
+    appendQuizCard,
+  });
 
   useEffect(() => {
+    latestQuizStateRef.current = {
+      flashcards,
+      cardDifficulty,
+      appendQuizCard,
+    };
+  }, [flashcards, cardDifficulty, appendQuizCard]);
+
+  useEffect(() => {
+    let isMounted = true;
+    setInitialized(false);
+
     const init = async () => {
       await startQuizSession(deckId);
       await loadFlashcards(deckId);
-      setInitialized(true);
+
+      if (isMounted) {
+        setInitialized(true);
+      }
     };
-    init();
+
+    void init();
+
     return () => {
-      endQuizSession();
+      isMounted = false;
+      void endQuizSession();
     };
-  }, [deckId]);
+  }, [deckId, startQuizSession, loadFlashcards, endQuizSession]);
 
   // Pick and append the first card once flashcards are loaded
   useEffect(() => {
@@ -70,7 +92,7 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
       const firstCard = pickWeightedCard(flashcards, cardDifficulty);
       appendQuizCard(firstCard);
     }
-  }, [initialized, flashcards.length, shuffledFlashcards.length]);
+  }, [initialized, flashcards, shuffledFlashcards.length, cardDifficulty, appendQuizCard]);
 
   const totalAnswered = Object.keys(cardDifficulty).length;
 
@@ -79,29 +101,26 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
       setCardDifficulty(cardId, rating);
       await recordAnswer(cardId, rating);
 
-      // Check if all cards are rated easy (read fresh state from store)
-      const { cardDifficulty: latestDifficulty, flashcards: allCards } =
-        useFlashcardsStore.getState();
-      const updatedDifficulty = { ...latestDifficulty, [cardId]: rating };
-      if (!allEasyDismissed && allCards.length > 0) {
-        const allEasy = allCards.every((fc) => updatedDifficulty[fc.id] === 'easy');
+      const updatedDifficulty = { ...cardDifficulty, [cardId]: rating };
+      if (!allEasyDismissed && flashcards.length > 0) {
+        const allEasy = flashcards.every((fc) => updatedDifficulty[fc.id] === 'easy');
         if (allEasy) {
           setTimeout(() => setShowAllEasyDialog(true), 300);
         }
       }
     },
-    [recordAnswer, setCardDifficulty, allEasyDismissed],
+    [recordAnswer, setCardDifficulty, allEasyDismissed, cardDifficulty, flashcards],
   );
 
-  // Read latest state directly from the store to avoid stale closures
-  // (the gesture/animation callback chain may hold outdated references)
   const handleRequestNextCard = useCallback(() => {
     const {
       flashcards: cards,
       cardDifficulty: difficulty,
       appendQuizCard: append,
-    } = useFlashcardsStore.getState();
+    } = latestQuizStateRef.current;
+
     if (cards.length === 0) return;
+
     const nextCard = pickWeightedCard(cards, difficulty);
     append(nextCard);
   }, []);

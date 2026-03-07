@@ -1,10 +1,13 @@
 import { useState, type ComponentProps } from 'react';
 import { Platform } from 'react-native';
-import { Button, Heading, Popover, Stack, Text, XStack, YStack, ZStack, useTheme } from 'tamagui';
+import { Button, Heading, Popover, Stack, Text, XStack, YStack, ZStack } from 'tamagui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+
 import { useIsLargeScreen } from '@/hooks/useLargeScreen';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { getColors } from '@/constants/colors';
 
 export interface HeaderActionItem {
   icon: ComponentProps<typeof MaterialIcons>['name'];
@@ -208,8 +211,8 @@ export function Header({
 }: HeaderProps) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const theme = useTheme();
-  const headerIconColor = (theme.primary as any)?.val ?? (theme.color as any)?.val;
+  const colorScheme = useColorScheme();
+  const headerIconColor = getColors(colorScheme === 'dark' ? 'dark' : 'light').accent;
   const isLargeScreen = useIsLargeScreen();
 
   const handleBackPress = () => {

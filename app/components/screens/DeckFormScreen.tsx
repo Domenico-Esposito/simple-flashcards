@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, TextInput as RNTextInput } from 'react-native';
 import { Button, Text, TextArea, View, YStack, useTheme } from 'tamagui';
 import { useRouter } from 'expo-router';
@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useFlashcardsStore } from '@/store/flashcards';
 import { Header } from '@/components/Header';
 import { useAppAlert } from '@/hooks/useAppAlert';
+import { useFormTextField } from '@/hooks/useFormTextField';
 
 const TITLE_LINE_HEIGHT = 32;
 
@@ -27,11 +28,21 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
 
   const { currentDeck, loadDeck, addDeck, editDeck, removeDeck } = useFlashcardsStore();
 
-  const titleRef = useRef<RNTextInput>(null);
-  const descriptionRef = useRef<RNTextInput>(null);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [error, setError] = useState('');
+  const {
+    value: title,
+    trimmedValue: trimmedTitle,
+    error: titleError,
+    setValue: setTitle,
+    onChangeText: onTitleChangeText,
+    clearError: clearTitleError,
+    validateRequired: validateTitle,
+  } = useFormTextField();
+  const {
+    value: description,
+    trimmedValue: trimmedDescription,
+    setValue: setDescription,
+    onChangeText: onDescriptionChangeText,
+  } = useFormTextField();
 
   useEffect(() => {
     if (isEditing) {
@@ -43,28 +54,19 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
     if (isEditing && currentDeck) {
       setTitle(currentDeck.title);
       setDescription(currentDeck.description || '');
-      // Update the actual input values
-      if (titleRef.current) {
-        titleRef.current.setNativeProps({ text: currentDeck.title });
-      }
-      if (descriptionRef.current) {
-        descriptionRef.current.setNativeProps({
-          text: currentDeck.description || '',
-        });
-      }
+      clearTitleError();
     }
-  }, [isEditing, currentDeck]);
+  }, [isEditing, currentDeck, setTitle, setDescription, clearTitleError]);
 
   const handleSave = async () => {
-    if (!title.trim()) {
-      setError(t('form.titleRequired'));
+    if (!validateTitle(t('form.titleRequired'))) {
       return;
     }
 
     if (isEditing) {
-      await editDeck(deckId, title.trim(), description.trim() || undefined);
+      await editDeck(deckId, trimmedTitle, trimmedDescription || undefined);
     } else {
-      await addDeck(title.trim(), description.trim() || undefined);
+      await addDeck(trimmedTitle, trimmedDescription || undefined);
     }
     router.back();
   };
@@ -102,12 +104,8 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
           <YStack gap="$4" flex={1} padding="$4">
             <YStack gap="$2">
               <RNTextInput
-                ref={titleRef}
-                defaultValue={title}
-                onChangeText={(text) => {
-                  setTitle(text);
-                  setError('');
-                }}
+                value={title}
+                onChangeText={onTitleChangeText}
                 placeholder={t('form.titlePlaceholder')}
                 multiline
                 scrollEnabled={false}
@@ -120,21 +118,20 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
                 }}
                 placeholderTextColor={theme.color9.val}
               />
-              {error && (
+              {titleError && (
                 <Text fontSize={12} color="$red10">
-                  {error}
+                  {titleError}
                 </Text>
               )}
             </YStack>
 
             <YStack gap="$1" flex={1}>
               <TextArea
-                ref={descriptionRef}
                 id="description"
                 size="$4"
                 flex={1}
-                defaultValue={description}
-                onChangeText={setDescription}
+                value={description}
+                onChangeText={onDescriptionChangeText}
                 placeholder={t('form.descriptionPlaceholder')}
                 borderWidth={0}
                 backgroundColor="transparent"

@@ -65,7 +65,16 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
     // Button fade in
     buttonOpacity.value = withDelay(700, withTiming(1, { duration: 300 }));
     buttonTranslateY.value = withDelay(700, withSpring(0, { damping: 15, stiffness: 100 }));
-  }, []);
+  }, [
+    buttonOpacity,
+    buttonTranslateY,
+    cardOpacity,
+    cardScale,
+    checkmarkRotation,
+    checkmarkScale,
+    statsOpacity,
+    statsTranslateY,
+  ]);
 
   const cardAnimatedStyle = useAnimatedStyle(() => ({
     opacity: cardOpacity.value,

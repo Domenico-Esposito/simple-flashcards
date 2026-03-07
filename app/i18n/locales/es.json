@@ -187,7 +187,8 @@
     "totalCards": "Cartas Totales",
     "totalTime": "Tiempo Total",
     "totalDecks": "Mazos Estudiados",
-    "noData": "No hay datos disponibles"
+    "noData": "No hay datos disponibles",
+    "loadError": "No se pudieron cargar las estadísticas"
   },
   "errors": {
     "deckNotFound": "Mazo no encontrado",

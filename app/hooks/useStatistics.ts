@@ -4,6 +4,24 @@ import { StatsSeries } from '@/types';
 
 export type Interval = 'day' | 'month' | 'quarter' | 'semester' | 'year';
 
+function getStartDateForInterval(interval: Interval): string {
+  const date = new Date();
+
+  switch (interval) {
+    case 'day':
+      date.setDate(date.getDate() - 7);
+      break;
+    case 'month':
+      date.setMonth(date.getMonth() - 6);
+      break;
+    default:
+      date.setFullYear(date.getFullYear() - 2);
+      break;
+  }
+
+  return date.toISOString();
+}
+
 export function useStatistics(deckId?: number, initialInterval: Interval = 'day') {
   const [interval, setInterval] = useState<Interval>(initialInterval);
   const [data, setData] = useState<StatsSeries[]>([]);
@@ -16,30 +34,16 @@ export function useStatistics(deckId?: number, initialInterval: Interval = 'day'
     totalDecks: 0,
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { getGlobalStats, getDeckStats, getKPIs } = useFlashcardsStore();
 
   const loadStats = useCallback(async () => {
     setLoading(true);
-    try {
-      let startDate: string | undefined;
+    setError(null);
 
-      if (interval === 'day') {
-        // Last 7 days
-        const d = new Date();
-        d.setDate(d.getDate() - 7);
-        startDate = d.toISOString();
-      } else if (interval === 'month') {
-        // Last 6 months
-        const d = new Date();
-        d.setMonth(d.getMonth() - 6);
-        startDate = d.toISOString();
-      } else {
-        // For longer periods, last 2 years
-        const d = new Date();
-        d.setFullYear(d.getFullYear() - 2);
-        startDate = d.toISOString();
-      }
+    try {
+      const startDate = getStartDateForInterval(interval);
 
       // Run sequentially to avoid NullPointerException on Android
       // when multiple prepareAsync calls happen concurrently
@@ -52,7 +56,11 @@ export function useStatistics(deckId?: number, initialInterval: Interval = 'day'
       setData(statsResult);
       setKpis(kpisResult);
     } catch (error) {
-      console.error('Failed to load stats:', error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'An unexpected error occurred while loading stats.',
+      );
     } finally {
       setLoading(false);
     }
@@ -68,6 +76,7 @@ export function useStatistics(deckId?: number, initialInterval: Interval = 'day'
     data,
     kpis,
     loading,
+    error,
     refresh: loadStats,
   };
 }

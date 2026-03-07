@@ -115,10 +115,6 @@ export async function restoreDatabaseFromFile(
     tempFile.delete();
   }
 
-  tempFile.create({ intermediates: true });
-  if (tempFile.exists) {
-    tempFile.delete();
-  }
   file.copy(tempFile);
 
   const serialized = await tempFile.bytes();

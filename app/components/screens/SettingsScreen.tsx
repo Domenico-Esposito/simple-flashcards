@@ -1,6 +1,6 @@
 import { Pressable } from 'react-native';
 import { Text, View, YStack, XStack } from 'tamagui';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,7 @@ import { getColors } from '@/constants/colors';
 type SettingsItem = {
   title: string;
   icon: keyof typeof MaterialIcons.glyphMap;
-  route: string;
+  route: Href;
 };
 
 export function SettingsScreen() {
@@ -56,7 +56,7 @@ export function SettingsScreen() {
 
       <YStack padding="$4" gap="$2">
         {settingsItems.map((item, index) => (
-          <Pressable key={item.route} onPress={() => router.push(item.route as any)}>
+          <Pressable key={item.route.toString()} onPress={() => router.push(item.route)}>
             <XStack
               backgroundColor="$backgroundStrong"
               padding="$4"

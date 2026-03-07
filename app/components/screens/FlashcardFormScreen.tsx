@@ -25,6 +25,9 @@ import {
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppAlert } from '@/hooks/useAppAlert';
 import { getColors } from '@/constants/colors';
+import { useFormTextField } from '@/hooks/useFormTextField';
+
+type EditorSection = 'question' | 'answer';
 
 type FlashcardFormScreenProps = {
   mode: 'new' | 'edit';
@@ -42,31 +45,43 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
   const keyboardHeight = useKeyboardHeight();
   const insets = useSafeAreaInsets();
 
-  const [questionText, setQuestionText] = useState('');
-  const [answerText, setAnswerText] = useState('');
-  const [questionError, setQuestionError] = useState('');
-  const [answerError, setAnswerError] = useState('');
+  const {
+    value: questionText,
+    error: questionError,
+    setValue: setQuestionText,
+    onChangeText: onQuestionChangeText,
+    clearError: clearQuestionError,
+    validateRequired: validateQuestion,
+  } = useFormTextField();
+  const {
+    value: answerText,
+    error: answerError,
+    setValue: setAnswerText,
+    onChangeText: onAnswerChangeText,
+    clearError: clearAnswerError,
+    validateRequired: validateAnswer,
+  } = useFormTextField();
   const [isLoading, setIsLoading] = useState(mode === 'edit');
-  const [activeSection, setActiveSection] = useState<'question' | 'answer'>('question');
+  const [activeSection, setActiveSection] = useState<EditorSection>('question');
 
   const questionEditor = useMarkdownEditor({
     value: questionText,
-    onChangeText: (text) => {
-      setQuestionText(text);
-      setQuestionError('');
-    },
+    onChangeText: onQuestionChangeText,
   });
 
   const answerEditor = useMarkdownEditor({
     value: answerText,
-    onChangeText: (text) => {
-      setAnswerText(text);
-      setAnswerError('');
-    },
+    onChangeText: onAnswerChangeText,
   });
 
   // Get the active editor
   const activeEditor = activeSection === 'question' ? questionEditor : answerEditor;
+  const toolbarBottomOffset = Platform.OS === 'ios' ? insets.bottom + 38 : 8;
+
+  const handleDonePress = () => {
+    activeEditor.inputRef.current?.blur();
+    Keyboard.dismiss();
+  };
 
   // Load existing flashcard data when in edit mode
   useEffect(() => {
@@ -76,27 +91,20 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
         if (fc) {
           setQuestionText(fc.question);
           setAnswerText(fc.answer);
+          clearQuestionError();
+          clearAnswerError();
         }
         setIsLoading(false);
       };
       loadFlashcard();
     }
-  }, [mode, flashcardId]);
+  }, [mode, flashcardId, setQuestionText, setAnswerText, clearQuestionError, clearAnswerError]);
 
   const handleSave = async () => {
-    let hasError = false;
+    const isQuestionValid = validateQuestion(t('flashcard.questionRequired'));
+    const isAnswerValid = validateAnswer(t('flashcard.answerRequired'));
 
-    if (!questionText.trim()) {
-      setQuestionError(t('flashcard.questionRequired'));
-      hasError = true;
-    }
-
-    if (!answerText.trim()) {
-      setAnswerError(t('flashcard.answerRequired'));
-      hasError = true;
-    }
-
-    if (hasError) return;
+    if (!isQuestionValid || !isAnswerValid) return;
 
     if (mode === 'new' && deckId !== undefined) {
       await addFlashcard(deckId, questionText, answerText);
@@ -220,7 +228,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
           <RNView
             style={{
               position: 'absolute',
-              bottom: Platform.OS === 'ios' ? insets.bottom + 38 : 8,
+              bottom: toolbarBottomOffset,
               left: 0,
               right: 0,
               zIndex: 100,
@@ -257,14 +265,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
                   })}
                 />
               </ScrollView>
-              <Pressable
-                onPress={() => {
-                  activeEditor.inputRef.current?.blur();
-                  Keyboard.dismiss();
-                }}
-                style={{ paddingHorizontal: 12 }}
-                hitSlop={8}
-              >
+              <Pressable onPress={handleDonePress} style={{ paddingHorizontal: 12 }} hitSlop={8}>
                 <Text color={colors.accent} fontWeight="600">
                   {t('common.done')}
                 </Text>

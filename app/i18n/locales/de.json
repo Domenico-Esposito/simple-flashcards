@@ -187,7 +187,8 @@
     "totalCards": "Karten Gesamt",
     "totalTime": "Gesamtzeit",
     "totalDecks": "Gelernte Stapel",
-    "noData": "Keine Daten verfügbar"
+    "noData": "Keine Daten verfügbar",
+    "loadError": "Die Statistiken konnten nicht geladen werden"
   },
   "errors": {
     "deckNotFound": "Stapel nicht gefunden",

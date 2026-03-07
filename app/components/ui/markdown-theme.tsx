@@ -1,30 +1,30 @@
 import * as React from 'react';
-import { Image, Linking, Platform, StyleSheet, Text as RNText } from 'react-native';
+import { Image, Linking, Platform, StyleSheet, Text as RNText, type TextStyle } from 'react-native';
 import { Text, View } from 'tamagui';
-import { getDefaultSegmentStyle } from '@domenico-esposito/react-native-markdown-editor';
-import type {
-  SegmentComponentProps,
-  SegmentComponentMap,
+import {
+  getDefaultSegmentStyle,
+  type HighlightSegmentType,
+  type SegmentComponentProps,
+  type SegmentComponentMap,
+  type RendererComponentMap,
+  type ParagraphRendererProps,
+  type TextRendererProps,
+  type HeadingRendererProps,
+  type BoldRendererProps,
+  type ItalicRendererProps,
+  type StrikethroughRendererProps,
+  type InlineCodeRendererProps,
+  type CodeBlockRendererProps,
+  type BlockquoteRendererProps,
+  type UnorderedListRendererProps,
+  type OrderedListRendererProps,
+  type ListItemRendererProps,
+  type LinkRendererProps,
+  type ImageRendererProps,
+  type RootRendererProps,
 } from '@domenico-esposito/react-native-markdown-editor';
+
 import { Fonts } from '@/constants/theme';
-import type {
-  RendererComponentMap,
-  ParagraphRendererProps,
-  TextRendererProps,
-  HeadingRendererProps,
-  BoldRendererProps,
-  ItalicRendererProps,
-  StrikethroughRendererProps,
-  InlineCodeRendererProps,
-  CodeBlockRendererProps,
-  BlockquoteRendererProps,
-  UnorderedListRendererProps,
-  OrderedListRendererProps,
-  ListItemRendererProps,
-  LinkRendererProps,
-  ImageRendererProps,
-  RootRendererProps,
-} from '@domenico-esposito/react-native-markdown-editor';
 
 // ---------------------------------------------------------------------------
 // Color palette
@@ -93,14 +93,14 @@ export function createSegmentComponents(scheme: ColorScheme): SegmentComponentMa
   // so that the library's web style-extraction (resolveSegmentStyle / collectNestedStyles)
   // can read the style directly from `element.props.style`.
   function mergeStyle(
-    type: string,
+    type: HighlightSegmentType,
     meta?: Record<string, string>,
-    overrides?: Record<string, any>,
-  ): Record<string, any> {
-    const base = getDefaultSegmentStyle(type as any, meta);
+    overrides: TextStyle = {},
+  ): TextStyle {
+    const base = getDefaultSegmentStyle(type, meta);
     const isCode = type === 'code' || type === 'codeBlock';
     const fontFamily = isCode ? Fonts?.mono : Fonts?.sans;
-    const heading =
+    const heading: TextStyle | undefined =
       meta?.lineContext === 'heading'
         ? {
             fontSize: editorHeadingSizes[meta?.headingLevel ?? '1'] ?? 16,
@@ -117,10 +117,10 @@ export function createSegmentComponents(scheme: ColorScheme): SegmentComponentMa
   // We use RNText on native (rendered by React, hooks are fine) and a plain
   // React.createElement('span') on web (no hooks, style is still extractable).
   function createSegment(
-    type: string,
+    type: HighlightSegmentType,
     meta: Record<string, string> | undefined,
     children: React.ReactNode,
-    style: Record<string, any>,
+    style: TextStyle,
   ) {
     if (Platform.OS === 'web') {
       return React.createElement('span', { style }, children);

@@ -49,6 +49,22 @@ function pickFileFromBrowser(): Promise<Uint8Array> {
   });
 }
 
+async function pickRestoreFile(): Promise<import('expo-file-system').File> {
+  const { File } = await import('expo-file-system');
+  const picked = await File.pickFileAsync();
+
+  if (Array.isArray(picked)) {
+    const file = picked[0];
+    if (!file) {
+      throw new Error(i18n.t('backup.noFileSelected'));
+    }
+
+    return new File(file.uri);
+  }
+
+  return new File(picked.uri);
+}
+
 export function BackupScreen() {
   const { refreshAfterRestore } = useFlashcardsStore();
   const { showAlert, AlertDialog } = useAppAlert();
@@ -109,10 +125,8 @@ export function BackupScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            const { File } = await import('expo-file-system');
-            const picked = await File.pickFileAsync();
-            const file = Array.isArray(picked) ? picked[0] : picked;
-            await restoreDatabaseFromFile(file as any);
+            const file = await pickRestoreFile();
+            await restoreDatabaseFromFile(file);
             await refreshAfterRestore();
             showAlert(t('common.completed'), t('backup.restoreSuccess'));
           } catch (error) {

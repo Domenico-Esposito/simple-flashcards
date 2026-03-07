@@ -126,7 +126,7 @@ function StackBar({
       duration: animationDuration,
       useNativeDriver: false,
     }).start();
-  }, [totalHeight]);
+  }, [animatedHeight, totalHeight, animationDuration]);
 
   const getPosition = (index: number): number => {
     let pos = 0;

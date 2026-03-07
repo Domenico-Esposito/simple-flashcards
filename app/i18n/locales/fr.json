@@ -187,7 +187,8 @@
     "totalCards": "Cartes Totales",
     "totalTime": "Temps Total",
     "totalDecks": "Paquets Étudiés",
-    "noData": "Aucune donnée disponible"
+    "noData": "Aucune donnée disponible",
+    "loadError": "Impossible de charger les statistiques"
   },
   "errors": {
     "deckNotFound": "Paquet non trouvé",

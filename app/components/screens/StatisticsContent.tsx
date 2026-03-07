@@ -28,7 +28,7 @@ export function StatisticsContent({
   title,
   showBackButton = false,
 }: StatisticsContentProps) {
-  const { interval, setInterval, data, kpis, loading, refresh } = useStatistics(deckId);
+  const { interval, setInterval, data, kpis, loading, error, refresh } = useStatistics(deckId);
   const { t } = useTranslation();
 
   const resolvedTitle = title ?? t('tab.statistics');
@@ -87,6 +87,26 @@ export function StatisticsContent({
               ))}
             </XStack>
           </View>
+
+          {error && (
+            <YStack
+              gap="$1"
+              padding="$3"
+              borderRadius="$4"
+              borderWidth={1}
+              borderColor="$red8"
+              backgroundColor="$red2"
+            >
+              <Text fontSize={14} fontWeight="600" color="$red10">
+                {t('stats.loadError')}
+              </Text>
+              {__DEV__ ? (
+                <Text fontSize={12} color="$red10">
+                  {error}
+                </Text>
+              ) : null}
+            </YStack>
+          )}
 
           {/* Chart Section */}
           <YStack gap="$3">

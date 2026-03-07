@@ -187,7 +187,8 @@
     "totalCards": "Total Cards",
     "totalTime": "Total Time",
     "totalDecks": "Decks Studied",
-    "noData": "No data available"
+    "noData": "No data available",
+    "loadError": "Unable to load statistics"
   },
   "errors": {
     "deckNotFound": "Deck not found",

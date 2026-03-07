@@ -2,7 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { TamaguiProvider, Theme } from '@tamagui/core';
 import { PortalProvider } from '@tamagui/portal';
 import { useFonts } from 'expo-font';
-import { Stack, usePathname, useRouter } from 'expo-router';
+import { Stack, usePathname, useRouter, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
@@ -35,6 +35,12 @@ const modalScreenOptions = {
 type NavigationLayoutProps = {
   colorScheme: 'light' | 'dark';
   topInset: number;
+};
+
+type SidebarTab = {
+  path: Href;
+  label: string;
+  icon: keyof typeof MaterialIcons.glyphMap;
 };
 
 /** Large screen: sidebar with content area */
@@ -135,7 +141,7 @@ function Sidebar() {
   const tint = Colors[colorScheme ?? 'light'].tint;
   const insets = useSafeAreaInsets();
 
-  const tabs = [
+  const tabs: SidebarTab[] = [
     { path: '/', label: t('tab.decks'), icon: 'layers' as const },
     {
       path: '/statistics',
@@ -157,10 +163,10 @@ function Sidebar() {
       gap="$1"
     >
       {tabs.map((tab) => {
-        const isActive =
-          pathname === tab.path || (tab.path !== '/' && pathname.startsWith(tab.path));
+        const tabPath = tab.path.toString();
+        const isActive = pathname === tabPath || (tabPath !== '/' && pathname.startsWith(tabPath));
         return (
-          <Pressable key={tab.path} onPress={() => router.push(tab.path as any)}>
+          <Pressable key={tabPath} onPress={() => router.push(tab.path)}>
             <XStack
               paddingVertical="$3"
               paddingHorizontal="$3"

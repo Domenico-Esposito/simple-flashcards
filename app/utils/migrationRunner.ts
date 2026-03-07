@@ -1,6 +1,12 @@
 import * as SQLite from 'expo-sqlite';
 import { migrations, getLatestVersion, type Migration } from './migrations';
 
+function logMigrationMessage(message: string): void {
+  if (__DEV__) {
+    console.log(message);
+  }
+}
+
 /**
  * Create the schema_version table if it doesn't exist
  */
@@ -78,7 +84,9 @@ async function executeMigration(
       await removeMigrationRecord(db, migration.version);
     }
 
-    console.log(`✓ Migration ${migration.version} (${migration.name}) ${direction} completed`);
+    logMigrationMessage(
+      `✓ Migration ${migration.version} (${migration.name}) ${direction} completed`,
+    );
   } catch (error) {
     console.error(
       `✗ Migration ${migration.version} (${migration.name}) ${direction} failed:`,
@@ -102,7 +110,7 @@ export async function runMigrations(db: SQLite.SQLiteDatabase): Promise<number> 
   // Run migration 1 to ensure all tables exist (it's idempotent via IF NOT EXISTS),
   // then continue with remaining migrations.
   if (currentVersion === 0 && (await isExistingDatabase(db))) {
-    console.log('Existing database detected, running baseline migration');
+    logMigrationMessage('Existing database detected, running baseline migration');
     await executeMigration(db, migrations[0], 'up');
     const updatedVersion = await getCurrentVersion(db);
     return runMigrationsFromVersion(db, updatedVersion);
@@ -121,11 +129,13 @@ async function runMigrationsFromVersion(
   const pendingMigrations = migrations.filter((m) => m.version > fromVersion);
 
   if (pendingMigrations.length === 0) {
-    console.log(`Database is up to date (version ${fromVersion})`);
+    logMigrationMessage(`Database is up to date (version ${fromVersion})`);
     return 0;
   }
 
-  console.log(`Running ${pendingMigrations.length} migration(s) from version ${fromVersion}...`);
+  logMigrationMessage(
+    `Running ${pendingMigrations.length} migration(s) from version ${fromVersion}...`,
+  );
 
   // Sort migrations by version to ensure correct order
   pendingMigrations.sort((a, b) => a.version - b.version);
@@ -134,6 +144,6 @@ async function runMigrationsFromVersion(
     await executeMigration(db, migration, 'up');
   }
 
-  console.log(`Migrations complete. Database now at version ${getLatestVersion()}`);
+  logMigrationMessage(`Migrations complete. Database now at version ${getLatestVersion()}`);
   return pendingMigrations.length;
 }
