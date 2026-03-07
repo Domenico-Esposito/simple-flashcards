@@ -9,7 +9,7 @@ import { HistogramChart } from '@/components/HistogramChart';
 import { StatCard } from '@/components/StatCard';
 import { Header } from '@/components/Header';
 import { formatTime } from '@/utils';
-import { chartColors, kpiColors } from '@/constants/colors';
+import { kpiColors } from '@/constants/colors';
 
 type StatisticsContentProps = {
   /** When provided, shows deck-specific statistics */
@@ -23,7 +23,11 @@ type StatisticsContentProps = {
 /**
  * Shared statistics UI used by both the global statistics tab and the per-deck statistics screen.
  */
-export function StatisticsContent({ deckId, title, showBackButton = false }: StatisticsContentProps) {
+export function StatisticsContent({
+  deckId,
+  title,
+  showBackButton = false,
+}: StatisticsContentProps) {
   const { interval, setInterval, data, kpis, loading, refresh } = useStatistics(deckId);
   const { t } = useTranslation();
 
@@ -40,23 +44,22 @@ export function StatisticsContent({ deckId, title, showBackButton = false }: Sta
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [refresh])
+    }, [refresh]),
   );
 
   return (
     <View flex={1} backgroundColor="$background">
       <Header title={resolvedTitle} showBackButton={showBackButton} />
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 50 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 50 }}
+        showsVerticalScrollIndicator={false}
+      >
         <YStack gap="$5">
           {/* Interval Selector */}
           <View backgroundColor="$backgroundStrong" borderRadius="$4" padding="$1">
             <XStack>
               {INTERVALS.map((i) => (
-                <Pressable
-                  key={i.value}
-                  onPress={() => setInterval(i.value)}
-                  style={{ flex: 1 }}
-                >
+                <Pressable key={i.value} onPress={() => setInterval(i.value)} style={{ flex: 1 }}>
                   <View
                     paddingVertical="$2.5"
                     paddingHorizontal="$3"
@@ -72,8 +75,8 @@ export function StatisticsContent({ deckId, title, showBackButton = false }: Sta
                       elevation: 2,
                     })}
                   >
-                    <Text 
-                      fontSize={13} 
+                    <Text
+                      fontSize={13}
                       fontWeight={interval === i.value ? '600' : '400'}
                       color={interval === i.value ? '$color' : '$gray10'}
                     >
@@ -87,14 +90,10 @@ export function StatisticsContent({ deckId, title, showBackButton = false }: Sta
 
           {/* Chart Section */}
           <YStack gap="$3">
-            <Text fontSize={18} fontWeight="600" color="$color">{t('stats.difficultyTrend')}</Text>
-            <View 
-              backgroundColor="$backgroundStrong" 
-              borderRadius="$4" 
-              padding="$4" 
-              minHeight={260}
-              justifyContent="center"
-            >
+            <Text fontSize={18} fontWeight="600" color="$color">
+              {t('stats.difficultyTrend')}
+            </Text>
+            <View backgroundColor="$backgroundStrong" borderRadius="$4" padding="$4">
               {loading ? (
                 <YStack alignItems="center" justifyContent="center" flex={1}>
                   <Spinner size="large" color="$primary" />
@@ -103,55 +102,41 @@ export function StatisticsContent({ deckId, title, showBackButton = false }: Sta
                 <HistogramChart data={data} />
               )}
             </View>
-            
-            {/* Legend */}
-            <XStack justifyContent="center" gap="$6" paddingTop="$2">
-              <XStack alignItems="center" gap="$2">
-                <View width={12} height={12} borderRadius={3} backgroundColor={chartColors.easy} />
-                <Text fontSize={13} color="$gray10">{t('stats.easy')}</Text>
-              </XStack>
-              <XStack alignItems="center" gap="$2">
-                <View width={12} height={12} borderRadius={3} backgroundColor={chartColors.medium} />
-                <Text fontSize={13} color="$gray10">{t('stats.medium')}</Text>
-              </XStack>
-              <XStack alignItems="center" gap="$2">
-                <View width={12} height={12} borderRadius={3} backgroundColor={chartColors.hard} />
-                <Text fontSize={13} color="$gray10">{t('stats.hard')}</Text>
-              </XStack>
-            </XStack>
           </YStack>
 
           <Separator marginVertical="$2" />
 
           {/* KPIs Section */}
           <YStack gap="$4">
-            <Text fontSize={18} fontWeight="600" color="$color">{t('stats.summary')}</Text>
-            
+            <Text fontSize={18} fontWeight="600" color="$color">
+              {t('stats.summary')}
+            </Text>
+
             <XStack gap="$3">
-              <StatCard 
-                title={t('stats.quizzesCompleted')} 
-                value={kpis.totalQuizzes} 
+              <StatCard
+                title={t('stats.quizzesCompleted')}
+                value={kpis.totalQuizzes}
                 icon="school"
                 iconColor={kpiColors.quizzes}
               />
-              <StatCard 
-                title={t('stats.totalCards')} 
+              <StatCard
+                title={t('stats.totalCards')}
                 value={kpis.totalCards}
                 icon="style"
                 iconColor={kpiColors.totalCards}
               />
             </XStack>
-            
+
             {deckId ? (
               <XStack gap="$3">
-                <StatCard 
-                  title={t('stats.easy')} 
+                <StatCard
+                  title={t('stats.easy')}
                   value={kpis.easyCount}
                   icon="sentiment-satisfied"
                   iconColor={kpiColors.easy}
                 />
-                <StatCard 
-                  title={t('stats.hard')} 
+                <StatCard
+                  title={t('stats.hard')}
                   value={kpis.hardCount}
                   icon="sentiment-dissatisfied"
                   iconColor={kpiColors.hard}
@@ -159,14 +144,14 @@ export function StatisticsContent({ deckId, title, showBackButton = false }: Sta
               </XStack>
             ) : (
               <XStack gap="$3">
-                <StatCard 
-                  title={t('stats.totalTime')} 
+                <StatCard
+                  title={t('stats.totalTime')}
                   value={formatTime(kpis.totalTime)}
                   icon="schedule"
                   iconColor={kpiColors.totalTime}
                 />
-                <StatCard 
-                  title={t('stats.totalDecks')} 
+                <StatCard
+                  title={t('stats.totalDecks')}
                   value={kpis.totalDecks}
                   icon="folder"
                   iconColor={kpiColors.totalDecks}

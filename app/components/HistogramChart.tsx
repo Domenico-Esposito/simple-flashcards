@@ -1,85 +1,46 @@
-import { StackedBarChart } from 'react-native-chart-kit';
 import { StatsSeries } from '@/types';
-import { useTheme, View, Text } from 'tamagui';
-import { chartColors, getColors } from '@/constants/colors';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { View, Text } from 'tamagui';
+import { chartColors } from '@/constants/colors';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
+import { StackedBarChart, type StackedBarData, type LegendItem } from './StackedBarChart';
 
 type Props = {
   data: StatsSeries[];
-  width?: number;
   height?: number;
 };
 
-export function HistogramChart({ data, width, height = 200 }: Props) {
-  const theme = useTheme();
-  const colorScheme = useColorScheme();
-  const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
-  const [containerWidth, setContainerWidth] = useState(0);
+export function HistogramChart({ data, height = 200 }: Props) {
   const { t } = useTranslation();
-
-  const chartWidth = width || containerWidth;
 
   if (!data || data.length === 0) {
     return (
-        <View height={height} alignItems="center" justifyContent="center">
-            <Text color="$gray10" fontSize={14}>{t('stats.noData')}</Text>
-        </View>
+      <View height={height} alignItems="center" justifyContent="center">
+        <Text color="$gray10" fontSize={14}>
+          {t('stats.noData')}
+        </Text>
+      </View>
     );
   }
 
-  const chartData = {
-    labels: data.map(d => {
-        if (d.period.length === 10) return d.period.substring(8); // DD
-        if (d.period.length === 7) return d.period.substring(5); // MM
-        return d.period;
-    }),
-    legend: [],
-    data: data.map(d => [d.easy, d.medium, d.hard]),
-    barColors: chartColors.barColors
-  };
+  const chartData: StackedBarData[] = data.map((d) => ({
+    label:
+      d.period.length === 10
+        ? d.period.substring(8) // DD
+        : d.period.length === 7
+          ? d.period.substring(5) // MM
+          : d.period,
+    stacks: [
+      { value: d.easy, color: chartColors.easy },
+      { value: d.medium, color: chartColors.medium },
+      { value: d.hard, color: chartColors.hard },
+    ],
+  }));
 
-  const chartConfig = {
-    backgroundColor: 'transparent',
-    backgroundGradientFrom: 'transparent',
-    backgroundGradientTo: 'transparent',
-    backgroundGradientFromOpacity: 0,
-    backgroundGradientToOpacity: 0,
-    decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(150, 150, 150, ${opacity * 0.5})`,
-    labelColor: () => (theme.gray10?.val as string) || colors.muted,
-    style: {
-      borderRadius: 16
-    },
-    barPercentage: 0.6,
-    propsForLabels: {
-      fontSize: 11,
-    },
-  };
+  const legend: LegendItem[] = [
+    { label: t('stats.easy'), color: chartColors.easy },
+    { label: t('stats.medium'), color: chartColors.medium },
+    { label: t('stats.hard'), color: chartColors.hard },
+  ];
 
-  return (
-    <View
-      alignItems="center"
-      justifyContent="center"
-      marginLeft={-16}
-      onLayout={(e: any) => setContainerWidth(e.nativeEvent.layout.width)}
-    >
-        {chartWidth > 0 && (
-          <>
-            {/* @ts-expect-error react-native-chart-kit class types incompatible with React 18 JSX */}
-            <StackedBarChart
-              data={chartData}
-              width={chartWidth}
-              height={height}
-              chartConfig={chartConfig}
-              hideLegend={true}
-              style={{
-                borderRadius: 16,
-              }}
-            />
-          </>
-        )}
-    </View>
-  );
+  return <StackedBarChart data={chartData} height={height} legend={legend} />;
 }
