@@ -8,25 +8,25 @@ import { Header } from '@/components/Header';
 import { HtmlContent } from '@/components/ui/HtmlContent';
 
 type ReadMoreScreenProps = {
-	type: 'question' | 'answer';
-	content: string;
+  type: 'question' | 'answer';
+  content: string;
 };
 
 export function ReadMoreScreen({ type, content }: ReadMoreScreenProps) {
-	const { t } = useTranslation();
-	const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
-	const title = type === 'question' ? t('flashcard.question') : t('flashcard.answer');
+  const title = type === 'question' ? t('flashcard.question') : t('flashcard.answer');
 
-	return (
-		<View flex={1} backgroundColor="$background">
-			<Header title={title} isModal />
+  return (
+    <View flex={1} backgroundColor="$background">
+      <Header title={title} isModal />
 
-			<ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: insets.bottom }}>
-				<Stack gap="$4" flex={1} paddingHorizontal="$4" paddingVertical="$2">
-					<HtmlContent html={content || ''} />
-				</Stack>
-			</ScrollView>
-		</View>
-	);
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: insets.bottom }}>
+        <Stack gap="$4" flex={1} paddingHorizontal="$4" paddingVertical="$2">
+          <HtmlContent html={content || ''} />
+        </Stack>
+      </ScrollView>
+    </View>
+  );
 }

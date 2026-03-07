@@ -11,7 +11,14 @@ type StatCardProps = {
   fullWidth?: boolean;
 };
 
-export function StatCard({ title, value, subtitle, icon, iconColor = kpiColors.quizzes, fullWidth = false }: StatCardProps) {
+export function StatCard({
+  title,
+  value,
+  subtitle,
+  icon,
+  iconColor = kpiColors.quizzes,
+  fullWidth = false,
+}: StatCardProps) {
   return (
     <View
       flex={fullWidth ? undefined : 1}
@@ -35,7 +42,13 @@ export function StatCard({ title, value, subtitle, icon, iconColor = kpiColors.q
             <MaterialIcons name={icon} size={22} color={iconColor} />
           </View>
         )}
-        <Text fontSize={13} color="$gray10" fontWeight="500" textTransform="uppercase" letterSpacing={0.5}>
+        <Text
+          fontSize={13}
+          color="$gray10"
+          fontWeight="500"
+          textTransform="uppercase"
+          letterSpacing={0.5}
+        >
           {title}
         </Text>
         <Text fontSize={28} fontWeight="700" color="$color">

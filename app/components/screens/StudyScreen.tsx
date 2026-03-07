@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { FlashcardViewer } from '@/components/FlashcardViewer';
 
 type StudyScreenProps = {
-	deckId: number;
+  deckId: number;
 };
 
 /**
@@ -11,12 +11,7 @@ type StudyScreenProps = {
  * Uses the shared FlashcardViewer for card flip and swipe navigation.
  */
 export function StudyScreen({ deckId }: StudyScreenProps) {
-	const router = useRouter();
+  const router = useRouter();
 
-	return (
-		<FlashcardViewer
-			deckId={deckId}
-			onExit={() => router.back()}
-		/>
-	);
+  return <FlashcardViewer deckId={deckId} onExit={() => router.back()} />;
 }

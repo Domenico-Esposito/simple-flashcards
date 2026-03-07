@@ -8,62 +8,65 @@ export { initDatabase } from './database';
  * Shuffle an array using Fisher-Yates algorithm
  */
 export function shuffleArray<T>(array: T[]): T[] {
-	const shuffled = [...array];
-	for (let i = shuffled.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-	}
-	return shuffled;
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 /**
  * Format a date string to a localized format
  */
 export function formatDate(isoString: string): string {
-	const i18n = require('@/i18n').default;
-	const locale = i18n.language ?? 'it';
-	const date = new Date(isoString);
-	return date.toLocaleDateString(locale, {
-		day: 'numeric',
-		month: 'short',
-		year: 'numeric',
-	});
+  const i18n = require('@/i18n').default;
+  const locale = i18n.language ?? 'it';
+  const date = new Date(isoString);
+  return date.toLocaleDateString(locale, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 /**
  * Format a duration in milliseconds to a human-readable string (e.g. "5m 30s")
  */
 export function formatTime(ms: number): string {
-	if (!ms) return '0s';
-	const seconds = Math.floor(ms / 1000);
-	if (seconds < 60) return `${seconds}s`;
-	const minutes = Math.floor(seconds / 60);
-	if (minutes < 60) return `${minutes}m ${seconds % 60}s`;
-	const hours = Math.floor(minutes / 60);
-	return `${hours}h ${minutes % 60}m`;
+  if (!ms) return '0s';
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ${seconds % 60}s`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ${minutes % 60}m`;
 }
 
 /**
  * Pick a weighted-random flashcard based on difficulty ratings.
  * Cards rated 'hard' are more likely to be picked, 'easy' less likely.
  */
-export function pickWeightedCard<T extends { id: number }>(cards: T[], difficultyMap: Record<number, 'easy' | 'medium' | 'hard'>): T {
-	const WEIGHTS = { hard: 3, medium: 2, easy: 0.5, unseen: 5 };
+export function pickWeightedCard<T extends { id: number }>(
+  cards: T[],
+  difficultyMap: Record<number, 'easy' | 'medium' | 'hard'>,
+): T {
+  const WEIGHTS = { hard: 3, medium: 2, easy: 0.5, unseen: 5 };
 
-	const weights = cards.map((card) => {
-		const rating = difficultyMap[card.id];
-		return rating ? WEIGHTS[rating] : WEIGHTS.unseen;
-	});
+  const weights = cards.map((card) => {
+    const rating = difficultyMap[card.id];
+    return rating ? WEIGHTS[rating] : WEIGHTS.unseen;
+  });
 
-	const totalWeight = weights.reduce((sum, w) => sum + w, 0);
-	let random = Math.random() * totalWeight;
+  const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+  let random = Math.random() * totalWeight;
 
-	for (let i = 0; i < cards.length; i++) {
-		random -= weights[i];
-		if (random <= 0) return cards[i];
-	}
+  for (let i = 0; i < cards.length; i++) {
+    random -= weights[i];
+    if (random <= 0) return cards[i];
+  }
 
-	return cards[cards.length - 1];
+  return cards[cards.length - 1];
 }
 
 /**
@@ -71,32 +74,32 @@ export function pickWeightedCard<T extends { id: number }>(cards: T[], difficult
  * Useful for generating previews of markdown content.
  */
 export function stripMarkdown(text: string): string {
-	return text
-		.replace(/<br\s*\/?>/gi, ' ')
-		.replace(/<[^>]*>/g, '')
-		.replace(/&nbsp;/gi, ' ')
-		.replace(/&amp;/gi, '&')
-		.replace(/&lt;/gi, '<')
-		.replace(/&gt;/gi, '>')
-		.replace(/&quot;/gi, '"')
-		.replace(/&#39;/gi, "'")
-		.replace(/&[a-z]+;/gi, '')
-		.replace(/^[=-]{2,}\s*$/gm, '')
-		.replace(/\[\^.+?\](: .*?$)?/gm, '')
-		.replace(/\s{0,2}\[.*?\]: .*?$/gm, '')
-		.replace(/!\[(.*?)\][[(].*?[\])]/g, '')
-		.replace(/\[([\s\S]*?)\]\s*[([].*?[)\]]/g, '$1')
-		.replace(/^(\n)?\s{0,3}>\s?/gm, '$1')
-		.replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/gm, '')
-		.replace(/^(\n)?\s{0,}#{1,6}\s*( (.+))? +#+$|^(\n)?\s{0,}#{1,6}\s*( (.+))?$/gm, '$1$3$4$6')
-		.replace(/([*]+)(\S)(.*?\S)??\1/g, '$2$3')
-		.replace(/(^|\W)([_]+)(\S)(.*?\S)??\2($|\W)/g, '$1$3$4$5')
-		.replace(/(`{3,})(.*?)\1/gms, '$2')
-		.replace(/`(.+?)`/g, '$1')
-		.replace(/~(.*?)~/g, '$1')
-		.replace(/^[-*+]\s+/gm, '')
-		.replace(/^\d+\.\s+/gm, '')
-		.replace(/\n+/g, ' ')
-		.replace(/\s{2,}/g, ' ')
-		.trim();
+  return text
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&[a-z]+;/gi, '')
+    .replace(/^[=-]{2,}\s*$/gm, '')
+    .replace(/\[\^.+?\](: .*?$)?/gm, '')
+    .replace(/\s{0,2}\[.*?\]: .*?$/gm, '')
+    .replace(/!\[(.*?)\][[(].*?[\])]/g, '')
+    .replace(/\[([\s\S]*?)\]\s*[([].*?[)\]]/g, '$1')
+    .replace(/^(\n)?\s{0,3}>\s?/gm, '$1')
+    .replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/gm, '')
+    .replace(/^(\n)?\s{0,}#{1,6}\s*( (.+))? +#+$|^(\n)?\s{0,}#{1,6}\s*( (.+))?$/gm, '$1$3$4$6')
+    .replace(/([*]+)(\S)(.*?\S)??\1/g, '$2$3')
+    .replace(/(^|\W)([_]+)(\S)(.*?\S)??\2($|\W)/g, '$1$3$4$5')
+    .replace(/(`{3,})(.*?)\1/gms, '$2')
+    .replace(/`(.+?)`/g, '$1')
+    .replace(/~(.*?)~/g, '$1')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+    .replace(/\n+/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }

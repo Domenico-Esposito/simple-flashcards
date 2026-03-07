@@ -5,8 +5,8 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { createRendererComponents } from '@/components/ui/markdown-theme';
 
 type HtmlContentProps = {
-	html: string;
-	baseFontSize?: number;
+  html: string;
+  baseFontSize?: number;
 };
 
 /**
@@ -14,8 +14,8 @@ type HtmlContentProps = {
  * Used in QuizScreen, StudyScreen, and ReadMoreScreen to display flashcard content.
  */
 export function HtmlContent({ html }: HtmlContentProps) {
-	const colorScheme = useColorScheme() ?? 'light';
-	const components = useMemo(() => createRendererComponents(colorScheme), [colorScheme]);
+  const colorScheme = useColorScheme() ?? 'light';
+  const components = useMemo(() => createRendererComponents(colorScheme), [colorScheme]);
 
-	return <MarkdownRenderer markdown={html} components={components} />;
+  return <MarkdownRenderer markdown={html} components={components} />;
 }

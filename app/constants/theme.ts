@@ -28,12 +28,12 @@ export const Colors = {
 };
 
 export const Fonts = {
-	sans: 'Inter',
-	serif: 'Inter',
-	rounded: 'Inter',
-	mono: Platform.select({
-		ios: 'Menlo',
-		android: 'monospace',
-		default: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-	}) as string,
+  sans: 'Inter',
+  serif: 'Inter',
+  rounded: 'Inter',
+  mono: Platform.select({
+    ios: 'Menlo',
+    android: 'monospace',
+    default: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+  }) as string,
 };

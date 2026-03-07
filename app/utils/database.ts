@@ -11,120 +11,122 @@ let db: SQLite.SQLiteDatabase | null = null;
  * Initialize the database and run migrations
  */
 export async function initDatabase(): Promise<void> {
-	db = await SQLite.openDatabaseAsync(DATABASE_NAME);
+  db = await SQLite.openDatabaseAsync(DATABASE_NAME);
 
-	// Detect FTS5 support from the actual SQLite engine before running migrations
-	await detectFts5Support(db);
+  // Detect FTS5 support from the actual SQLite engine before running migrations
+  await detectFts5Support(db);
 
-	// Run all pending migrations
-	await runMigrations(db);
+  // Run all pending migrations
+  await runMigrations(db);
 
-	// Rebuild FTS indexes to ensure they're in sync with existing data
-	if (isFts5Supported()) {
-		await rebuildFtsIndexes();
-	}
+  // Rebuild FTS indexes to ensure they're in sync with existing data
+  if (isFts5Supported()) {
+    await rebuildFtsIndexes();
+  }
 }
 
 /**
  * Close the database connection
  */
 export async function closeDatabase(): Promise<void> {
-	if (db) {
-		await db.closeAsync();
-		db = null;
-	}
+  if (db) {
+    await db.closeAsync();
+    db = null;
+  }
 }
 
 /**
  * Reinitialize the database connection and rebuild indexes
  */
 export async function reinitializeDatabase(): Promise<void> {
-	await closeDatabase();
-	resetFts5Detection();
-	await initDatabase();
+  await closeDatabase();
+  resetFts5Detection();
+  await initDatabase();
 }
 
 /**
  * Get the database instance
  */
 function getDb(): SQLite.SQLiteDatabase {
-	if (!db) {
-		throw new Error('Database not initialized. Call initDatabase() first.');
-	}
-	return db;
+  if (!db) {
+    throw new Error('Database not initialized. Call initDatabase() first.');
+  }
+  return db;
 }
 
 /**
  * Serialize the database to a Uint8Array (works on all platforms)
  */
 export async function backupDatabaseToBytes(): Promise<Uint8Array> {
-	return await getDb().serializeAsync();
+  return await getDb().serializeAsync();
 }
 
 /**
  * Backup the database into a file on disk (native only)
  */
 export async function backupDatabaseToFile(): Promise<import('expo-file-system').File> {
-	const { Directory, File, Paths } = await import('expo-file-system');
-	const backupDirectory = new Directory(Paths.document, 'flashcards-backups');
-	backupDirectory.create({ idempotent: true });
+  const { Directory, File, Paths } = await import('expo-file-system');
+  const backupDirectory = new Directory(Paths.document, 'flashcards-backups');
+  backupDirectory.create({ idempotent: true });
 
-	const filename = `flashcards_backup_${Date.now()}.db`;
-	const backupFile = new File(backupDirectory, filename);
+  const filename = `flashcards_backup_${Date.now()}.db`;
+  const backupFile = new File(backupDirectory, filename);
 
-	if (backupFile.exists) {
-		backupFile.delete();
-	}
+  if (backupFile.exists) {
+    backupFile.delete();
+  }
 
-	const serialized = await getDb().serializeAsync();
-	backupFile.create({ intermediates: true });
-	backupFile.write(serialized);
+  const serialized = await getDb().serializeAsync();
+  backupFile.create({ intermediates: true });
+  backupFile.write(serialized);
 
-	return backupFile;
+  return backupFile;
 }
 
 /**
  * Restore the database from raw bytes (works on all platforms)
  */
 export async function restoreDatabaseFromBytes(data: Uint8Array): Promise<void> {
-	const sourceDb = await SQLite.deserializeDatabaseAsync(data);
-	try {
-		await SQLite.backupDatabaseAsync({
-			sourceDatabase: sourceDb,
-			destDatabase: getDb(),
-		});
-	} finally {
-		await sourceDb.closeAsync();
-	}
-	await reinitializeDatabase();
+  const sourceDb = await SQLite.deserializeDatabaseAsync(data);
+  try {
+    await SQLite.backupDatabaseAsync({
+      sourceDatabase: sourceDb,
+      destDatabase: getDb(),
+    });
+  } finally {
+    await sourceDb.closeAsync();
+  }
+  await reinitializeDatabase();
 }
 
 /**
  * Restore the database from a backup file (native only)
  */
-export async function restoreDatabaseFromFile(file: import('expo-file-system').File): Promise<void> {
-	const { Directory, File, Paths } = await import('expo-file-system');
-	const backupDirectory = new Directory(Paths.document, 'flashcards-backups');
-	backupDirectory.create({ idempotent: true });
+export async function restoreDatabaseFromFile(
+  file: import('expo-file-system').File,
+): Promise<void> {
+  const { Directory, File, Paths } = await import('expo-file-system');
+  const backupDirectory = new Directory(Paths.document, 'flashcards-backups');
+  backupDirectory.create({ idempotent: true });
 
-	const tempFile = new File(backupDirectory, `restore_${Date.now()}.db`);
+  const tempFile = new File(backupDirectory, `restore_${Date.now()}.db`);
 
-	if (tempFile.exists) {
-		tempFile.delete();
-	}
+  if (tempFile.exists) {
+    tempFile.delete();
+  }
 
-	tempFile.create({ intermediates: true });
-	if (tempFile.exists) {
-		tempFile.delete();
-	}
-	file.copy(tempFile);
+  tempFile.create({ intermediates: true });
+  if (tempFile.exists) {
+    tempFile.delete();
+  }
+  file.copy(tempFile);
 
-	const serialized = await tempFile.bytes();
-	await restoreDatabaseFromBytes(serialized);
+  const serialized = await tempFile.bytes();
+  await restoreDatabaseFromBytes(serialized);
 
-	if (tempFile.exists) {
-		tempFile.delete();
-	}
+  if (tempFile.exists) {
+    tempFile.delete();
+  }
 }
 
 // ==================== DECK OPERATIONS ====================
@@ -133,46 +135,53 @@ export async function restoreDatabaseFromFile(file: import('expo-file-system').F
  * Get all decks
  */
 export async function getAllDecks(): Promise<Deck[]> {
-	const result = await getDb().getAllAsync<Deck>('SELECT * FROM decks ORDER BY createdAt DESC');
-	return result;
+  const result = await getDb().getAllAsync<Deck>('SELECT * FROM decks ORDER BY createdAt DESC');
+  return result;
 }
 
 /**
  * Get a single deck by ID
  */
 export async function getDeckById(id: number): Promise<Deck | null> {
-	const result = await getDb().getFirstAsync<Deck>('SELECT * FROM decks WHERE id = ?', [id]);
-	return result || null;
+  const result = await getDb().getFirstAsync<Deck>('SELECT * FROM decks WHERE id = ?', [id]);
+  return result || null;
 }
 
 /**
  * Create a new deck
  */
 export async function createDeck(title: string, description?: string): Promise<Deck> {
-	const createdAt = new Date().toISOString();
-	const result = await getDb().runAsync('INSERT INTO decks (title, description, createdAt) VALUES (?, ?, ?)', [title, description || null, createdAt]);
+  const createdAt = new Date().toISOString();
+  const result = await getDb().runAsync(
+    'INSERT INTO decks (title, description, createdAt) VALUES (?, ?, ?)',
+    [title, description || null, createdAt],
+  );
 
-	return {
-		id: result.lastInsertRowId,
-		title,
-		description,
-		createdAt,
-	};
+  return {
+    id: result.lastInsertRowId,
+    title,
+    description,
+    createdAt,
+  };
 }
 
 /**
  * Update an existing deck
  */
 export async function updateDeck(id: number, title: string, description?: string): Promise<void> {
-	await getDb().runAsync('UPDATE decks SET title = ?, description = ? WHERE id = ?', [title, description || null, id]);
+  await getDb().runAsync('UPDATE decks SET title = ?, description = ? WHERE id = ?', [
+    title,
+    description || null,
+    id,
+  ]);
 }
 
 /**
  * Delete a deck and all its flashcards
  */
 export async function deleteDeck(id: number): Promise<void> {
-	await getDb().runAsync('DELETE FROM flashcards WHERE deckId = ?', [id]);
-	await getDb().runAsync('DELETE FROM decks WHERE id = ?', [id]);
+  await getDb().runAsync('DELETE FROM flashcards WHERE deckId = ?', [id]);
+  await getDb().runAsync('DELETE FROM decks WHERE id = ?', [id]);
 }
 
 // ==================== FLASHCARD OPERATIONS ====================
@@ -181,52 +190,70 @@ export async function deleteDeck(id: number): Promise<void> {
  * Get all flashcards for a deck
  */
 export async function getFlashcardsByDeckId(deckId: number): Promise<Flashcard[]> {
-	const result = await getDb().getAllAsync<Flashcard>('SELECT * FROM flashcards WHERE deckId = ?', [deckId]);
-	return result;
+  const result = await getDb().getAllAsync<Flashcard>('SELECT * FROM flashcards WHERE deckId = ?', [
+    deckId,
+  ]);
+  return result;
 }
 
 /**
  * Get a single flashcard by ID
  */
 export async function getFlashcardById(id: number): Promise<Flashcard | null> {
-	const result = await getDb().getFirstAsync<Flashcard>('SELECT * FROM flashcards WHERE id = ?', [id]);
-	return result || null;
+  const result = await getDb().getFirstAsync<Flashcard>('SELECT * FROM flashcards WHERE id = ?', [
+    id,
+  ]);
+  return result || null;
 }
 
 /**
  * Create a new flashcard
  */
-export async function createFlashcard(deckId: number, question: string, answer: string): Promise<Flashcard> {
-	const result = await getDb().runAsync('INSERT INTO flashcards (deckId, question, answer) VALUES (?, ?, ?)', [deckId, question, answer]);
+export async function createFlashcard(
+  deckId: number,
+  question: string,
+  answer: string,
+): Promise<Flashcard> {
+  const result = await getDb().runAsync(
+    'INSERT INTO flashcards (deckId, question, answer) VALUES (?, ?, ?)',
+    [deckId, question, answer],
+  );
 
-	return {
-		id: result.lastInsertRowId,
-		deckId,
-		question,
-		answer,
-	};
+  return {
+    id: result.lastInsertRowId,
+    deckId,
+    question,
+    answer,
+  };
 }
 
 /**
  * Update an existing flashcard
  */
 export async function updateFlashcard(id: number, question: string, answer: string): Promise<void> {
-	await getDb().runAsync('UPDATE flashcards SET question = ?, answer = ? WHERE id = ?', [question, answer, id]);
+  await getDb().runAsync('UPDATE flashcards SET question = ?, answer = ? WHERE id = ?', [
+    question,
+    answer,
+    id,
+  ]);
 }
 
 /**
  * Delete a flashcard
  */
 export async function deleteFlashcard(id: number): Promise<void> {
-	await getDb().runAsync('DELETE FROM flashcards WHERE id = ?', [id]);
+  await getDb().runAsync('DELETE FROM flashcards WHERE id = ?', [id]);
 }
 
 /**
  * Get flashcard count for a deck
  */
 export async function getFlashcardCount(deckId: number): Promise<number> {
-	const result = await getDb().getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM flashcards WHERE deckId = ?', [deckId]);
-	return result?.count || 0;
+  const result = await getDb().getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM flashcards WHERE deckId = ?',
+    [deckId],
+  );
+  return result?.count || 0;
 }
 
 // ==================== FTS5 SEARCH OPERATIONS ====================
@@ -236,15 +263,15 @@ export async function getFlashcardCount(deckId: number): Promise<number> {
  * Called during initialization to ensure indexes are in sync
  */
 async function rebuildFtsIndexes(): Promise<void> {
-	const database = getDb();
+  const database = getDb();
 
-	// Rebuild flashcards FTS index
-	await database.execAsync(`
+  // Rebuild flashcards FTS index
+  await database.execAsync(`
     INSERT INTO flashcards_fts(flashcards_fts) VALUES('rebuild');
   `);
 
-	// Rebuild decks FTS index
-	await database.execAsync(`
+  // Rebuild decks FTS index
+  await database.execAsync(`
     INSERT INTO decks_fts(decks_fts) VALUES('rebuild');
   `);
 }
@@ -254,36 +281,36 @@ async function rebuildFtsIndexes(): Promise<void> {
  * Returns deck IDs that match the query
  */
 export async function searchDecks(query: string): Promise<number[]> {
-	if (!query.trim()) {
-		const allDecks = await getAllDecks();
-		return allDecks.map((d) => d.id);
-	}
+  if (!query.trim()) {
+    const allDecks = await getAllDecks();
+    return allDecks.map((d) => d.id);
+  }
 
-	if (isFts5Supported()) {
-		// FTS5 search with trigram tokenizer
-		const escapedQuery = query.replace(/"/g, '""');
-		const result = await getDb().getAllAsync<{ id: number }>(
-			`SELECT DISTINCT d.id FROM decks d
+  if (isFts5Supported()) {
+    // FTS5 search with trigram tokenizer
+    const escapedQuery = query.replace(/"/g, '""');
+    const result = await getDb().getAllAsync<{ id: number }>(
+      `SELECT DISTINCT d.id FROM decks d
 		 LEFT JOIN flashcards f ON f.deckId = d.id
 		 WHERE d.id IN (SELECT rowid FROM decks_fts WHERE decks_fts MATCH ?)
 			OR f.id IN (SELECT rowid FROM flashcards_fts WHERE flashcards_fts MATCH ?)
 		 ORDER BY d.createdAt DESC`,
-			[`"${escapedQuery}"`, `"${escapedQuery}"`],
-		);
-		return result.map((r) => r.id);
-	}
+      [`"${escapedQuery}"`, `"${escapedQuery}"`],
+    );
+    return result.map((r) => r.id);
+  }
 
-	// LIKE fallback for web
-	const likeQuery = `%${query}%`;
-	const result = await getDb().getAllAsync<{ id: number }>(
-		`SELECT DISTINCT d.id FROM decks d
+  // LIKE fallback for web
+  const likeQuery = `%${query}%`;
+  const result = await getDb().getAllAsync<{ id: number }>(
+    `SELECT DISTINCT d.id FROM decks d
 		 LEFT JOIN flashcards f ON f.deckId = d.id
 		 WHERE d.title LIKE ? OR d.description LIKE ?
 			OR f.question LIKE ? OR f.answer LIKE ?
 		 ORDER BY d.createdAt DESC`,
-		[likeQuery, likeQuery, likeQuery, likeQuery],
-	);
-	return result.map((r) => r.id);
+    [likeQuery, likeQuery, likeQuery, likeQuery],
+  );
+  return result.map((r) => r.id);
 }
 
 /**
@@ -291,70 +318,73 @@ export async function searchDecks(query: string): Promise<number[]> {
  * Returns flashcards grouped by deck ID
  */
 export async function searchFlashcards(query: string): Promise<Record<number, Flashcard[]>> {
-	if (!query.trim()) {
-		return {};
-	}
+  if (!query.trim()) {
+    return {};
+  }
 
-	let result: Flashcard[];
+  let result: Flashcard[];
 
-	if (isFts5Supported()) {
-		const escapedQuery = query.replace(/"/g, '""');
-		result = await getDb().getAllAsync<Flashcard>(
-			`SELECT f.* FROM flashcards f
+  if (isFts5Supported()) {
+    const escapedQuery = query.replace(/"/g, '""');
+    result = await getDb().getAllAsync<Flashcard>(
+      `SELECT f.* FROM flashcards f
 		 WHERE f.id IN (SELECT rowid FROM flashcards_fts WHERE flashcards_fts MATCH ?)
 		 ORDER BY f.deckId, f.id`,
-			[`"${escapedQuery}"`],
-		);
-	} else {
-		// LIKE fallback for web
-		const likeQuery = `%${query}%`;
-		result = await getDb().getAllAsync<Flashcard>(
-			`SELECT f.* FROM flashcards f
+      [`"${escapedQuery}"`],
+    );
+  } else {
+    // LIKE fallback for web
+    const likeQuery = `%${query}%`;
+    result = await getDb().getAllAsync<Flashcard>(
+      `SELECT f.* FROM flashcards f
 		 WHERE f.question LIKE ? OR f.answer LIKE ?
 		 ORDER BY f.deckId, f.id`,
-			[likeQuery, likeQuery],
-		);
-	}
+      [likeQuery, likeQuery],
+    );
+  }
 
-	// Group by deckId
-	const grouped: Record<number, Flashcard[]> = {};
-	for (const fc of result) {
-		if (!grouped[fc.deckId]) {
-			grouped[fc.deckId] = [];
-		}
-		grouped[fc.deckId].push(fc);
-	}
+  // Group by deckId
+  const grouped: Record<number, Flashcard[]> = {};
+  for (const fc of result) {
+    if (!grouped[fc.deckId]) {
+      grouped[fc.deckId] = [];
+    }
+    grouped[fc.deckId].push(fc);
+  }
 
-	return grouped;
+  return grouped;
 }
 
 interface SearchResult {
-	matchingDeckIds: number[];
-	flashcardsByDeck: Record<number, Flashcard[]>;
+  matchingDeckIds: number[];
+  flashcardsByDeck: Record<number, Flashcard[]>;
 }
 
 /**
  * Combined search on decks and flashcards using FTS5
  */
 export async function search(query: string): Promise<SearchResult> {
-	if (!query.trim()) {
-		const allDecks = await getAllDecks();
-		return {
-			matchingDeckIds: allDecks.map((d) => d.id),
-			flashcardsByDeck: {},
-		};
-	}
+  if (!query.trim()) {
+    const allDecks = await getAllDecks();
+    return {
+      matchingDeckIds: allDecks.map((d) => d.id),
+      flashcardsByDeck: {},
+    };
+  }
 
-	const [matchingDeckIds, flashcardsByDeck] = await Promise.all([searchDecks(query), searchFlashcards(query)]);
+  const [matchingDeckIds, flashcardsByDeck] = await Promise.all([
+    searchDecks(query),
+    searchFlashcards(query),
+  ]);
 
-	// Merge deck IDs: include decks that match directly OR have matching flashcards
-	const flashcardDeckIds = Object.keys(flashcardsByDeck).map(Number);
-	const allMatchingDeckIds = [...new Set([...matchingDeckIds, ...flashcardDeckIds])];
+  // Merge deck IDs: include decks that match directly OR have matching flashcards
+  const flashcardDeckIds = Object.keys(flashcardsByDeck).map(Number);
+  const allMatchingDeckIds = [...new Set([...matchingDeckIds, ...flashcardDeckIds])];
 
-	return {
-		matchingDeckIds: allMatchingDeckIds,
-		flashcardsByDeck,
-	};
+  return {
+    matchingDeckIds: allMatchingDeckIds,
+    flashcardsByDeck,
+  };
 }
 
 // ==================== QUIZ OPERATIONS ====================
@@ -363,72 +393,88 @@ export async function search(query: string): Promise<SearchResult> {
  * Create a new quiz session for a deck and return its ID
  */
 export async function createQuizSession(deckId: number): Promise<number> {
-	const startedAt = new Date().toISOString();
-	const result = await getDb().runAsync('INSERT INTO quiz_sessions (deckId, startedAt) VALUES (?, ?)', [deckId, startedAt]);
-	return result.lastInsertRowId;
+  const startedAt = new Date().toISOString();
+  const result = await getDb().runAsync(
+    'INSERT INTO quiz_sessions (deckId, startedAt) VALUES (?, ?)',
+    [deckId, startedAt],
+  );
+  return result.lastInsertRowId;
 }
 
 /**
  * Update a quiz session with the end time, total time spent, and card counts
  */
 export async function updateQuizSession(
-	id: number,
-	endedAt: string,
-	totalTimeSpent: number,
-	totalCards: number,
-	easyCount: number,
-	hardCount: number,
+  id: number,
+  endedAt: string,
+  totalTimeSpent: number,
+  totalCards: number,
+  easyCount: number,
+  hardCount: number,
 ): Promise<void> {
-	await getDb().runAsync(
-		'UPDATE quiz_sessions SET endedAt = ?, totalTimeSpent = ?, totalCards = ?, easyCount = ?, hardCount = ? WHERE id = ?',
-		[endedAt, totalTimeSpent, totalCards, easyCount, hardCount, id],
-	);
+  await getDb().runAsync(
+    'UPDATE quiz_sessions SET endedAt = ?, totalTimeSpent = ?, totalCards = ?, easyCount = ?, hardCount = ? WHERE id = ?',
+    [endedAt, totalTimeSpent, totalCards, easyCount, hardCount, id],
+  );
 }
 
 /**
  * Delete a quiz session and its associated answers
  */
 export async function deleteQuizSession(id: number): Promise<void> {
-	await getDb().runAsync('DELETE FROM quiz_sessions WHERE id = ?', [id]);
+  await getDb().runAsync('DELETE FROM quiz_sessions WHERE id = ?', [id]);
 }
 
 /**
  * Record a user's answer to a flashcard during a quiz session
  */
-export async function createQuizAnswer(sessionId: number, flashcardId: number, responseType: string): Promise<void> {
-	const answeredAt = new Date().toISOString();
-	await getDb().runAsync('INSERT INTO quiz_answers (sessionId, flashcardId, responseType, answeredAt) VALUES (?, ?, ?, ?)', [sessionId, flashcardId, responseType, answeredAt]);
+export async function createQuizAnswer(
+  sessionId: number,
+  flashcardId: number,
+  responseType: string,
+): Promise<void> {
+  const answeredAt = new Date().toISOString();
+  await getDb().runAsync(
+    'INSERT INTO quiz_answers (sessionId, flashcardId, responseType, answeredAt) VALUES (?, ?, ?, ?)',
+    [sessionId, flashcardId, responseType, answeredAt],
+  );
 }
 
 // ==================== STATS OPERATIONS ====================
 
-export async function getStats(interval: 'day' | 'month' | 'quarter' | 'semester' | 'year', deckId?: number, startDate?: string): Promise<StatsSeries[]> {
-	let periodExpr = "strftime('%Y-%m-%d', s.startedAt)";
+export async function getStats(
+  interval: 'day' | 'month' | 'quarter' | 'semester' | 'year',
+  deckId?: number,
+  startDate?: string,
+): Promise<StatsSeries[]> {
+  let periodExpr = "strftime('%Y-%m-%d', s.startedAt)";
 
-	if (interval === 'month') {
-		periodExpr = "strftime('%Y-%m', s.startedAt)";
-	} else if (interval === 'year') {
-		periodExpr = "strftime('%Y', s.startedAt)";
-	} else if (interval === 'quarter') {
-		periodExpr = "strftime('%Y', s.startedAt) || '-Q' || ((CAST(strftime('%m', s.startedAt) AS INTEGER) - 1) / 3 + 1)";
-	} else if (interval === 'semester') {
-		periodExpr = "strftime('%Y', s.startedAt) || '-S' || ((CAST(strftime('%m', s.startedAt) AS INTEGER) - 1) / 6 + 1)";
-	}
+  if (interval === 'month') {
+    periodExpr = "strftime('%Y-%m', s.startedAt)";
+  } else if (interval === 'year') {
+    periodExpr = "strftime('%Y', s.startedAt)";
+  } else if (interval === 'quarter') {
+    periodExpr =
+      "strftime('%Y', s.startedAt) || '-Q' || ((CAST(strftime('%m', s.startedAt) AS INTEGER) - 1) / 3 + 1)";
+  } else if (interval === 'semester') {
+    periodExpr =
+      "strftime('%Y', s.startedAt) || '-S' || ((CAST(strftime('%m', s.startedAt) AS INTEGER) - 1) / 6 + 1)";
+  }
 
-	let whereClause = 's.endedAt IS NOT NULL';
-	const params: (string | number)[] = [];
+  let whereClause = 's.endedAt IS NOT NULL';
+  const params: (string | number)[] = [];
 
-	if (deckId) {
-		whereClause += ' AND s.deckId = ?';
-		params.push(deckId);
-	}
+  if (deckId) {
+    whereClause += ' AND s.deckId = ?';
+    params.push(deckId);
+  }
 
-	if (startDate) {
-		whereClause += ' AND s.startedAt >= ?';
-		params.push(startDate);
-	}
+  if (startDate) {
+    whereClause += ' AND s.startedAt >= ?';
+    params.push(startDate);
+  }
 
-	const query = `
+  const query = `
       SELECT 
         ${periodExpr} as period,
         SUM(s.easyCount) as easy,
@@ -440,27 +486,27 @@ export async function getStats(interval: 'day' | 'month' | 'quarter' | 'semester
       ORDER BY period ASC
     `;
 
-	const result = await getDb().getAllAsync<StatsSeries>(query, params);
-	return result;
+  const result = await getDb().getAllAsync<StatsSeries>(query, params);
+  return result;
 }
 
 export async function getKPIs(deckId?: number): Promise<{
-	totalQuizzes: number;
-	totalCards: number;
-	easyCount: number;
-	hardCount: number;
-	totalTime: number;
-	totalDecks: number;
+  totalQuizzes: number;
+  totalCards: number;
+  easyCount: number;
+  hardCount: number;
+  totalTime: number;
+  totalDecks: number;
 }> {
-	let whereClause = 'endedAt IS NOT NULL';
-	const params: (string | number)[] = [];
+  let whereClause = 'endedAt IS NOT NULL';
+  const params: (string | number)[] = [];
 
-	if (deckId) {
-		whereClause += ' AND deckId = ?';
-		params.push(deckId);
-	}
+  if (deckId) {
+    whereClause += ' AND deckId = ?';
+    params.push(deckId);
+  }
 
-	const query = `
+  const query = `
         SELECT 
             COUNT(*) as totalQuizzes,
             SUM(totalTimeSpent) as totalTime,
@@ -472,31 +518,31 @@ export async function getKPIs(deckId?: number): Promise<{
         WHERE ${whereClause}
     `;
 
-	const result = await getDb().getFirstAsync<{
-		totalQuizzes: number;
-		totalTime: number;
-		totalCards: number;
-		easyCount: number;
-		hardCount: number;
-		totalDecks: number;
-	}>(query, params);
+  const result = await getDb().getFirstAsync<{
+    totalQuizzes: number;
+    totalTime: number;
+    totalCards: number;
+    easyCount: number;
+    hardCount: number;
+    totalDecks: number;
+  }>(query, params);
 
-	return {
-		totalQuizzes: result?.totalQuizzes || 0,
-		totalTime: result?.totalTime || 0,
-		totalCards: result?.totalCards || 0,
-		easyCount: result?.easyCount || 0,
-		hardCount: result?.hardCount || 0,
-		totalDecks: result?.totalDecks || 0,
-	};
+  return {
+    totalQuizzes: result?.totalQuizzes || 0,
+    totalTime: result?.totalTime || 0,
+    totalCards: result?.totalCards || 0,
+    easyCount: result?.easyCount || 0,
+    hardCount: result?.hardCount || 0,
+    totalDecks: result?.totalDecks || 0,
+  };
 }
 
 /**
  * Reset all statistics by deleting all quiz sessions and answers
  */
 export async function resetAllStats(): Promise<void> {
-	await getDb().runAsync('DELETE FROM quiz_answers');
-	await getDb().runAsync('DELETE FROM quiz_sessions');
+  await getDb().runAsync('DELETE FROM quiz_answers');
+  await getDb().runAsync('DELETE FROM quiz_sessions');
 }
 
 /**
@@ -504,10 +550,10 @@ export async function resetAllStats(): Promise<void> {
  * and re-running migrations from scratch
  */
 export async function resetAllData(): Promise<void> {
-	const database = getDb();
+  const database = getDb();
 
-	// Drop triggers first, then FTS tables, then data tables, then schema_version
-	await database.execAsync(`
+  // Drop triggers first, then FTS tables, then data tables, then schema_version
+  await database.execAsync(`
 		DROP TRIGGER IF EXISTS decks_au;
 		DROP TRIGGER IF EXISTS decks_ad;
 		DROP TRIGGER IF EXISTS decks_ai;
@@ -523,6 +569,6 @@ export async function resetAllData(): Promise<void> {
 		DROP TABLE IF EXISTS schema_version;
 	`);
 
-	// Re-run migrations from version 0
-	await reinitializeDatabase();
+  // Re-run migrations from version 0
+  await reinitializeDatabase();
 }

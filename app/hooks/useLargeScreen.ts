@@ -7,6 +7,6 @@ const LARGE_SCREEN_BREAKPOINT = 768;
  * regardless of platform (tablet, large phone in landscape, desktop, etc.).
  */
 export function useIsLargeScreen(): boolean {
-	const { width } = useWindowDimensions();
-	return width >= LARGE_SCREEN_BREAKPOINT;
+  const { width } = useWindowDimensions();
+  return width >= LARGE_SCREEN_BREAKPOINT;
 }

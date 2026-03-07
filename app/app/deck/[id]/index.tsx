@@ -5,6 +5,3 @@ export default function DeckDetailRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
   return <DeckDetailScreen deckId={parseInt(id, 10)} />;
 }
-
-
-

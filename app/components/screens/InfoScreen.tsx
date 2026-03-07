@@ -5,38 +5,40 @@ import { Header } from '@/components/Header';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export function InfoScreen() {
-	const colorScheme = useColorScheme();
-	const { t } = useTranslation();
+  const colorScheme = useColorScheme();
+  const { t } = useTranslation();
 
-	return (
-		<View flex={1} backgroundColor="$background">
-			<Header title={t('info.title')} showBackButton />
+  return (
+    <View flex={1} backgroundColor="$background">
+      <Header title={t('info.title')} showBackButton />
 
-			<YStack padding="$4" gap="$6">
-				<View backgroundColor="$backgroundStrong" padding="$4" borderRadius="$3" gap="$2">
-					<XStack justifyContent="space-between">
-						<Text color="$secondary">{t('info.version')}</Text>
-						<Text color="$color">1.0.0</Text>
-					</XStack>
-					<XStack justifyContent="space-between">
-						<Text color="$secondary">{t('info.developedWith')}</Text>
-						<Text color="$color">React Native + Expo</Text>
-					</XStack>
-				</View>
+      <YStack padding="$4" gap="$6">
+        <View backgroundColor="$backgroundStrong" padding="$4" borderRadius="$3" gap="$2">
+          <XStack justifyContent="space-between">
+            <Text color="$secondary">{t('info.version')}</Text>
+            <Text color="$color">1.0.0</Text>
+          </XStack>
+          <XStack justifyContent="space-between">
+            <Text color="$secondary">{t('info.developedWith')}</Text>
+            <Text color="$color">React Native + Expo</Text>
+          </XStack>
+        </View>
 
-				<Text fontSize={12} color="$placeholderColor" textAlign="center">
-					{t('info.tagline')}
-				</Text>
+        <Text fontSize={12} color="$placeholderColor" textAlign="center">
+          {t('info.tagline')}
+        </Text>
 
-				<YStack gap="$2" marginTop="$4">
-					<Text fontSize={14} color="$secondary" textAlign="center">
-						{t('info.themeSysFollow')}
-					</Text>
-					<Text fontSize={12} color="$placeholderColor" textAlign="center">
-						{t('info.currentTheme', { theme: colorScheme === 'dark' ? t('info.darkTheme') : t('info.lightTheme') })}
-					</Text>
-				</YStack>
-			</YStack>
-		</View>
-	);
+        <YStack gap="$2" marginTop="$4">
+          <Text fontSize={14} color="$secondary" textAlign="center">
+            {t('info.themeSysFollow')}
+          </Text>
+          <Text fontSize={12} color="$placeholderColor" textAlign="center">
+            {t('info.currentTheme', {
+              theme: colorScheme === 'dark' ? t('info.darkTheme') : t('info.lightTheme'),
+            })}
+          </Text>
+        </YStack>
+      </YStack>
+    </View>
+  );
 }

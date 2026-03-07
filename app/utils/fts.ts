@@ -19,17 +19,17 @@ let _supported: boolean | null = null;
  * The result is cached for subsequent calls to `isFts5Supported()`.
  */
 export async function detectFts5Support(db: SQLite.SQLiteDatabase): Promise<boolean> {
-	if (_supported !== null) return _supported;
+  if (_supported !== null) return _supported;
 
-	try {
-		const rows = await db.getAllAsync<{ name: string }>('PRAGMA module_list');
-		_supported = rows.some((r) => r.name === 'fts5');
-	} catch {
-		// PRAGMA module_list may not be available in every build – safe default
-		_supported = false;
-	}
+  try {
+    const rows = await db.getAllAsync<{ name: string }>('PRAGMA module_list');
+    _supported = rows.some((r) => r.name === 'fts5');
+  } catch {
+    // PRAGMA module_list may not be available in every build – safe default
+    _supported = false;
+  }
 
-	return _supported;
+  return _supported;
 }
 
 /**
@@ -37,15 +37,15 @@ export async function detectFts5Support(db: SQLite.SQLiteDatabase): Promise<bool
  * Must be called **after** `detectFts5Support()` has resolved at least once.
  */
 export function isFts5Supported(): boolean {
-	if (_supported === null) {
-		throw new Error('FTS5 support not yet detected. Call detectFts5Support(db) first.');
-	}
-	return _supported;
+  if (_supported === null) {
+    throw new Error('FTS5 support not yet detected. Call detectFts5Support(db) first.');
+  }
+  return _supported;
 }
 
 /**
  * Reset the cached value (useful for tests or after database re-init).
  */
 export function resetFts5Detection(): void {
-	_supported = null;
+  _supported = null;
 }

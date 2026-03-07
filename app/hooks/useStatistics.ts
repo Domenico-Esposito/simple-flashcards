@@ -23,7 +23,7 @@ export function useStatistics(deckId?: number, initialInterval: Interval = 'day'
     setLoading(true);
     try {
       let startDate: string | undefined;
-      
+
       if (interval === 'day') {
         // Last 7 days
         const d = new Date();
@@ -43,12 +43,12 @@ export function useStatistics(deckId?: number, initialInterval: Interval = 'day'
 
       // Run sequentially to avoid NullPointerException on Android
       // when multiple prepareAsync calls happen concurrently
-      const statsResult = deckId 
+      const statsResult = deckId
         ? await getDeckStats(deckId, interval, startDate)
         : await getGlobalStats(interval, startDate);
-        
+
       const kpisResult = await getKPIs(deckId);
-      
+
       setData(statsResult);
       setKpis(kpisResult);
     } catch (error) {
@@ -68,6 +68,6 @@ export function useStatistics(deckId?: number, initialInterval: Interval = 'day'
     data,
     kpis,
     loading,
-    refresh: loadStats
+    refresh: loadStats,
   };
 }

@@ -5,7 +5,7 @@ import { migrations, getLatestVersion, type Migration } from './migrations';
  * Create the schema_version table if it doesn't exist
  */
 async function ensureSchemaVersionTable(db: SQLite.SQLiteDatabase): Promise<void> {
-	await db.execAsync(`
+  await db.execAsync(`
 		CREATE TABLE IF NOT EXISTS schema_version (
 			version INTEGER PRIMARY KEY,
 			applied_at TEXT NOT NULL
@@ -18,23 +18,28 @@ async function ensureSchemaVersionTable(db: SQLite.SQLiteDatabase): Promise<void
  * Returns 0 if no migrations have been applied yet
  */
 async function getCurrentVersion(db: SQLite.SQLiteDatabase): Promise<number> {
-	const result = await db.getFirstAsync<{ version: number }>('SELECT MAX(version) as version FROM schema_version');
-	return result?.version ?? 0;
+  const result = await db.getFirstAsync<{ version: number }>(
+    'SELECT MAX(version) as version FROM schema_version',
+  );
+  return result?.version ?? 0;
 }
 
 /**
  * Record a migration as applied
  */
 async function recordMigration(db: SQLite.SQLiteDatabase, version: number): Promise<void> {
-	const appliedAt = new Date().toISOString();
-	await db.runAsync('INSERT INTO schema_version (version, applied_at) VALUES (?, ?)', [version, appliedAt]);
+  const appliedAt = new Date().toISOString();
+  await db.runAsync('INSERT INTO schema_version (version, applied_at) VALUES (?, ?)', [
+    version,
+    appliedAt,
+  ]);
 }
 
 /**
  * Remove a migration record (used during rollback)
  */
 async function removeMigrationRecord(db: SQLite.SQLiteDatabase, version: number): Promise<void> {
-	await db.runAsync('DELETE FROM schema_version WHERE version = ?', [version]);
+  await db.runAsync('DELETE FROM schema_version WHERE version = ?', [version]);
 }
 
 /**
@@ -42,36 +47,45 @@ async function removeMigrationRecord(db: SQLite.SQLiteDatabase, version: number)
  * This indicates a pre-migration database that needs baseline versioning
  */
 async function isExistingDatabase(db: SQLite.SQLiteDatabase): Promise<boolean> {
-	const result = await db.getFirstAsync<{ count: number }>(
-		"SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='decks'"
-	);
-	return (result?.count ?? 0) > 0;
+  const result = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='decks'",
+  );
+  return (result?.count ?? 0) > 0;
 }
 
 /**
  * Run a single migration within a transaction
  */
-async function executeMigration(db: SQLite.SQLiteDatabase, migration: Migration, direction: 'up' | 'down'): Promise<void> {
-	const handler = direction === 'up' ? migration.up : migration.down;
+async function executeMigration(
+  db: SQLite.SQLiteDatabase,
+  migration: Migration,
+  direction: 'up' | 'down',
+): Promise<void> {
+  const handler = direction === 'up' ? migration.up : migration.down;
 
-	if (!handler) {
-		throw new Error(`Migration ${migration.version} (${migration.name}) does not support ${direction}`);
-	}
+  if (!handler) {
+    throw new Error(
+      `Migration ${migration.version} (${migration.name}) does not support ${direction}`,
+    );
+  }
 
-	try {
-		await handler(db);
+  try {
+    await handler(db);
 
-		if (direction === 'up') {
-			await recordMigration(db, migration.version);
-		} else {
-			await removeMigrationRecord(db, migration.version);
-		}
+    if (direction === 'up') {
+      await recordMigration(db, migration.version);
+    } else {
+      await removeMigrationRecord(db, migration.version);
+    }
 
-		console.log(`✓ Migration ${migration.version} (${migration.name}) ${direction} completed`);
-	} catch (error) {
-		console.error(`✗ Migration ${migration.version} (${migration.name}) ${direction} failed:`, error);
-		throw error;
-	}
+    console.log(`✓ Migration ${migration.version} (${migration.name}) ${direction} completed`);
+  } catch (error) {
+    console.error(
+      `✗ Migration ${migration.version} (${migration.name}) ${direction} failed:`,
+      error,
+    );
+    throw error;
+  }
 }
 
 /**
@@ -79,44 +93,47 @@ async function executeMigration(db: SQLite.SQLiteDatabase, migration: Migration,
  * Returns the number of migrations applied
  */
 export async function runMigrations(db: SQLite.SQLiteDatabase): Promise<number> {
-	await ensureSchemaVersionTable(db);
+  await ensureSchemaVersionTable(db);
 
-	const currentVersion = await getCurrentVersion(db);
-	const latestVersion = getLatestVersion();
+  const currentVersion = await getCurrentVersion(db);
+  const latestVersion = getLatestVersion();
 
-	// Handle existing databases without schema_version
-	// Run migration 1 to ensure all tables exist (it's idempotent via IF NOT EXISTS),
-	// then continue with remaining migrations.
-	if (currentVersion === 0 && (await isExistingDatabase(db))) {
-		console.log('Existing database detected, running baseline migration');
-		await executeMigration(db, migrations[0], 'up');
-		const updatedVersion = await getCurrentVersion(db);
-		return runMigrationsFromVersion(db, updatedVersion);
-	}
+  // Handle existing databases without schema_version
+  // Run migration 1 to ensure all tables exist (it's idempotent via IF NOT EXISTS),
+  // then continue with remaining migrations.
+  if (currentVersion === 0 && (await isExistingDatabase(db))) {
+    console.log('Existing database detected, running baseline migration');
+    await executeMigration(db, migrations[0], 'up');
+    const updatedVersion = await getCurrentVersion(db);
+    return runMigrationsFromVersion(db, updatedVersion);
+  }
 
-	return runMigrationsFromVersion(db, currentVersion);
+  return runMigrationsFromVersion(db, currentVersion);
 }
 
 /**
  * Run migrations starting from a specific version
  */
-async function runMigrationsFromVersion(db: SQLite.SQLiteDatabase, fromVersion: number): Promise<number> {
-	const pendingMigrations = migrations.filter((m) => m.version > fromVersion);
+async function runMigrationsFromVersion(
+  db: SQLite.SQLiteDatabase,
+  fromVersion: number,
+): Promise<number> {
+  const pendingMigrations = migrations.filter((m) => m.version > fromVersion);
 
-	if (pendingMigrations.length === 0) {
-		console.log(`Database is up to date (version ${fromVersion})`);
-		return 0;
-	}
+  if (pendingMigrations.length === 0) {
+    console.log(`Database is up to date (version ${fromVersion})`);
+    return 0;
+  }
 
-	console.log(`Running ${pendingMigrations.length} migration(s) from version ${fromVersion}...`);
+  console.log(`Running ${pendingMigrations.length} migration(s) from version ${fromVersion}...`);
 
-	// Sort migrations by version to ensure correct order
-	pendingMigrations.sort((a, b) => a.version - b.version);
+  // Sort migrations by version to ensure correct order
+  pendingMigrations.sort((a, b) => a.version - b.version);
 
-	for (const migration of pendingMigrations) {
-		await executeMigration(db, migration, 'up');
-	}
+  for (const migration of pendingMigrations) {
+    await executeMigration(db, migration, 'up');
+  }
 
-	console.log(`Migrations complete. Database now at version ${getLatestVersion()}`);
-	return pendingMigrations.length;
+  console.log(`Migrations complete. Database now at version ${getLatestVersion()}`);
+  return pendingMigrations.length;
 }

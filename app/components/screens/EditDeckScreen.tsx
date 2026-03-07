@@ -1,9 +1,9 @@
 import { DeckFormScreen } from './DeckFormScreen';
 
 type EditDeckScreenProps = {
-	deckId: number;
+  deckId: number;
 };
 
 export function EditDeckScreen({ deckId }: EditDeckScreenProps) {
-	return <DeckFormScreen deckId={deckId} />;
+  return <DeckFormScreen deckId={deckId} />;
 }

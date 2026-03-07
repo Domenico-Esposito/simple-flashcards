@@ -5,10 +5,10 @@ import { isFts5Supported } from './fts';
  * Migration definition interface
  */
 export interface Migration {
-	version: number;
-	name: string;
-	up: (db: SQLite.SQLiteDatabase) => Promise<void>;
-	down?: (db: SQLite.SQLiteDatabase) => Promise<void>;
+  version: number;
+  name: string;
+  up: (db: SQLite.SQLiteDatabase) => Promise<void>;
+  down?: (db: SQLite.SQLiteDatabase) => Promise<void>;
 }
 
 /**
@@ -16,12 +16,12 @@ export interface Migration {
  * Each migration should be idempotent and handle edge cases gracefully.
  */
 export const migrations: Migration[] = [
-	// Migration 1: Initial schema – consolidated from the development migrations.
-	{
-		version: 1,
-		name: 'initial_schema',
-		up: async (db) => {
-			await db.execAsync(`
+  // Migration 1: Initial schema – consolidated from the development migrations.
+  {
+    version: 1,
+    name: 'initial_schema',
+    up: async (db) => {
+      await db.execAsync(`
 				CREATE TABLE IF NOT EXISTS decks (
 					id INTEGER PRIMARY KEY AUTOINCREMENT,
 					title TEXT NOT NULL,
@@ -60,9 +60,9 @@ export const migrations: Migration[] = [
 				);
 			`);
 
-			// FTS5 is not available on web/WASM, skip FTS tables and triggers
-			if (isFts5Supported()) {
-				await db.execAsync(`
+      // FTS5 is not available on web/WASM, skip FTS tables and triggers
+      if (isFts5Supported()) {
+        await db.execAsync(`
 					CREATE VIRTUAL TABLE IF NOT EXISTS flashcards_fts USING fts5(
 						question,
 						answer,
@@ -107,10 +107,10 @@ export const migrations: Migration[] = [
 						INSERT INTO decks_fts(rowid, title, description) VALUES (new.id, new.title, COALESCE(new.description, ''));
 					END;
 				`);
-			}
-		},
-		down: async (db) => {
-			await db.execAsync(`
+      }
+    },
+    down: async (db) => {
+      await db.execAsync(`
 				DROP TRIGGER IF EXISTS decks_au;
 				DROP TRIGGER IF EXISTS decks_ad;
 				DROP TRIGGER IF EXISTS decks_ai;
@@ -124,17 +124,17 @@ export const migrations: Migration[] = [
 				DROP TABLE IF EXISTS flashcards;
 				DROP TABLE IF EXISTS decks;
 			`);
-		},
-	},
+    },
+  },
 
-	// ============================================================
-	// ADD NEW MIGRATIONS BELOW THIS LINE
-	// ============================================================
+  // ============================================================
+  // ADD NEW MIGRATIONS BELOW THIS LINE
+  // ============================================================
 ];
 
 /**
  * Get the latest migration version
  */
 export function getLatestVersion(): number {
-	return migrations.length > 0 ? migrations[migrations.length - 1].version : 0;
+  return migrations.length > 0 ? migrations[migrations.length - 1].version : 0;
 }
