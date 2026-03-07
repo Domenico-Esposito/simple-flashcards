@@ -105,6 +105,7 @@ export function createSegmentComponents(scheme: ColorScheme): SegmentComponentMa
         ? {
             fontSize: editorHeadingSizes[meta?.headingLevel ?? '1'] ?? 16,
             lineHeight: Math.ceil((editorHeadingSizes[meta?.headingLevel ?? '1'] ?? 16) * 1.5),
+            fontFamily: Fonts?.sansBold,
           }
         : undefined;
     return Object.assign({}, base, { fontFamily }, overrides, heading);
@@ -138,7 +139,12 @@ export function createSegmentComponents(scheme: ColorScheme): SegmentComponentMa
     createSegment(type, meta, children, mergeStyle(type, meta, { color: c.text }));
 
   const BoldSegment = ({ type, meta, children }: SegmentComponentProps) =>
-    createSegment(type, meta, children, mergeStyle(type, meta, { color: c.text }));
+    createSegment(
+      type,
+      meta,
+      children,
+      mergeStyle(type, meta, { color: c.text, fontWeight: '700', fontFamily: Fonts?.sansBold }),
+    );
 
   const ItalicSegment = ({ type, meta, children }: SegmentComponentProps) =>
     createSegment(type, meta, children, mergeStyle(type, meta, { color: c.text }));
@@ -222,7 +228,9 @@ export function createRendererComponents(scheme: ColorScheme): RendererComponent
 
   function createHeading(fontSize: number) {
     const HeadingComponent = ({ children }: HeadingRendererProps<1 | 2 | 3 | 4 | 5 | 6>) => (
-      <Text style={{ fontSize, fontWeight: '700', color: c.text }}>{children}</Text>
+      <Text style={{ fontSize, fontWeight: '700', fontFamily: Fonts?.sansBold, color: c.text }}>
+        {children}
+      </Text>
     );
     HeadingComponent.displayName = `Heading`;
     return HeadingComponent;
@@ -342,6 +350,7 @@ const rendererStyles = StyleSheet.create({
   },
   bold: {
     fontWeight: '700',
+    fontFamily: Fonts?.sansBold,
   },
   italic: {
     fontStyle: 'italic',

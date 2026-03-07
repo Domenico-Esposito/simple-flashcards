@@ -29,6 +29,7 @@ export const Colors = {
 
 export const Fonts = {
   sans: 'Inter',
+  sansBold: 'InterBold',
   serif: 'Inter',
   rounded: 'Inter',
   mono: Platform.select({

@@ -31,8 +31,6 @@ type FlashcardViewerProps = {
   answerFooter?: (currentCard: Flashcard) => ReactNode;
   /** Extra bottom padding on the answer card to make room for answerFooter */
   answerBottomPadding?: number;
-  /** Content rendered in the header-right area (e.g. counter text) */
-  headerRight?: ReactNode;
   /** Called when the close/exit button is pressed */
   onExit: () => void;
   /** Called after a forward navigation completes and all cards have been seen */
@@ -53,7 +51,6 @@ export function FlashcardViewer({
   deckId,
   answerFooter,
   answerBottomPadding = 0,
-  headerRight,
   onExit,
   onAllCardsSeen,
   hintText,
@@ -280,32 +277,9 @@ export function FlashcardViewer({
             <IconSymbol name="xmark" size={24} color={closeIconColor} />
           </Pressable>
           {!infiniteMode && (
-            <View
-              flexDirection="row"
-              gap="$1"
-              flex={1}
-              justifyContent="center"
-              marginHorizontal="$4"
-            >
-              {shuffledFlashcards.map((_, index) => (
-                <View
-                  key={index}
-                  width={8}
-                  height={8}
-                  borderRadius={4}
-                  backgroundColor={index === currentIndex ? dotActiveColor : dotInactiveColor}
-                />
-              ))}
-            </View>
-          )}
-          {infiniteMode ? (
-            <View flex={1} />
-          ) : (
-            (headerRight ?? (
-              <Text color="$secondary" fontSize={14}>
-                {currentIndex + 1}/{shuffledFlashcards.length}
-              </Text>
-            ))
+            <Text color="$secondary" fontSize={14}>
+              {currentIndex + 1}/{shuffledFlashcards.length}
+            </Text>
           )}
         </View>
 
