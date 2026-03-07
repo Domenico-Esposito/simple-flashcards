@@ -10,13 +10,16 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "app:start": "npm run start --workspace=app",
     "app:ios": "npm run ios --workspace=app",
     "app:android": "npm run android --workspace=app"
   },
   "devDependencies": {
+    "eslint-config-prettier": "10.1.8",
+    "prettier": "3.8.1",
     "turbo": "^2.5.4"
   },
-  "packageManager": "npm@10.9.2",
-  "dependencies": {}
+  "packageManager": "npm@10.9.2"
 }
