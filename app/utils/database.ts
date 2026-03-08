@@ -1,5 +1,13 @@
 import * as SQLite from 'expo-sqlite';
-import { Deck, Flashcard, StatsSeries } from '@/types';
+import {
+  Deck,
+  Flashcard,
+  FlashcardOption,
+  FlashcardType,
+  StandardFlashcard,
+  MultipleChoiceFlashcard,
+  StatsSeries,
+} from '@/types';
 import { runMigrations } from './migrationRunner';
 import { detectFts5Support, isFts5Supported, resetFts5Detection } from './fts';
 
@@ -183,27 +191,87 @@ export async function deleteDeck(id: number): Promise<void> {
 // ==================== FLASHCARD OPERATIONS ====================
 
 /**
- * Get all flashcards for a deck
+ * Build a Flashcard union object from a raw DB row + its options
+ */
+function buildFlashcard(
+  row: { id: number; question: string; answer: string; deckId: number; type: string },
+  options: FlashcardOption[],
+): Flashcard {
+  if (row.type === 'multiple_choice') {
+    return {
+      id: row.id,
+      question: row.question,
+      deckId: row.deckId,
+      type: 'multiple_choice',
+      options,
+    } as MultipleChoiceFlashcard;
+  }
+  return {
+    id: row.id,
+    question: row.question,
+    answer: row.answer,
+    deckId: row.deckId,
+    type: 'standard',
+  } as StandardFlashcard;
+}
+
+/**
+ * Get all flashcards for a deck (with options for MC cards)
  */
 export async function getFlashcardsByDeckId(deckId: number): Promise<Flashcard[]> {
-  const result = await getDb().getAllAsync<Flashcard>('SELECT * FROM flashcards WHERE deckId = ?', [
-    deckId,
-  ]);
-  return result;
+  const rows = await getDb().getAllAsync<{
+    id: number;
+    question: string;
+    answer: string;
+    deckId: number;
+    type: string;
+  }>('SELECT * FROM flashcards WHERE deckId = ?', [deckId]);
+
+  const mcIds = rows.filter((r) => r.type === 'multiple_choice').map((r) => r.id);
+  let optionsByCard: Record<number, FlashcardOption[]> = {};
+
+  if (mcIds.length > 0) {
+    const placeholders = mcIds.map(() => '?').join(',');
+    const allOptions = await getDb().getAllAsync<FlashcardOption>(
+      `SELECT * FROM flashcard_options WHERE flashcardId IN (${placeholders}) ORDER BY sortOrder`,
+      mcIds,
+    );
+    for (const opt of allOptions) {
+      if (!optionsByCard[opt.flashcardId]) optionsByCard[opt.flashcardId] = [];
+      // SQLite stores booleans as integers
+      optionsByCard[opt.flashcardId].push({ ...opt, isCorrect: !!opt.isCorrect });
+    }
+  }
+
+  return rows.map((row) => buildFlashcard(row, optionsByCard[row.id] || []));
 }
 
 /**
  * Get a single flashcard by ID
  */
 export async function getFlashcardById(id: number): Promise<Flashcard | null> {
-  const result = await getDb().getFirstAsync<Flashcard>('SELECT * FROM flashcards WHERE id = ?', [
-    id,
-  ]);
-  return result || null;
+  const row = await getDb().getFirstAsync<{
+    id: number;
+    question: string;
+    answer: string;
+    deckId: number;
+    type: string;
+  }>('SELECT * FROM flashcards WHERE id = ?', [id]);
+  if (!row) return null;
+
+  let options: FlashcardOption[] = [];
+  if (row.type === 'multiple_choice') {
+    options = await getDb().getAllAsync<FlashcardOption>(
+      'SELECT * FROM flashcard_options WHERE flashcardId = ? ORDER BY sortOrder',
+      [id],
+    );
+    options = options.map((o) => ({ ...o, isCorrect: !!o.isCorrect }));
+  }
+  return buildFlashcard(row, options);
 }
 
 /**
- * Create a new flashcard
+ * Create a new standard flashcard
  */
 export async function createFlashcard(
   deckId: number,
@@ -211,7 +279,7 @@ export async function createFlashcard(
   answer: string,
 ): Promise<Flashcard> {
   const result = await getDb().runAsync(
-    'INSERT INTO flashcards (deckId, question, answer) VALUES (?, ?, ?)',
+    "INSERT INTO flashcards (deckId, question, answer, type) VALUES (?, ?, ?, 'standard')",
     [deckId, question, answer],
   );
 
@@ -220,18 +288,83 @@ export async function createFlashcard(
     deckId,
     question,
     answer,
+    type: 'standard',
   };
 }
 
 /**
- * Update an existing flashcard
+ * Create a new multiple-choice flashcard
+ */
+export async function createMultipleChoiceFlashcard(
+  deckId: number,
+  question: string,
+  options: Array<{ text: string; isCorrect: boolean }>,
+): Promise<Flashcard> {
+  const result = await getDb().runAsync(
+    "INSERT INTO flashcards (deckId, question, answer, type) VALUES (?, ?, '', 'multiple_choice')",
+    [deckId, question],
+  );
+
+  const flashcardId = result.lastInsertRowId;
+  const dbOptions: FlashcardOption[] = [];
+
+  for (let i = 0; i < options.length; i++) {
+    const opt = options[i];
+    const optResult = await getDb().runAsync(
+      'INSERT INTO flashcard_options (flashcardId, text, sortOrder, isCorrect) VALUES (?, ?, ?, ?)',
+      [flashcardId, opt.text, i, opt.isCorrect ? 1 : 0],
+    );
+    dbOptions.push({
+      id: optResult.lastInsertRowId,
+      flashcardId,
+      text: opt.text,
+      sortOrder: i,
+      isCorrect: opt.isCorrect,
+    });
+  }
+
+  return {
+    id: flashcardId,
+    deckId,
+    question,
+    type: 'multiple_choice',
+    options: dbOptions,
+  };
+}
+
+/**
+ * Update an existing flashcard (standard)
  */
 export async function updateFlashcard(id: number, question: string, answer: string): Promise<void> {
-  await getDb().runAsync('UPDATE flashcards SET question = ?, answer = ? WHERE id = ?', [
-    question,
-    answer,
-    id,
-  ]);
+  await getDb().runAsync(
+    "UPDATE flashcards SET question = ?, answer = ?, type = 'standard' WHERE id = ?",
+    [question, answer, id],
+  );
+  // Remove any leftover options if switching from MC to standard
+  await getDb().runAsync('DELETE FROM flashcard_options WHERE flashcardId = ?', [id]);
+}
+
+/**
+ * Update an existing flashcard to multiple-choice
+ */
+export async function updateMultipleChoiceFlashcard(
+  id: number,
+  question: string,
+  options: Array<{ text: string; isCorrect: boolean }>,
+): Promise<void> {
+  await getDb().runAsync(
+    "UPDATE flashcards SET question = ?, answer = '', type = 'multiple_choice' WHERE id = ?",
+    [question, id],
+  );
+  // Replace all options
+  await getDb().runAsync('DELETE FROM flashcard_options WHERE flashcardId = ?', [id]);
+  for (let i = 0; i < options.length; i++) {
+    const opt = options[i];
+    await getDb().runAsync(
+      'INSERT INTO flashcard_options (flashcardId, text, sortOrder, isCorrect) VALUES (?, ?, ?, ?)',
+      [id, opt.text, i, opt.isCorrect ? 1 : 0],
+    );
+  }
 }
 
 /**
@@ -560,6 +693,7 @@ export async function resetAllData(): Promise<void> {
 		DROP TABLE IF EXISTS flashcards_fts;
 		DROP TABLE IF EXISTS quiz_answers;
 		DROP TABLE IF EXISTS quiz_sessions;
+		DROP TABLE IF EXISTS flashcard_options;
 		DROP TABLE IF EXISTS flashcards;
 		DROP TABLE IF EXISTS decks;
 		DROP TABLE IF EXISTS schema_version;

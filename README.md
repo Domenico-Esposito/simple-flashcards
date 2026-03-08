@@ -70,12 +70,31 @@ type Deck = {
   createdAt: string; // ISO date
 };
 
-type Flashcard = {
+// Standard flashcard (question + answer)
+type StandardFlashcard = {
   id: number;
+  type: 'standard';
   question: string; // Markdown
   answer: string; // Markdown
   deckId: number;
 };
+
+// Multiple-choice flashcard (question + options)
+type MultipleChoiceFlashcard = {
+  id: number;
+  type: 'multiple_choice';
+  question: string; // Markdown
+  deckId: number;
+  options: FlashcardOption[];
+};
+
+type FlashcardOption = {
+  id: number;
+  text: string;
+  isCorrect: boolean;
+};
+
+type Flashcard = StandardFlashcard | MultipleChoiceFlashcard;
 ```
 
 Quiz sessions and answers are tracked in separate tables for statistics.
@@ -117,7 +136,7 @@ npm run app:android
 
 ## Import / Export Format
 
-Decks can be imported and exported as JSON:
+Decks can be imported and exported as JSON. Flashcards can be standard (question + answer) or multiple-choice (question + options):
 
 ```json
 {
@@ -127,10 +146,22 @@ Decks can be imported and exported as JSON:
     {
       "question": "What is 2 + 2?",
       "answer": "**4**"
+    },
+    {
+      "question": "Which planet is closest to the Sun?",
+      "type": "multiple_choice",
+      "options": [
+        { "text": "Mercury", "isCorrect": true },
+        { "text": "Venus", "isCorrect": false },
+        { "text": "Earth", "isCorrect": false },
+        { "text": "Mars", "isCorrect": false }
+      ]
     }
   ]
 }
 ```
+
+Standard flashcards only require `question` and `answer`. Multiple-choice flashcards require `type: "multiple_choice"`, at least 2 options, and exactly one option with `isCorrect: true`.
 
 Import supports both local files and remote URLs.
 

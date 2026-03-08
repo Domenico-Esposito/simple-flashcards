@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Deck, Flashcard, StatsSeries, DifficultyRating } from '@/types';
+import { Deck, Flashcard, FlashcardType, StatsSeries, DifficultyRating } from '@/types';
 import * as db from '@/utils/database';
 import { shuffleArray } from '@/utils';
 
@@ -33,14 +33,31 @@ interface FlashcardsState {
   reshuffleFlashcards: () => void;
   appendQuizCard: (card: Flashcard) => void;
   addFlashcard: (deckId: number, question: string, answer: string) => Promise<Flashcard>;
+  addMultipleChoiceFlashcard: (
+    deckId: number,
+    question: string,
+    options: Array<{ text: string; isCorrect: boolean }>,
+  ) => Promise<Flashcard>;
   editFlashcard: (id: number, question: string, answer: string) => Promise<void>;
+  editMultipleChoiceFlashcard: (
+    id: number,
+    question: string,
+    options: Array<{ text: string; isCorrect: boolean }>,
+  ) => Promise<void>;
   removeFlashcard: (id: number) => Promise<void>;
 
   // Actions - Import
   importDeck: (
     title: string,
     description: string | undefined,
-    flashcards: Array<{ question: string; answer: string }>,
+    flashcards: Array<
+      | { question: string; answer: string }
+      | {
+          question: string;
+          type: 'multiple_choice';
+          options: Array<{ text: string; isCorrect: boolean }>;
+        }
+    >,
   ) => Promise<Deck>;
 
   // Actions - Quiz Session
@@ -179,11 +196,40 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
     return flashcard;
   },
 
+  addMultipleChoiceFlashcard: async (
+    deckId: number,
+    question: string,
+    options: Array<{ text: string; isCorrect: boolean }>,
+  ) => {
+    const flashcard = await db.createMultipleChoiceFlashcard(deckId, question, options);
+    set((state) => ({
+      flashcards: [...state.flashcards, flashcard],
+    }));
+    return flashcard;
+  },
+
   editFlashcard: async (id: number, question: string, answer: string) => {
     await db.updateFlashcard(id, question, answer);
     set((state) => ({
-      flashcards: state.flashcards.map((f) => (f.id === id ? { ...f, question, answer } : f)),
+      flashcards: state.flashcards.map((f) =>
+        f.id === id ? { ...f, question, answer, type: 'standard' as const } : f,
+      ),
     }));
+  },
+
+  editMultipleChoiceFlashcard: async (
+    id: number,
+    question: string,
+    options: Array<{ text: string; isCorrect: boolean }>,
+  ) => {
+    await db.updateMultipleChoiceFlashcard(id, question, options);
+    // Reload from DB to get proper option IDs
+    const updated = await db.getFlashcardById(id);
+    if (updated) {
+      set((state) => ({
+        flashcards: state.flashcards.map((f) => (f.id === id ? updated : f)),
+      }));
+    }
   },
 
   removeFlashcard: async (id: number) => {
@@ -196,12 +242,24 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
   importDeck: async (
     title: string,
     description: string | undefined,
-    flashcards: Array<{ question: string; answer: string }>,
+    flashcards: Array<
+      | { question: string; answer: string }
+      | {
+          question: string;
+          type: 'multiple_choice';
+          options: Array<{ text: string; isCorrect: boolean }>;
+        }
+    >,
   ) => {
     const deck = await db.createDeck(title, description);
 
     for (const fc of flashcards) {
-      await db.createFlashcard(deck.id, fc.question, fc.answer);
+      if ('type' in fc && fc.type === 'multiple_choice') {
+        await db.createMultipleChoiceFlashcard(deck.id, fc.question, fc.options);
+      } else {
+        const stdFc = fc as { question: string; answer: string };
+        await db.createFlashcard(deck.id, stdFc.question, stdFc.answer);
+      }
     }
 
     set((state) => ({

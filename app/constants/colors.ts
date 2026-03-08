@@ -67,6 +67,12 @@ const palette = {
     textInput: '#171717',
     /** Placeholder text color */
     placeholder: '#A3A3A3',
+    /** General text color */
+    text: '#171717',
+    /** Border color */
+    border: '#D4D4D4',
+    /** Input background color */
+    inputBg: '#FFFFFF',
   },
   dark: {
     accent: '#60A5FA',
@@ -104,6 +110,12 @@ const palette = {
     textInput: '#FAFAFA',
     /** Placeholder text color */
     placeholder: '#737373',
+    /** General text color */
+    text: '#FAFAFA',
+    /** Border color */
+    border: '#404040',
+    /** Input background color */
+    inputBg: '#262626',
   },
 } as const;
 

@@ -19,7 +19,10 @@ export function FlashcardListItem({ flashcard, onPress, onLongPress }: Flashcard
   const colorScheme = useColorScheme();
   const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
   const questionPreview = stripMarkdown(flashcard.question);
-  const answerPreview = stripMarkdown(flashcard.answer);
+  const answerPreview =
+    flashcard.type === 'multiple_choice'
+      ? flashcard.options.map((o) => o.text).join(' · ')
+      : stripMarkdown(flashcard.answer);
 
   return (
     <Pressable onPress={onPress} onLongPress={onLongPress}>

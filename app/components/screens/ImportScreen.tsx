@@ -188,6 +188,18 @@ export function ImportScreen() {
                   <Text fontSize={13} color="$secondary" marginLeft="$3">
                     {t('import.answerField')}
                   </Text>
+                  <Text fontSize={13} color="$secondary" marginLeft="$3">
+                    {t('import.typeField')}
+                  </Text>
+                  <Text fontSize={13} color="$secondary" marginLeft="$3">
+                    {t('import.optionsField')}
+                  </Text>
+                  <Text fontSize={13} color="$secondary" marginLeft="$6">
+                    {t('import.optionTextField')}
+                  </Text>
+                  <Text fontSize={13} color="$secondary" marginLeft="$6">
+                    {t('import.optionCorrectField')}
+                  </Text>
                 </YStack>
               </View>
             )}

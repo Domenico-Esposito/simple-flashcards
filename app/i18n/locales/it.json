@@ -62,7 +62,18 @@
     },
     "navigationHint": "↑↓ cambia carta • tocco per {{action}} risposta",
     "showAnswer": "mostrare",
-    "hideAnswer": "nascondere"
+    "hideAnswer": "nascondere",
+    "typeStandard": "Risposta singola",
+    "typeMultipleChoice": "Risposta multipla",
+    "optionPlaceholder": "Opzione {{index}}",
+    "addOption": "Aggiungi opzione",
+    "markCorrect": "Segna come corretta",
+    "minOptionsRequired": "Sono necessarie almeno 2 opzioni",
+    "correctOptionRequired": "Seleziona la risposta corretta",
+    "optionTextRequired": "Tutte le opzioni devono avere del testo",
+    "selectAnswer": "Seleziona una risposta",
+    "correct": "Corretto!",
+    "incorrect": "Sbagliato"
   },
   "form": {
     "titlePlaceholder": "Titolo",
@@ -109,19 +120,23 @@
     "hideFormat": "Nascondi formato JSON",
     "showFormat": "Mostra formato JSON",
     "formatTitle": "Formato JSON",
-    "formatExample": "{\n  \"title\": \"Nome del mazzo\",\n  \"description\": \"Descrizione opzionale\",\n  \"flashcards\": [\n    {\n      \"question\": \"Domanda 1\",\n      \"answer\": \"Risposta 1\"\n    }\n  ]\n}",
+    "formatExample": "{\n  \"title\": \"Nome del mazzo\",\n  \"description\": \"Descrizione opzionale\",\n  \"flashcards\": [\n    {\n      \"question\": \"Domanda 1\",\n      \"answer\": \"Risposta 1\"\n    },\n    {\n      \"question\": \"Quale è corretta?\",\n      \"type\": \"multiple_choice\",\n      \"options\": [\n        { \"text\": \"Opzione A\", \"isCorrect\": true },\n        { \"text\": \"Opzione B\", \"isCorrect\": false }\n      ]\n    }\n  ]\n}",
     "fieldsLabel": "Campi:",
     "titleField": "• title (obbligatorio): Nome del mazzo",
     "descriptionField": "• description (opzionale): Descrizione",
     "flashcardsField": "• flashcards (obbligatorio): Array di flashcard",
     "questionField": "• question: Testo della domanda (Markdown)",
-    "answerField": "• answer: Testo della risposta (Markdown)",
+    "answerField": "• answer: Testo della risposta (Markdown) — solo card standard",
     "invalidUrl": "Inserisci un URL valido",
     "missingJson": "Inserisci il JSON del mazzo",
     "invalidJson": "JSON non valido. Controlla la sintassi.",
     "error": "Errore durante l'importazione",
     "successTitle": "Importazione completata",
-    "successMessage": "Mazzo \"{{title}}\" importato con {{count}} flashcard!"
+    "successMessage": "Mazzo \"{{title}}\" importato con {{count}} flashcard!",
+    "typeField": "• type (opzionale): \"multiple_choice\" per card a scelta multipla",
+    "optionsField": "• options: Array di opzioni (solo card a scelta multipla)",
+    "optionTextField": "• text: Testo dell'opzione",
+    "optionCorrectField": "• isCorrect: true per la risposta corretta"
   },
   "export": {
     "title": "Esporta dati",
@@ -198,6 +213,8 @@
     "flashcardsArrayRequired": "Il campo \"flashcards\" deve essere un array",
     "questionMissing": "Flashcard {{index}}: campo \"question\" mancante",
     "answerMissing": "Flashcard {{index}}: campo \"answer\" mancante",
+    "optionsMissing": "Flashcard {{index}}: deve avere almeno 2 opzioni",
+    "correctOptionMissing": "Flashcard {{index}}: deve avere esattamente un'opzione corretta",
     "sharingNotAvailable": "La condivisione non è disponibile su questo dispositivo"
   }
 }

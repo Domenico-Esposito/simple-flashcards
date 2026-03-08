@@ -1,6 +1,6 @@
 import { File, Paths } from 'expo-file-system';
 import { isAvailableAsync, shareAsync } from 'expo-sharing';
-import { DeckExport, DeckWithFlashcards } from '@/types';
+import { DeckExport, DeckWithFlashcards, Flashcard } from '@/types';
 import * as db from './database';
 import i18n from '@/i18n';
 
@@ -18,10 +18,19 @@ export async function exportDeckToJson(deckId: number): Promise<string> {
   const exportData: DeckExport = {
     title: deck.title,
     description: deck.description,
-    flashcards: flashcards.map((fc) => ({
-      question: fc.question,
-      answer: fc.answer,
-    })),
+    flashcards: flashcards.map((fc) => {
+      if (fc.type === 'multiple_choice') {
+        return {
+          question: fc.question,
+          type: 'multiple_choice' as const,
+          options: fc.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect })),
+        };
+      }
+      return {
+        question: fc.question,
+        answer: fc.answer,
+      };
+    }),
   };
 
   return JSON.stringify(exportData, null, 2);
@@ -83,19 +92,36 @@ export async function importDeckFromJson(data: unknown): Promise<DeckWithFlashca
     if (!fc.question || typeof fc.question !== 'string') {
       throw new Error(i18n.t('errors.questionMissing', { index: i + 1 }));
     }
-    if (!fc.answer || typeof fc.answer !== 'string') {
-      throw new Error(i18n.t('errors.answerMissing', { index: i + 1 }));
+    if ('type' in fc && fc.type === 'multiple_choice') {
+      if (!Array.isArray(fc.options) || fc.options.length < 2) {
+        throw new Error(i18n.t('errors.optionsMissing', { index: i + 1 }));
+      }
+      const correctCount = fc.options.filter((o) => o.isCorrect).length;
+      if (correctCount !== 1) {
+        throw new Error(i18n.t('errors.correctOptionMissing', { index: i + 1 }));
+      }
+    } else {
+      const stdFc = fc as { question: string; answer: string };
+      if (!stdFc.answer || typeof stdFc.answer !== 'string') {
+        throw new Error(i18n.t('errors.answerMissing', { index: i + 1 }));
+      }
     }
   }
 
   // Create deck
   const deck = await db.createDeck(deckData.title, deckData.description);
 
-  // Create flashcards - store markdown content directly
-  const flashcards = [];
+  // Create flashcards
+  const flashcards: Flashcard[] = [];
   for (const fc of deckData.flashcards) {
-    const flashcard = await db.createFlashcard(deck.id, fc.question, fc.answer);
-    flashcards.push(flashcard);
+    if ('type' in fc && fc.type === 'multiple_choice') {
+      const flashcard = await db.createMultipleChoiceFlashcard(deck.id, fc.question, fc.options);
+      flashcards.push(flashcard);
+    } else {
+      const stdFc = fc as { question: string; answer: string };
+      const flashcard = await db.createFlashcard(deck.id, stdFc.question, stdFc.answer);
+      flashcards.push(flashcard);
+    }
   }
 
   return {

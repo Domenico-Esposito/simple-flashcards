@@ -127,6 +127,32 @@ export const migrations: Migration[] = [
     },
   },
 
+  // Migration 2: Multiple-choice flashcard support
+  {
+    version: 2,
+    name: 'multiple_choice_flashcards',
+    up: async (db) => {
+      await db.execAsync(`
+        ALTER TABLE flashcards ADD COLUMN type TEXT NOT NULL DEFAULT 'standard';
+
+        CREATE TABLE IF NOT EXISTS flashcard_options (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          flashcardId INTEGER NOT NULL,
+          text TEXT NOT NULL,
+          sortOrder INTEGER NOT NULL DEFAULT 0,
+          isCorrect INTEGER NOT NULL DEFAULT 0,
+          FOREIGN KEY (flashcardId) REFERENCES flashcards(id) ON DELETE CASCADE
+        );
+      `);
+    },
+    down: async (db) => {
+      await db.execAsync(`
+        DROP TABLE IF EXISTS flashcard_options;
+      `);
+      // SQLite doesn't support DROP COLUMN before 3.35.0; safe to leave the column
+    },
+  },
+
   // ============================================================
   // ADD NEW MIGRATIONS BELOW THIS LINE
   // ============================================================

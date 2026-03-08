@@ -3,14 +3,50 @@
  */
 
 /**
- * Represents a single flashcard with a question and answer
+ * Flashcard type discriminator
  */
-export type Flashcard = {
+export type FlashcardType = 'standard' | 'multiple_choice';
+
+/**
+ * A single option in a multiple-choice flashcard
+ */
+export type FlashcardOption = {
+  id: number;
+  flashcardId: number;
+  text: string;
+  sortOrder: number;
+  isCorrect: boolean;
+};
+
+/**
+ * Base fields shared by every flashcard
+ */
+type FlashcardBase = {
   id: number;
   question: string;
-  answer: string;
   deckId: number;
 };
+
+/**
+ * Classic flashcard with a free-text answer
+ */
+export type StandardFlashcard = FlashcardBase & {
+  type: 'standard';
+  answer: string;
+};
+
+/**
+ * Multiple-choice flashcard — no `answer` field; uses options instead
+ */
+export type MultipleChoiceFlashcard = FlashcardBase & {
+  type: 'multiple_choice';
+  options: FlashcardOption[];
+};
+
+/**
+ * Union of all flashcard variants
+ */
+export type Flashcard = StandardFlashcard | MultipleChoiceFlashcard;
 
 /**
  * Represents a deck (collection) of flashcards
@@ -35,10 +71,14 @@ export type DeckWithFlashcards = Deck & {
 export type DeckExport = {
   title: string;
   description?: string;
-  flashcards: Array<{
-    question: string;
-    answer: string;
-  }>;
+  flashcards: Array<
+    | { question: string; answer: string }
+    | {
+        question: string;
+        type: 'multiple_choice';
+        options: Array<{ text: string; isCorrect: boolean }>;
+      }
+  >;
 };
 
 /**

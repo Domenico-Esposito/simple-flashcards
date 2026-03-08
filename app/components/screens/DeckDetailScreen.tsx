@@ -79,9 +79,13 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
   const filteredFlashcards = useMemo(() => {
     if (!searchQuery.trim()) return flashcards;
     const query = searchQuery.toLowerCase().trim();
-    return flashcards.filter(
-      (fc) => fc.question.toLowerCase().includes(query) || fc.answer.toLowerCase().includes(query),
-    );
+    return flashcards.filter((fc) => {
+      const q = fc.question.toLowerCase().includes(query);
+      if (fc.type === 'multiple_choice') {
+        return q || fc.options.some((o) => o.text.toLowerCase().includes(query));
+      }
+      return q || fc.answer.toLowerCase().includes(query);
+    });
   }, [flashcards, searchQuery]);
 
   useEffect(() => {

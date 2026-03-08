@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
+import { useEffect, useState, useCallback, useRef, type ReactNode, useMemo } from 'react';
 import { Dimensions, Pressable, LayoutChangeEvent } from 'react-native';
 import { Text, View, YStack, Button } from 'tamagui';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -20,6 +20,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { SkiaCardShadow } from '@/components/ui/SkiaCardShadow';
 import { Flashcard } from '@/types';
 import { getColors } from '@/constants/colors';
+import { shuffleArray } from '@/utils';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 80;
@@ -71,6 +72,9 @@ export function FlashcardViewer({
   const [questionContentHeight, setQuestionContentHeight] = useState(0);
   const [answerContentHeight, setAnswerContentHeight] = useState(0);
 
+  // MC state: selected option per card
+  const [mcSelections, setMcSelections] = useState<Record<number, number>>({});
+
   const isQuestionOverflow = questionContentHeight > layoutHeight;
   const isAnswerOverflow = answerContentHeight > layoutHeight;
 
@@ -104,14 +108,45 @@ export function FlashcardViewer({
   }, [deckId, loadFlashcardsForQuiz, infiniteMode]);
 
   const currentCard = shuffledFlashcards[currentIndex];
+  const isMC = currentCard?.type === 'multiple_choice';
+
+  // Get shuffled options for the current card.
+  // Memoized by card ID to ensure stability during interaction but refresh on navigation.
+  // We use useMemo instead of state to avoid side-effects during render.
+  const currentShuffledOptions = useMemo(() => {
+    if (!currentCard || currentCard.type !== 'multiple_choice') return [];
+    return shuffleArray([...currentCard.options]);
+  }, [currentCard]);
+
+  const mcSelectedIndex = currentCard ? mcSelections[currentCard.id] : undefined;
+
+  // Handle MC option selection
+  const handleMcSelect = useCallback(
+    (optionId: number) => {
+      if (!currentCard || !isMC || mcSelections[currentCard.id] !== undefined) return;
+      setMcSelections((prev) => ({ ...prev, [currentCard.id]: optionId }));
+      // Auto-flip to answer side after short delay
+      setTimeout(() => {
+        flipRotation.value = withTiming(180, { duration: 400 });
+        isShowingAnswer.value = 1;
+        setShowAnswer(true);
+      }, 300);
+    },
+    [currentCard, isMC, mcSelections, flipRotation, isShowingAnswer],
+  );
 
   // Handler to open the "Read more" modal
   const openReadMore = useCallback(
     (type: 'question' | 'answer') => {
-      const content = type === 'question' ? currentCard?.question : currentCard?.answer;
+      let content = '';
+      if (type === 'question') {
+        content = currentCard?.question ?? '';
+      } else if (currentCard?.type === 'standard') {
+        content = currentCard.answer;
+      }
       router.push({
         pathname: '/read-more/[type]',
-        params: { type, content: content || '' },
+        params: { type, content },
       });
     },
     [router, currentCard],
@@ -125,6 +160,16 @@ export function FlashcardViewer({
     setShowAnswer(false);
     flipRotation.value = 0;
     isShowingAnswer.value = 0;
+
+    // Clear MC selection so the card can be answered again if revisited
+    const card = shuffledCardsRef.current[currentIndexRef.current];
+    if (card?.type === 'multiple_choice') {
+      setMcSelections((prev) => {
+        const next = { ...prev };
+        delete next[card.id];
+        return next;
+      });
+    }
 
     if (infiniteMode) {
       // Always advance — a new card was just appended by onRequestNextCard
@@ -146,6 +191,17 @@ export function FlashcardViewer({
     setShowAnswer(false);
     flipRotation.value = 0;
     isShowingAnswer.value = 0;
+
+    // Clear MC selection so the card can be answered again
+    const card = shuffledCardsRef.current[currentIndexRef.current];
+    if (card?.type === 'multiple_choice') {
+      setMcSelections((prev) => {
+        const next = { ...prev };
+        delete next[card.id];
+        return next;
+      });
+    }
+
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : prev));
   }, [flipRotation, isShowingAnswer]);
 
@@ -196,9 +252,24 @@ export function FlashcardViewer({
       runOnJS(openReadMore)('answer');
     });
 
+  // For MC cards, tap-to-flip is disabled until an option is selected.
+  // We use a shared value to communicate this to the gesture worklet.
+  const mcHasSelection = useSharedValue(0);
+
+  useEffect(() => {
+    if (currentCard && currentCard.type === 'multiple_choice') {
+      mcHasSelection.value = mcSelections[currentCard.id] !== undefined ? 1 : 0;
+    } else {
+      mcHasSelection.value = 1; // standard cards always allow tap-to-flip
+    }
+  }, [currentCard, mcSelections, mcHasSelection]);
+
   const tapGesture = Gesture.Tap()
     .maxDistance(10)
     .onEnd(() => {
+      // For MC cards without a selection, ignore tap (options handle interaction)
+      if (mcHasSelection.value === 0) return;
+
       const currentlyShowingAnswer = isShowingAnswer.value === 1;
       if (currentlyShowingAnswer) {
         flipRotation.value = withTiming(0, { duration: 400 });
@@ -246,8 +317,6 @@ export function FlashcardViewer({
   const shadowColor = colors.shadow;
   const cardBg = colors.cardBg;
   const closeIconColor = colors.iconDefault;
-  const dotActiveColor = colors.dotActive;
-  const dotInactiveColor = colors.dotInactive;
 
   if (shuffledFlashcards.length === 0 || !currentCard) {
     return (
@@ -257,10 +326,14 @@ export function FlashcardViewer({
     );
   }
 
-  const defaultHint = (showing: boolean) =>
-    t('flashcard.navigationHint', {
+  const defaultHint = (showing: boolean) => {
+    if (isMC && mcSelectedIndex === undefined) {
+      return t('flashcard.selectAnswer');
+    }
+    return t('flashcard.navigationHint', {
       action: showing ? t('flashcard.hideAnswer') : t('flashcard.showAnswer'),
     });
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -297,7 +370,7 @@ export function FlashcardViewer({
               ]}
             >
               <View style={{ flex: 1, position: 'relative', overflow: 'visible' }}>
-                {/* Front face — Question */}
+                {/* Front face — Question (+ MC options) */}
                 <Animated.View
                   style={[
                     {
@@ -331,7 +404,11 @@ export function FlashcardViewer({
                           style={{
                             overflow: 'hidden',
                             flex: 1,
-                            justifyContent: isQuestionOverflow ? 'flex-start' : 'center',
+                            justifyContent: isMC
+                              ? 'flex-start'
+                              : isQuestionOverflow
+                                ? 'flex-start'
+                                : 'center',
                           }}
                         >
                           <YStack
@@ -344,8 +421,44 @@ export function FlashcardViewer({
                               {t('flashcard.questionLabel')}
                             </Text>
                             <MarkdownContent markdown={currentCard.question} />
+
+                            {/* MC options on front face */}
+                            {isMC && (
+                              <YStack gap="$2" marginTop="$4">
+                                <Text fontSize={12} color="$secondary" marginBottom="$1">
+                                  {t('flashcard.selectAnswer')}
+                                </Text>
+                                {currentShuffledOptions.map((option) => {
+                                  const isSelected = mcSelectedIndex === option.id;
+                                  return (
+                                    <Pressable
+                                      key={option.id}
+                                      onPress={() => handleMcSelect(option.id)}
+                                      disabled={mcSelectedIndex !== undefined}
+                                    >
+                                      <View
+                                        paddingHorizontal="$4"
+                                        paddingVertical="$3"
+                                        borderRadius="$3"
+                                        style={{
+                                          borderWidth: 2,
+                                          borderColor: isSelected ? colors.accent : colors.border,
+                                          backgroundColor: isSelected
+                                            ? colors.accentBgTint
+                                            : 'transparent',
+                                        }}
+                                      >
+                                        <Text fontSize={15} color="$color">
+                                          {option.text}
+                                        </Text>
+                                      </View>
+                                    </Pressable>
+                                  );
+                                })}
+                              </YStack>
+                            )}
                           </YStack>
-                          {isQuestionOverflow && (
+                          {!isMC && isQuestionOverflow && (
                             <View
                               position="absolute"
                               bottom={16}
@@ -374,7 +487,7 @@ export function FlashcardViewer({
                   </SkiaCardShadow>
                 </Animated.View>
 
-                {/* Back face — Answer */}
+                {/* Back face — Answer / MC results */}
                 <Animated.View
                   style={[
                     {
@@ -406,44 +519,117 @@ export function FlashcardViewer({
                           style={{
                             overflow: 'hidden',
                             flex: 1,
-                            justifyContent: isAnswerOverflow ? 'flex-start' : 'center',
+                            justifyContent: isMC
+                              ? 'flex-start'
+                              : isAnswerOverflow
+                                ? 'flex-start'
+                                : 'center',
                           }}
                         >
-                          <YStack
-                            paddingVertical="$6"
-                            onLayout={(e: LayoutChangeEvent) =>
-                              setAnswerContentHeight(e.nativeEvent.layout.height)
-                            }
-                          >
-                            <Text fontSize={14} color="$secondary" marginBottom="$2">
-                              {t('flashcard.answerLabel')}
-                            </Text>
-                            <MarkdownContent markdown={currentCard.answer} />
-                          </YStack>
-                        </View>
-                        {isAnswerOverflow && (
-                          <View
-                            position="absolute"
-                            bottom={answerBottomPadding + 16}
-                            left={0}
-                            right={0}
-                            alignItems="center"
-                            pointerEvents="box-none"
-                          >
-                            <GestureDetector gesture={answerReadMoreTap}>
-                              <View>
-                                <Button
-                                  size="$3"
-                                  theme="active"
-                                  borderRadius="$10"
-                                  pointerEvents="none"
+                          {isMC ? (
+                            <YStack paddingVertical="$6">
+                              <Text fontSize={14} color="$secondary" marginBottom="$2">
+                                {t('flashcard.questionLabel')}
+                              </Text>
+                              <MarkdownContent markdown={currentCard.question} />
+
+                              <YStack gap="$2" marginTop="$4">
+                                {(() => {
+                                  const selectedOpt = currentShuffledOptions.find(
+                                    (o) => o.id === mcSelectedIndex,
+                                  );
+                                  const isCorrectAnswer = selectedOpt?.isCorrect ?? false;
+                                  return (
+                                    <>
+                                      <Text
+                                        fontSize={14}
+                                        fontWeight="700"
+                                        color={isCorrectAnswer ? colors.success : colors.error}
+                                        marginBottom="$1"
+                                      >
+                                        {isCorrectAnswer
+                                          ? t('flashcard.correct')
+                                          : t('flashcard.incorrect')}
+                                      </Text>
+                                      {currentShuffledOptions.map((option) => {
+                                        const isSelected = mcSelectedIndex === option.id;
+                                        let optBorderColor: string = colors.border;
+                                        let bgColor: string = 'transparent';
+
+                                        if (option.isCorrect) {
+                                          optBorderColor = colors.success;
+                                          bgColor = colors.successBgTint;
+                                        } else if (isSelected && !option.isCorrect) {
+                                          optBorderColor = colors.error;
+                                          bgColor = colors.errorBgTint;
+                                        }
+
+                                        return (
+                                          <View
+                                            key={option.id}
+                                            paddingHorizontal="$4"
+                                            paddingVertical="$3"
+                                            borderRadius="$3"
+                                            style={{
+                                              borderWidth: 2,
+                                              borderColor: optBorderColor,
+                                              backgroundColor: bgColor,
+                                            }}
+                                          >
+                                            <Text fontSize={15} color="$color">
+                                              {option.text}
+                                            </Text>
+                                          </View>
+                                        );
+                                      })}
+                                    </>
+                                  );
+                                })()}
+                              </YStack>
+                            </YStack>
+                          ) : (
+                            <>
+                              <YStack
+                                paddingVertical="$6"
+                                onLayout={(e: LayoutChangeEvent) =>
+                                  setAnswerContentHeight(e.nativeEvent.layout.height)
+                                }
+                              >
+                                <Text fontSize={14} color="$secondary" marginBottom="$2">
+                                  {t('flashcard.answerLabel')}
+                                </Text>
+                                <MarkdownContent
+                                  markdown={
+                                    currentCard.type === 'standard' ? currentCard.answer : ''
+                                  }
+                                />
+                              </YStack>
+                              {isAnswerOverflow && (
+                                <View
+                                  position="absolute"
+                                  bottom={answerBottomPadding + 16}
+                                  left={0}
+                                  right={0}
+                                  alignItems="center"
+                                  pointerEvents="box-none"
                                 >
-                                  {t('flashcard.readMore')}
-                                </Button>
-                              </View>
-                            </GestureDetector>
-                          </View>
-                        )}
+                                  <GestureDetector gesture={answerReadMoreTap}>
+                                    <View>
+                                      <Button
+                                        size="$3"
+                                        theme="active"
+                                        borderRadius="$10"
+                                        pointerEvents="none"
+                                      >
+                                        {t('flashcard.readMore')}
+                                      </Button>
+                                    </View>
+                                  </GestureDetector>
+                                </View>
+                              )}
+                            </>
+                          )}
+                        </View>
                         {answerFooter?.(currentCard)}
                       </View>
                     </Animated.View>
