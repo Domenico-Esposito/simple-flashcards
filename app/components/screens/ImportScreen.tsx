@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView } from 'react-native';
+import { Platform, ScrollView } from 'react-native';
 import { Button, Input, Label, Text, TextArea, View, YStack, XStack } from 'tamagui';
 
 import { useTranslation } from 'react-i18next';
@@ -78,7 +78,7 @@ export function ImportScreen() {
   };
 
   return (
-    <View flex={1} backgroundColor="$background">
+    <View flex={1} backgroundColor="$background" testID="import-screen">
       <Header title={t('import.title')} showBackButton />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
@@ -92,6 +92,8 @@ export function ImportScreen() {
                 onPress={() => setImportMode('url')}
                 themeInverse={importMode === 'url'}
                 chromeless={importMode !== 'url'}
+                testID="import-mode-url-button"
+                accessibilityLabel="import-mode-url-button"
               >
                 {t('import.fromUrl')}
               </Button>
@@ -101,6 +103,8 @@ export function ImportScreen() {
                 onPress={() => setImportMode('json')}
                 themeInverse={importMode === 'json'}
                 chromeless={importMode !== 'json'}
+                testID="import-mode-json-button"
+                accessibilityLabel="import-mode-json-button"
               >
                 {t('import.fromJson')}
               </Button>
@@ -115,13 +119,22 @@ export function ImportScreen() {
                   <Label htmlFor="importUrl">{t('import.urlLabel')}</Label>
                   <Input
                     id="importUrl"
+                    testID="import-url-input"
+                    accessibilityLabel="import-url-input"
                     size="$4"
                     value={importUrl}
                     onChangeText={setImportUrl}
                     placeholder={t('import.urlPlaceholder')}
                   />
                 </YStack>
-                <Button size="$4" onPress={handleImportFromUrl} disabled={isImporting} themeInverse>
+                <Button
+                  size="$4"
+                  onPress={handleImportFromUrl}
+                  disabled={isImporting}
+                  themeInverse
+                  testID="import-from-url-button"
+                  accessibilityLabel="import-from-url-button"
+                >
                   {isImporting ? t('common.importing') : t('import.fromUrlButton')}
                 </Button>
               </>
@@ -134,12 +147,19 @@ export function ImportScreen() {
                   <Label htmlFor="importJson">{t('import.jsonLabel')}</Label>
                   <TextArea
                     id="importJson"
+                    testID="import-json-input"
+                    accessibilityLabel="import-json-input"
                     size="$4"
                     value={importJson}
                     onChangeText={setImportJson}
                     placeholder={t('import.jsonPlaceholder')}
                     numberOfLines={8}
                     minHeight={160}
+                    autoCorrect={false}
+                    spellCheck={false}
+                    autoComplete="off"
+                    importantForAutofill="no"
+                    keyboardType="visible-password" // prevents auto-capitalization and auto-correction
                   />
                 </YStack>
                 <Button
@@ -147,6 +167,8 @@ export function ImportScreen() {
                   onPress={handleImportFromJson}
                   disabled={isImporting}
                   themeInverse
+                  testID="import-from-json-button"
+                  accessibilityLabel="import-from-json-button"
                 >
                   {isImporting ? t('common.importing') : t('import.fromJsonButton')}
                 </Button>
@@ -156,11 +178,23 @@ export function ImportScreen() {
 
           {/* Format Documentation */}
           <YStack gap="$3">
-            <Button size="$4" onPress={() => setShowFormat(!showFormat)} chromeless>
+            <Button
+              size="$4"
+              onPress={() => setShowFormat(!showFormat)}
+              chromeless
+              testID="import-toggle-format-button"
+              accessibilityLabel="import-toggle-format-button"
+            >
               {showFormat ? t('import.hideFormat') : t('import.showFormat')}
             </Button>
             {showFormat && (
-              <View backgroundColor="$backgroundStrong" padding="$4" borderRadius="$3" gap="$3">
+              <View
+                backgroundColor="$backgroundStrong"
+                padding="$4"
+                borderRadius="$3"
+                gap="$3"
+                testID="import-format-panel"
+              >
                 <Text fontSize={16} fontWeight="600" color="$color">
                   {t('import.formatTitle')}
                 </Text>

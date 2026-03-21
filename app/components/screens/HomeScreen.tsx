@@ -39,6 +39,7 @@ function DeckGrid({ decks, deckCounts, onPress, onLongPress }: DeckListContentPr
               flashcardCount={deckCounts[item.id] || 0}
               onPress={() => onPress(item.id)}
               onLongPress={() => onLongPress(item)}
+              testID={`home-deck-card-${item.id}`}
             />
           </View>
         ))}
@@ -59,6 +60,7 @@ function DeckMobileList({ decks, deckCounts, onPress, onLongPress }: DeckListCon
           flashcardCount={deckCounts[item.id] || 0}
           onPress={() => onPress(item.id)}
           onLongPress={() => onLongPress(item)}
+          testID={`home-deck-card-${item.id}`}
         />
       )}
       contentContainerStyle={{ paddingBottom: 20 }}
@@ -93,7 +95,11 @@ function SearchResultsGrid({ sections, onFlashcardPress }: SearchResultsContentP
           <View flexDirection="row" flexWrap="wrap" margin={-6}>
             {section.data.map((item) => (
               <View key={item.id} width="50%" padding={6}>
-                <FlashcardListItem flashcard={item} onPress={() => onFlashcardPress(item.id)} />
+                <FlashcardListItem
+                  flashcard={item}
+                  onPress={() => onFlashcardPress(item.id)}
+                  testID={`home-search-flashcard-${item.id}`}
+                />
               </View>
             ))}
           </View>
@@ -123,7 +129,11 @@ function SearchResultsMobileList({ sections, onFlashcardPress }: SearchResultsCo
         </View>
       )}
       renderItem={({ item }) => (
-        <FlashcardListItem flashcard={item} onPress={() => onFlashcardPress(item.id)} />
+        <FlashcardListItem
+          flashcard={item}
+          onPress={() => onFlashcardPress(item.id)}
+          testID={`home-search-flashcard-${item.id}`}
+        />
       )}
       contentContainerStyle={{ paddingBottom: 20 }}
       ItemSeparatorComponent={() => <View height={10} />}
@@ -209,7 +219,7 @@ export function HomeScreen() {
     router.push(`/flashcard-edit/${flashcardId}`);
 
   return (
-    <View flex={1} backgroundColor="$background">
+    <View flex={1} backgroundColor="$background" testID="home-screen">
       <Header
         title={t('home.title')}
         showBackButton={false}
@@ -218,6 +228,7 @@ export function HomeScreen() {
             icon: 'add',
             label: t('home.newDeck'),
             onPress: () => router.push('/deck/new'),
+            testID: 'home-new-deck-action',
           }),
         ]}
       />
@@ -229,18 +240,20 @@ export function HomeScreen() {
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder={t('home.searchPlaceholder')}
+            testID="home-search-input"
+            clearButtonTestID="home-search-clear-button"
           />
         )}
 
         {decks.length === 0 ? (
           <YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
-            <Text color="$gray10" fontSize={16} textAlign="center">
+            <Text color="$gray10" fontSize={16} textAlign="center" testID="home-empty-state">
               {t('home.noDecks')}
             </Text>
           </YStack>
         ) : filteredDecks.length === 0 ? (
           <YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
-            <Text color="$gray10" fontSize={16} textAlign="center">
+            <Text color="$gray10" fontSize={16} textAlign="center" testID="home-search-empty-state">
               {t('home.noSearchResults', { query: searchQuery })}
             </Text>
           </YStack>

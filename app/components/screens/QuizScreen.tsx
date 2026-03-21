@@ -179,16 +179,19 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
               type="hard"
               onPress={() => handleResponse(currentCard.id, 'hard')}
               currentRating={cardDifficulty[currentCard.id]}
+              testID="quiz-difficulty-hard-button"
             />
             <DifficultyButton
               type="medium"
               onPress={() => handleResponse(currentCard.id, 'medium')}
               currentRating={cardDifficulty[currentCard.id]}
+              testID="quiz-difficulty-medium-button"
             />
             <DifficultyButton
               type="easy"
               onPress={() => handleResponse(currentCard.id, 'easy')}
               currentRating={cardDifficulty[currentCard.id]}
+              testID="quiz-difficulty-easy-button"
             />
           </View>
         </View>
@@ -225,6 +228,7 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
             paddingHorizontal="$5"
             paddingVertical="$5"
             borderRadius="$6"
+            testID="quiz-exit-dialog"
           >
             <YStack gap="$3">
               <AlertDialog.Title size="$6">{t('quiz.exitTitle')}</AlertDialog.Title>
@@ -233,15 +237,32 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
               </AlertDialog.Description>
               <YStack gap="$2" paddingTop="$2">
                 <AlertDialog.Cancel asChild>
-                  <Button borderRadius="$4">{t('common.cancel')}</Button>
+                  <Button
+                    borderRadius="$4"
+                    testID="quiz-exit-cancel-button"
+                    accessibilityLabel="quiz-exit-cancel-button"
+                  >
+                    {t('common.cancel')}
+                  </Button>
                 </AlertDialog.Cancel>
                 <AlertDialog.Action asChild>
-                  <Button borderRadius="$4" onPress={handleExitWithSave}>
+                  <Button
+                    borderRadius="$4"
+                    onPress={handleExitWithSave}
+                    testID="quiz-exit-save-button"
+                    accessibilityLabel="quiz-exit-save-button"
+                  >
                     {t('common.exit')}
                   </Button>
                 </AlertDialog.Action>
                 <AlertDialog.Action asChild>
-                  <Button theme="red" borderRadius="$4" onPress={handleExitDiscard}>
+                  <Button
+                    theme="red"
+                    borderRadius="$4"
+                    onPress={handleExitDiscard}
+                    testID="quiz-exit-discard-button"
+                    accessibilityLabel="quiz-exit-discard-button"
+                  >
                     {t('quiz.exitWithoutSaving')}
                   </Button>
                 </AlertDialog.Action>
@@ -263,6 +284,7 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
             paddingHorizontal="$5"
             paddingVertical="$5"
             borderRadius="$6"
+            testID="quiz-all-easy-dialog"
           >
             <YStack gap="$3">
               <AlertDialog.Title size="$6">{t('quiz.allEasyTitle')}</AlertDialog.Title>
@@ -271,12 +293,23 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
               </AlertDialog.Description>
               <YStack gap="$2" paddingTop="$2">
                 <AlertDialog.Action asChild>
-                  <Button theme="active" borderRadius="$4" onPress={handleAllEasyExit}>
+                  <Button
+                    theme="active"
+                    borderRadius="$4"
+                    onPress={handleAllEasyExit}
+                    testID="quiz-all-easy-exit-button"
+                    accessibilityLabel="quiz-all-easy-exit-button"
+                  >
                     {t('quiz.closeButton')}
                   </Button>
                 </AlertDialog.Action>
                 <AlertDialog.Cancel asChild>
-                  <Button borderRadius="$4" onPress={handleAllEasyContinue}>
+                  <Button
+                    borderRadius="$4"
+                    onPress={handleAllEasyContinue}
+                    testID="quiz-all-easy-continue-button"
+                    accessibilityLabel="quiz-all-easy-continue-button"
+                  >
                     {t('quiz.continue')}
                   </Button>
                 </AlertDialog.Cancel>
@@ -326,10 +359,12 @@ const DifficultyButton = ({
   type,
   onPress,
   currentRating,
+  testID,
 }: {
   type: DifficultyRating;
   onPress: () => void;
   currentRating?: DifficultyRating;
+  testID: string;
 }) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
@@ -358,7 +393,12 @@ const DifficultyButton = ({
   const opacity = !currentRating ? 1 : currentRating === type ? 1 : 0.4;
 
   return (
-    <Pressable onPress={handlePress} style={{ flex: 1 }}>
+    <Pressable
+      onPress={handlePress}
+      style={{ flex: 1 }}
+      testID={testID}
+      accessibilityLabel={testID}
+    >
       <Animated.View style={[animatedStyle, { opacity, overflow: 'visible' }]}>
         <SkiaCardShadow
           borderRadius={12}

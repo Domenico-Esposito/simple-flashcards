@@ -150,6 +150,11 @@ function Sidebar() {
     },
     { path: '/settings', label: t('tab.settings'), icon: 'settings' as const },
   ];
+  const sidebarTestIDByPath: Record<string, string> = {
+    '/': 'sidebar-tab-decks',
+    '/statistics': 'sidebar-tab-statistics',
+    '/settings': 'sidebar-tab-settings',
+  };
 
   return (
     <YStack
@@ -166,7 +171,11 @@ function Sidebar() {
         const tabPath = tab.path.toString();
         const isActive = pathname === tabPath || (tabPath !== '/' && pathname.startsWith(tabPath));
         return (
-          <Pressable key={tabPath} onPress={() => router.push(tab.path)}>
+          <Pressable
+            key={tabPath}
+            onPress={() => router.push(tab.path)}
+            testID={sidebarTestIDByPath[tabPath] ?? 'sidebar-tab-item'}
+          >
             <XStack
               paddingVertical="$3"
               paddingHorizontal="$3"

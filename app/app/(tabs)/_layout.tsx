@@ -29,6 +29,8 @@ export default function TabLayout() {
         name="index"
         options={{
           title: t('tab.decks'),
+          tabBarButtonTestID: 'tab-decks',
+          tabBarAccessibilityLabel: 'tab-decks',
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="rectangle.stack.fill" color={color} />
           ),
@@ -38,6 +40,8 @@ export default function TabLayout() {
         name="statistics"
         options={{
           title: t('tab.statistics'),
+          tabBarButtonTestID: 'tab-statistics',
+          tabBarAccessibilityLabel: 'tab-statistics',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
         }}
       />
@@ -45,6 +49,8 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: t('tab.settings'),
+          tabBarButtonTestID: 'tab-settings',
+          tabBarAccessibilityLabel: 'tab-settings',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
         }}
       />

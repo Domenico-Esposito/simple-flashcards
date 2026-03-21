@@ -39,13 +39,19 @@ type RichTextEditorProps = {
   editor: MarkdownEditorHandle;
   placeholder?: string;
   minHeight?: number;
+  testID?: string;
 };
 
 // Export hook for external use
 export { useKeyboardHeight };
 export { useMarkdownEditor };
 
-export function RichTextEditor({ editor, placeholder, minHeight = 150 }: RichTextEditorProps) {
+export function RichTextEditor({
+  editor,
+  placeholder,
+  minHeight = 150,
+  testID,
+}: RichTextEditorProps) {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
   const segmentComponents = useMemo(() => createSegmentComponents(colorScheme), [colorScheme]);
@@ -54,6 +60,8 @@ export function RichTextEditor({ editor, placeholder, minHeight = 150 }: RichTex
     <View backgroundColor="transparent" minHeight={minHeight} flex={1}>
       <MarkdownTextInput
         editor={editor}
+        testID={testID}
+        accessibilityLabel={testID}
         placeholder={placeholder}
         placeholderTextColor={colors.placeholder}
         style={styles.inputContainer}

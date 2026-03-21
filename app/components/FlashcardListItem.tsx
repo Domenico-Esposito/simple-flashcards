@@ -10,12 +10,18 @@ interface FlashcardListItemProps {
   flashcard: Flashcard;
   onPress: () => void;
   onLongPress?: () => void;
+  testID?: string;
 }
 
 /**
  * List item displaying a flashcard preview
  */
-export function FlashcardListItem({ flashcard, onPress, onLongPress }: FlashcardListItemProps) {
+export function FlashcardListItem({
+  flashcard,
+  onPress,
+  onLongPress,
+  testID,
+}: FlashcardListItemProps) {
   const colorScheme = useColorScheme();
   const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
   const questionPreview = stripMarkdown(flashcard.question);
@@ -23,9 +29,15 @@ export function FlashcardListItem({ flashcard, onPress, onLongPress }: Flashcard
     flashcard.type === 'multiple_choice'
       ? flashcard.options.map((o) => o.text).join(' · ')
       : stripMarkdown(flashcard.answer);
+  const flashcardItemTestID = testID ?? 'flashcard-list-item';
 
   return (
-    <Pressable onPress={onPress} onLongPress={onLongPress}>
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      testID={flashcardItemTestID}
+      accessibilityLabel={flashcardItemTestID}
+    >
       {({ pressed }) => (
         <View
           backgroundColor={pressed ? '$backgroundPress' : '$backgroundStrong'}
@@ -41,10 +53,18 @@ export function FlashcardListItem({ flashcard, onPress, onLongPress }: Flashcard
                 numberOfLines={2}
                 height={40}
                 color="$color"
+                testID={`${flashcardItemTestID}-question`}
               >
                 {questionPreview}
               </Text>
-              <Text fontSize={13} lineHeight={18} color="$gray10" numberOfLines={2} height={36}>
+              <Text
+                fontSize={13}
+                lineHeight={18}
+                color="$gray10"
+                numberOfLines={2}
+                height={36}
+                testID={`${flashcardItemTestID}-answer`}
+              >
                 {answerPreview}
               </Text>
             </YStack>

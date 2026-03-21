@@ -91,7 +91,7 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View flex={1} backgroundColor="$background">
+      <View flex={1} backgroundColor="$background" testID="deck-form-screen">
         <Header
           title={isEditing ? t('deck.editTitle') : t('deck.createTitle')}
           isModal={isEditing}
@@ -104,6 +104,8 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
           <YStack gap="$4" flex={1} padding="$4">
             <YStack gap="$2">
               <RNTextInput
+                testID="deck-form-title-input"
+                accessibilityLabel="deck-form-title-input"
                 value={title}
                 onChangeText={onTitleChangeText}
                 placeholder={t('form.titlePlaceholder')}
@@ -128,6 +130,8 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
             <YStack gap="$1" flex={1}>
               <TextArea
                 id="description"
+                testID="deck-form-description-input"
+                accessibilityLabel="deck-form-description-input"
                 size="$4"
                 flex={1}
                 value={description}
@@ -144,15 +148,33 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
             </YStack>
 
             <YStack gap="$3">
-              <Button size="$4" onPress={handleSave} themeInverse>
+              <Button
+                size="$4"
+                onPress={handleSave}
+                themeInverse
+                testID="deck-form-save-button"
+                accessibilityLabel="deck-form-save-button"
+              >
                 {t('common.save')}
               </Button>
               {isEditing && (
-                <Button size="$4" onPress={handleDelete} theme="red">
+                <Button
+                  size="$4"
+                  onPress={handleDelete}
+                  theme="red"
+                  testID="deck-form-delete-button"
+                  accessibilityLabel="deck-form-delete-button"
+                >
                   {t('deck.delete.title')}
                 </Button>
               )}
-              <Button size="$4" onPress={() => router.back()} chromeless>
+              <Button
+                size="$4"
+                onPress={() => router.back()}
+                chromeless
+                testID="deck-form-cancel-button"
+                accessibilityLabel="deck-form-cancel-button"
+              >
                 {t('common.cancel')}
               </Button>
             </YStack>

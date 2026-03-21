@@ -25,7 +25,7 @@ export function ResetStatsScreen() {
   };
 
   return (
-    <View flex={1} backgroundColor="$background">
+    <View flex={1} backgroundColor="$background" testID="reset-stats-screen">
       <Header title={t('resetStats.title')} showBackButton />
 
       <YStack padding="$4" gap="$4">
@@ -37,7 +37,14 @@ export function ResetStatsScreen() {
           {t('resetStats.irreversible')}
         </Text>
 
-        <Button size="$4" theme="red" onPress={handleResetStats} marginTop="$4">
+        <Button
+          size="$4"
+          theme="red"
+          onPress={handleResetStats}
+          marginTop="$4"
+          testID="reset-stats-confirm-button"
+          accessibilityLabel="reset-stats-confirm-button"
+        >
           {t('resetStats.buttonLabel')}
         </Button>
       </YStack>

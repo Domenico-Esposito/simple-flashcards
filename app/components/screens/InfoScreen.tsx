@@ -9,7 +9,7 @@ export function InfoScreen() {
   const { t } = useTranslation();
 
   return (
-    <View flex={1} backgroundColor="$background">
+    <View flex={1} backgroundColor="$background" testID="info-screen">
       <Header title={t('info.title')} showBackButton />
 
       <YStack padding="$4" gap="$6">

@@ -36,6 +36,8 @@ export function ExportScreen() {
 
     return (
       <ListItem
+        testID={`export-deck-item-${item.id}`}
+        accessibilityLabel={`export-deck-item-${item.id}`}
         pressTheme
         onPress={() => !isExporting && handleExportDeck(item)}
         borderRadius="$4"
@@ -61,7 +63,7 @@ export function ExportScreen() {
   };
 
   return (
-    <View flex={1} backgroundColor="$background">
+    <View flex={1} backgroundColor="$background" testID="export-screen">
       <Header title={t('export.title')} showBackButton />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
@@ -78,7 +80,13 @@ export function ExportScreen() {
           {decks.length === 0 ? (
             <YStack padding="$4" paddingTop="$8" alignItems="center">
               <MaterialIcons name="folder-open" size={64} color="gray" style={{ opacity: 0.3 }} />
-              <Text fontSize={16} color="$placeholderColor" textAlign="center" marginTop="$4">
+              <Text
+                fontSize={16}
+                color="$placeholderColor"
+                textAlign="center"
+                marginTop="$4"
+                testID="export-empty-state"
+              >
                 {t('export.noDecks')}
               </Text>
             </YStack>

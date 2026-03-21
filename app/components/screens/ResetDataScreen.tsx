@@ -25,7 +25,7 @@ export function ResetDataScreen() {
   };
 
   return (
-    <View flex={1} backgroundColor="$background">
+    <View flex={1} backgroundColor="$background" testID="reset-data-screen">
       <Header title={t('resetData.title')} showBackButton />
 
       <YStack padding="$4" gap="$4">
@@ -37,7 +37,14 @@ export function ResetDataScreen() {
           {t('resetData.description2')}
         </Text>
 
-        <Button size="$4" theme="red" onPress={handleResetData} marginTop="$4">
+        <Button
+          size="$4"
+          theme="red"
+          onPress={handleResetData}
+          marginTop="$4"
+          testID="reset-data-confirm-button"
+          accessibilityLabel="reset-data-confirm-button"
+        >
           {t('resetData.buttonLabel')}
         </Button>
       </YStack>

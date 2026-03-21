@@ -12,18 +12,25 @@ interface DeckCardProps {
   flashcardCount: number;
   onPress: () => void;
   onLongPress?: () => void;
+  testID?: string;
 }
 
 /**
  * Card component displaying a deck summary
  */
-export function DeckCard({ deck, flashcardCount, onPress, onLongPress }: DeckCardProps) {
+export function DeckCard({ deck, flashcardCount, onPress, onLongPress, testID }: DeckCardProps) {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
+  const deckCardTestID = testID ?? 'deck-card';
 
   return (
-    <Pressable onPress={onPress} onLongPress={onLongPress}>
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      testID={deckCardTestID}
+      accessibilityLabel={deckCardTestID}
+    >
       {({ pressed }) => (
         <View
           backgroundColor={pressed ? '$backgroundPress' : '$backgroundStrong'}
@@ -36,7 +43,13 @@ export function DeckCard({ deck, flashcardCount, onPress, onLongPress }: DeckCar
             </YStack>
             <YStack flex={1} justifyContent="space-between">
               <YStack gap="$1.5">
-                <Text fontSize={17} fontWeight="600" numberOfLines={1} color="$color">
+                <Text
+                  fontSize={17}
+                  fontWeight="600"
+                  numberOfLines={1}
+                  color="$color"
+                  testID={`${deckCardTestID}-title`}
+                >
                   {deck.title}
                 </Text>
                 {deck.description && (

@@ -7,16 +7,26 @@ interface SearchBarProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
+  testID?: string;
+  clearButtonTestID?: string;
 }
 
 /**
  * Reusable search bar component with consistent styling
  */
-export function SearchBar({ value, onChangeText, placeholder }: SearchBarProps) {
+export function SearchBar({
+  value,
+  onChangeText,
+  placeholder,
+  testID,
+  clearButtonTestID,
+}: SearchBarProps) {
   const theme = useTheme();
   const secondaryColor = theme.secondary.val;
   const { t } = useTranslation();
   const resolvedPlaceholder = placeholder ?? t('common.search');
+  const inputTestID = testID ?? 'search-input';
+  const resolvedClearButtonTestID = clearButtonTestID ?? `${inputTestID}-clear`;
 
   const handleClear = () => {
     onChangeText('');
@@ -36,6 +46,8 @@ export function SearchBar({ value, onChangeText, placeholder }: SearchBarProps) 
         <IconSymbol name="magnifyingglass" size={18} color={secondaryColor} />
       </View>
       <Input
+        testID={inputTestID}
+        accessibilityLabel={inputTestID}
         size="$4"
         value={value}
         onChangeText={onChangeText}
@@ -48,7 +60,11 @@ export function SearchBar({ value, onChangeText, placeholder }: SearchBarProps) 
       />
       {value.length > 0 && (
         <View position="absolute" right="$3" top={0} bottom={0} justifyContent="center" zIndex={1}>
-          <Pressable onPress={handleClear}>
+          <Pressable
+            onPress={handleClear}
+            testID={resolvedClearButtonTestID}
+            accessibilityLabel={resolvedClearButtonTestID}
+          >
             <IconSymbol name="xmark.circle.fill" size={18} color={secondaryColor} />
           </Pressable>
         </View>

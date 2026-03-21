@@ -36,6 +36,7 @@ function FlashcardGrid({ flashcards, onEdit, onDelete }: FlashcardListContentPro
               flashcard={item}
               onPress={() => onEdit(item.id)}
               onLongPress={() => onDelete(item.id)}
+              testID={`deck-detail-flashcard-${item.id}`}
             />
           </View>
         ))}
@@ -55,6 +56,7 @@ function FlashcardMobileList({ flashcards, onEdit, onDelete }: FlashcardListCont
           flashcard={item}
           onPress={() => onEdit(item.id)}
           onLongPress={() => onDelete(item.id)}
+          testID={`deck-detail-flashcard-${item.id}`}
         />
       )}
       contentContainerStyle={{ paddingBottom: 20 }}
@@ -116,7 +118,7 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
   }
 
   return (
-    <View flex={1} backgroundColor="$background">
+    <View flex={1} backgroundColor="$background" testID="deck-detail-screen">
       <Header
         title={currentDeck.title}
         subtitle={currentDeck.description}
@@ -125,11 +127,13 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
             icon: 'bar-chart',
             label: t('deck.statistics'),
             onPress: () => router.push(`/deck/${deckId}/statistics`),
+            testID: 'deck-detail-stats-action',
           }),
           createHeaderAction({
             icon: 'edit',
             label: t('deck.edit'),
             onPress: () => router.push(`/deck/${deckId}/edit`),
+            testID: 'deck-detail-edit-action',
           }),
         ]}
       />
@@ -140,6 +144,8 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
           <Pressable
             onPress={() => router.push(`/deck/${deckId}/flashcard/new`)}
             style={{ flex: 1 }}
+            testID="deck-detail-add-flashcard-button"
+            accessibilityLabel="deck-detail-add-flashcard-button"
           >
             <View
               backgroundColor="$primary"
@@ -156,7 +162,12 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
             </View>
           </Pressable>
           {flashcards.length > 0 && (
-            <Pressable onPress={() => router.push(`/deck/${deckId}/study`)} style={{ flex: 1 }}>
+            <Pressable
+              onPress={() => router.push(`/deck/${deckId}/study`)}
+              style={{ flex: 1 }}
+              testID="deck-detail-study-button"
+              accessibilityLabel="deck-detail-study-button"
+            >
               <View
                 backgroundColor="$backgroundStrong"
                 borderRadius="$4"
@@ -173,7 +184,12 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
             </Pressable>
           )}
           {flashcards.length > 0 && (
-            <Pressable onPress={() => router.push(`/deck/${deckId}/quiz`)} style={{ flex: 1 }}>
+            <Pressable
+              onPress={() => router.push(`/deck/${deckId}/quiz`)}
+              style={{ flex: 1 }}
+              testID="deck-detail-quiz-button"
+              accessibilityLabel="deck-detail-quiz-button"
+            >
               <View
                 backgroundColor="$backgroundStrong"
                 borderRadius="$4"
@@ -197,12 +213,20 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder={t('deck.searchPlaceholder')}
+            testID="deck-detail-search-input"
+            clearButtonTestID="deck-detail-search-clear-button"
           />
         )}
 
         {/* Section title */}
         {flashcards.length > 0 && (
-          <Text fontSize={18} fontWeight="600" color="$color" marginTop="$2">
+          <Text
+            fontSize={18}
+            fontWeight="600"
+            color="$color"
+            marginTop="$2"
+            testID="deck-detail-flashcard-count"
+          >
             {t('deck.flashcardCount', { count: flashcards.length })}
           </Text>
         )}

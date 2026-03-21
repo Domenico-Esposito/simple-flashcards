@@ -13,6 +13,7 @@ export interface HeaderActionItem {
   icon: ComponentProps<typeof MaterialIcons>['name'];
   label: string;
   onPress: () => void;
+  testID?: string;
 }
 
 interface HeaderProps {
@@ -66,7 +67,13 @@ function LargeScreenHeader({
       minHeight={56}
     >
       {showBackButton && (
-        <Button size="$4" onPress={onBackPress} circular>
+        <Button
+          size="$4"
+          onPress={onBackPress}
+          circular
+          testID="header-back-button"
+          accessibilityLabel="header-back-button"
+        >
           <MaterialIcons name="chevron-left" size={30} color={headerIconColor} />
         </Button>
       )}
@@ -83,7 +90,14 @@ function LargeScreenHeader({
       {actions.length > 0 && (
         <XStack gap="$2">
           {actions.map((action, index) => (
-            <Button key={index} size="$4" onPress={action.onPress} borderRadius="$3">
+            <Button
+              key={index}
+              size="$4"
+              onPress={action.onPress}
+              borderRadius="$3"
+              testID={action.testID ?? `header-action-${index}`}
+              accessibilityLabel={action.testID ?? `header-action-${index}`}
+            >
               <XStack gap="$2" alignItems="center">
                 <MaterialIcons name={action.icon} size={18} color={headerIconColor} />
                 <Text color="$color" fontSize={14}>
@@ -146,7 +160,14 @@ function MobileHeader({
           paddingHorizontal="$4"
         >
           {showBackButton && (
-            <Button size="$4" height="100%" onPress={onBackPress} circular>
+            <Button
+              size="$4"
+              height="100%"
+              onPress={onBackPress}
+              circular
+              testID="header-back-button"
+              accessibilityLabel="header-back-button"
+            >
               <MaterialIcons name="chevron-left" size={30} color={headerIconColor} />
             </Button>
           )}
@@ -154,7 +175,13 @@ function MobileHeader({
           {actions.length > 0 && (
             <Popover open={menuOpen} onOpenChange={setMenuOpen} placement="bottom-end">
               <Popover.Trigger asChild>
-                <Button size="$4" height="100%" circular>
+                <Button
+                  size="$4"
+                  height="100%"
+                  circular
+                  testID="header-actions-menu-button"
+                  accessibilityLabel="header-actions-menu-button"
+                >
                   <MaterialIcons name="more-vert" size={24} color={headerIconColor} />
                 </Button>
               </Popover.Trigger>
@@ -179,6 +206,8 @@ function MobileHeader({
                       justifyContent="flex-start"
                       paddingHorizontal="$3"
                       onPress={() => handleActionPress(action)}
+                      testID={action.testID ?? `header-action-${index}`}
+                      accessibilityLabel={action.testID ?? `header-action-${index}`}
                     >
                       <XStack gap="$3" alignItems="center">
                         <MaterialIcons name={action.icon} size={20} color={headerIconColor} />
@@ -243,6 +272,7 @@ interface HeaderActionProps {
   icon: ComponentProps<typeof MaterialIcons>['name'];
   label: string;
   onPress: () => void;
+  testID?: string;
 }
 
 /**

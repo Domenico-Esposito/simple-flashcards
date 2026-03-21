@@ -33,12 +33,12 @@ export function StatisticsContent({
 
   const resolvedTitle = title ?? t('tab.statistics');
 
-  const INTERVALS: { value: Interval; label: string }[] = [
-    { value: 'day', label: t('stats.interval7days') },
-    { value: 'month', label: t('stats.interval6months') },
-    { value: 'quarter', label: t('stats.intervalQuarter') },
-    { value: 'semester', label: t('stats.intervalSemester') },
-    { value: 'year', label: t('stats.intervalYear') },
+  const INTERVALS: { value: Interval; label: string; testID: string }[] = [
+    { value: 'day', label: t('stats.interval7days'), testID: 'stats-interval-day' },
+    { value: 'month', label: t('stats.interval6months'), testID: 'stats-interval-month' },
+    { value: 'quarter', label: t('stats.intervalQuarter'), testID: 'stats-interval-quarter' },
+    { value: 'semester', label: t('stats.intervalSemester'), testID: 'stats-interval-semester' },
+    { value: 'year', label: t('stats.intervalYear'), testID: 'stats-interval-year' },
   ];
 
   useFocusEffect(
@@ -48,7 +48,11 @@ export function StatisticsContent({
   );
 
   return (
-    <View flex={1} backgroundColor="$background">
+    <View
+      flex={1}
+      backgroundColor="$background"
+      testID={deckId ? 'deck-statistics-screen' : 'statistics-screen'}
+    >
       <Header title={resolvedTitle} showBackButton={showBackButton} />
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 50 }}
@@ -59,7 +63,12 @@ export function StatisticsContent({
           <View backgroundColor="$backgroundStrong" borderRadius="$4" padding="$1">
             <XStack>
               {INTERVALS.map((i) => (
-                <Pressable key={i.value} onPress={() => setInterval(i.value)} style={{ flex: 1 }}>
+                <Pressable
+                  key={i.value}
+                  onPress={() => setInterval(i.value)}
+                  style={{ flex: 1 }}
+                  testID={i.testID}
+                >
                   <View
                     paddingVertical="$2.5"
                     paddingHorizontal="$3"
@@ -113,7 +122,12 @@ export function StatisticsContent({
             <Text fontSize={18} fontWeight="600" color="$color">
               {t('stats.difficultyTrend')}
             </Text>
-            <View backgroundColor="$backgroundStrong" borderRadius="$4" padding="$4">
+            <View
+              backgroundColor="$backgroundStrong"
+              borderRadius="$4"
+              padding="$4"
+              testID="statistics-chart-section"
+            >
               {loading ? (
                 <YStack alignItems="center" justifyContent="center" flex={1}>
                   <Spinner size="large" color="$primary" />
@@ -127,7 +141,7 @@ export function StatisticsContent({
           <Separator marginVertical="$2" />
 
           {/* KPIs Section */}
-          <YStack gap="$4">
+          <YStack gap="$4" testID="statistics-summary-section">
             <Text fontSize={18} fontWeight="600" color="$color">
               {t('stats.summary')}
             </Text>

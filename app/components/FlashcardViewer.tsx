@@ -320,7 +320,13 @@ export function FlashcardViewer({
 
   if (shuffledFlashcards.length === 0 || !currentCard) {
     return (
-      <View flex={1} justifyContent="center" alignItems="center" backgroundColor="$background">
+      <View
+        flex={1}
+        justifyContent="center"
+        alignItems="center"
+        backgroundColor="$background"
+        testID="flashcard-viewer-loading"
+      >
         <Text color="$secondary">{t('common.loading')}</Text>
       </View>
     );
@@ -337,7 +343,12 @@ export function FlashcardViewer({
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <View flex={1} paddingTop={insets.top} backgroundColor="$background">
+      <View
+        flex={1}
+        paddingTop={insets.top}
+        backgroundColor="$background"
+        testID="flashcard-viewer-screen"
+      >
         {/* Header */}
         <View
           flexDirection="row"
@@ -346,18 +357,26 @@ export function FlashcardViewer({
           paddingHorizontal="$4"
           paddingVertical="$3"
         >
-          <Pressable onPress={onExit} style={{ padding: 8 }}>
+          <Pressable
+            onPress={onExit}
+            style={{ padding: 8 }}
+            testID="flashcard-viewer-exit-button"
+            accessibilityLabel="flashcard-viewer-exit-button"
+          >
             <IconSymbol name="xmark" size={24} color={closeIconColor} />
           </Pressable>
           {!infiniteMode && (
-            <Text color="$secondary" fontSize={14}>
+            <Text color="$secondary" fontSize={14} testID="flashcard-viewer-progress">
               {currentIndex + 1}/{shuffledFlashcards.length}
             </Text>
           )}
         </View>
 
         {/* Card area */}
-        <View style={{ flex: 1, position: 'relative', overflow: 'visible' }}>
+        <View
+          style={{ flex: 1, position: 'relative', overflow: 'visible' }}
+          testID="flashcard-viewer-card"
+        >
           <GestureDetector gesture={composedGesture}>
             <Animated.View
               style={[
@@ -428,13 +447,15 @@ export function FlashcardViewer({
                                 <Text fontSize={12} color="$secondary" marginBottom="$1">
                                   {t('flashcard.selectAnswer')}
                                 </Text>
-                                {currentShuffledOptions.map((option) => {
+                                {currentShuffledOptions.map((option, index) => {
                                   const isSelected = mcSelectedIndex === option.id;
                                   return (
                                     <Pressable
                                       key={option.id}
                                       onPress={() => handleMcSelect(option.id)}
                                       disabled={mcSelectedIndex !== undefined}
+                                      testID={`flashcard-viewer-option-${index}`}
+                                      accessibilityLabel={`flashcard-viewer-option-${index}`}
                                     >
                                       <View
                                         paddingHorizontal="$4"
@@ -468,7 +489,11 @@ export function FlashcardViewer({
                               pointerEvents="box-none"
                             >
                               <GestureDetector gesture={questionReadMoreTap}>
-                                <View>
+                                <View
+                                  testID="flashcard-viewer-question-read-more-button"
+                                  accessibilityLabel="flashcard-viewer-question-read-more-button"
+                                  accessible
+                                >
                                   <Button
                                     size="$3"
                                     theme="active"
@@ -614,7 +639,11 @@ export function FlashcardViewer({
                                   pointerEvents="box-none"
                                 >
                                   <GestureDetector gesture={answerReadMoreTap}>
-                                    <View>
+                                    <View
+                                      testID="flashcard-viewer-answer-read-more-button"
+                                      accessibilityLabel="flashcard-viewer-answer-read-more-button"
+                                      accessible
+                                    >
                                       <Button
                                         size="$3"
                                         theme="active"
@@ -649,7 +678,12 @@ export function FlashcardViewer({
           backgroundColor="$transparent"
           zIndex={0}
         >
-          <Text color="$placeholderColor" fontSize={12} textAlign="center">
+          <Text
+            color="$placeholderColor"
+            fontSize={12}
+            textAlign="center"
+            testID="flashcard-viewer-hint"
+          >
             {(hintText ?? defaultHint)(showAnswer)}
           </Text>
         </View>

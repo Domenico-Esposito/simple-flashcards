@@ -141,7 +141,7 @@ export function BackupScreen() {
   };
 
   return (
-    <View flex={1} backgroundColor="$background">
+    <View flex={1} backgroundColor="$background" testID="backup-screen">
       <Header title={t('backup.title')} showBackButton />
 
       <YStack padding="$4" gap="$4">
@@ -149,11 +149,23 @@ export function BackupScreen() {
           {t('backup.description')}
         </Text>
 
-        <Button size="$4" onPress={handleBackup} themeInverse>
+        <Button
+          size="$4"
+          onPress={handleBackup}
+          themeInverse
+          testID="backup-create-button"
+          accessibilityLabel="backup-create-button"
+        >
           {t('backup.createButton')}
         </Button>
 
-        <Button size="$4" onPress={handleRestore} theme="red">
+        <Button
+          size="$4"
+          onPress={handleRestore}
+          theme="red"
+          testID="backup-restore-button"
+          accessibilityLabel="backup-restore-button"
+        >
           {t('backup.restoreButton')}
         </Button>
       </YStack>

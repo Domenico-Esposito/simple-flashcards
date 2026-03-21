@@ -49,31 +49,47 @@ export function SettingsScreen() {
       route: '/settings/info',
     },
   ];
+  const testIDByRoute: Record<string, string> = {
+    '/settings/import': 'settings-item-import',
+    '/settings/export': 'settings-item-export',
+    '/settings/backup': 'settings-item-backup',
+    '/settings/reset-stats': 'settings-item-reset-stats',
+    '/settings/reset-data': 'settings-item-reset-data',
+    '/settings/info': 'settings-item-info',
+  };
 
   return (
-    <View flex={1} backgroundColor="$background">
+    <View flex={1} backgroundColor="$background" testID="settings-screen">
       <Header title={t('settings.title')} showBackButton={false} />
 
       <YStack padding="$4" gap="$2">
-        {settingsItems.map((item, index) => (
-          <Pressable key={item.route.toString()} onPress={() => router.push(item.route)}>
-            <XStack
-              backgroundColor="$backgroundStrong"
-              padding="$4"
-              borderRadius="$3"
-              alignItems="center"
-              justifyContent="space-between"
+        {settingsItems.map((item, index) => {
+          const itemTestID = testIDByRoute[item.route.toString()] ?? `settings-item-${index}`;
+          return (
+            <Pressable
+              key={item.route.toString()}
+              onPress={() => router.push(item.route)}
+              testID={itemTestID}
+              accessibilityLabel={itemTestID}
             >
-              <XStack alignItems="center" gap="$3">
-                <MaterialIcons name={item.icon} size={24} color={colors.muted} />
-                <Text fontSize={16} color="$color">
-                  {item.title}
-                </Text>
+              <XStack
+                backgroundColor="$backgroundStrong"
+                padding="$4"
+                borderRadius="$3"
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <XStack alignItems="center" gap="$3">
+                  <MaterialIcons name={item.icon} size={24} color={colors.muted} />
+                  <Text fontSize={16} color="$color">
+                    {item.title}
+                  </Text>
+                </XStack>
+                <MaterialIcons name="chevron-right" size={24} color={colors.muted} />
               </XStack>
-              <MaterialIcons name="chevron-right" size={24} color={colors.muted} />
-            </XStack>
-          </Pressable>
-        ))}
+            </Pressable>
+          );
+        })}
       </YStack>
     </View>
   );

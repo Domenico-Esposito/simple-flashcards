@@ -109,6 +109,7 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
         justifyContent="center"
         alignItems="center"
         paddingHorizontal="$4"
+        testID="quiz-completion-card"
       >
         <Animated.View
           style={[
@@ -247,7 +248,15 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 
             {/* Close button */}
             <Animated.View style={buttonAnimatedStyle}>
-              <Button size="$5" theme="active" borderRadius="$4" onPress={onClose} fontWeight="600">
+              <Button
+                size="$5"
+                theme="active"
+                borderRadius="$4"
+                onPress={onClose}
+                fontWeight="600"
+                testID="quiz-completion-close-button"
+                accessibilityLabel="quiz-completion-close-button"
+              >
                 {t('quiz.closeButton')}
               </Button>
             </Animated.View>
