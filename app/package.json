@@ -7,6 +7,10 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "prepare:android-build": "node ./scripts/ensure-react-native-root-link.js",
+    "build:android": "npm run prepare:android-build && expo run:android --variant release",
+    "build:ios": "expo run:ios --configuration Release",
+    "build:web": "expo export --platform web",
     "lint": "expo lint"
   },
   "dependencies": {

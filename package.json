@@ -14,7 +14,13 @@
     "format:check": "prettier --check .",
     "app:start": "npm run start --workspace=app",
     "app:ios": "npm run ios --workspace=app",
-    "app:android": "npm run android --workspace=app"
+    "app:android": "npm run android --workspace=app",
+    "app:build:ios": "npm run build:ios --workspace=app",
+    "app:build:android": "npm run build:android --workspace=app",
+    "app:build:web": "npm run build:web --workspace=app",
+    "app:e2e": "maestro test --no-ansi app/.maestro/main.yaml",
+    "app:e2e:android": "maestro --platform android test --no-ansi app/.maestro/main.yaml",
+    "app:e2e:ios": "maestro --platform ios test --no-ansi app/.maestro/main.yaml"
   },
   "devDependencies": {
     "eslint-config-prettier": "10.1.8",

@@ -11,6 +11,7 @@ A minimal, open-source flashcard app built with React Native and Expo. Create de
 - **Import / Export** — Share decks as JSON files or import from a URL
 - **Backup & Restore** — Full database backup and restore
 - **Search** — Full-text search across decks and flashcards (FTS5 on native, LIKE fallback on web)
+- **E2E tests** — Full user-flow coverage with Maestro using stable `testID` selectors
 - **i18n** — Italian, English, Spanish, French, German (auto-detects device language)
 - **Dark / Light theme** — Neutral, eye-friendly color palette in both modes
 
@@ -123,16 +124,46 @@ npm run app:android
 
 ### Available Scripts (root)
 
-| Script                 | Description                      |
-| ---------------------- | -------------------------------- |
-| `npm run dev`          | Start all workspaces in dev mode |
-| `npm run build`        | Build all workspaces             |
-| `npm run lint`         | Lint all workspaces              |
-| `npm run format`       | Format code with Prettier        |
-| `npm run format:check` | Check code formatting            |
-| `npm run app:start`    | Start Expo dev server            |
-| `npm run app:ios`      | Run on iOS                       |
-| `npm run app:android`  | Run on Android                   |
+| Script                      | Description                      |
+| --------------------------- | -------------------------------- |
+| `npm run dev`               | Start all workspaces in dev mode |
+| `npm run build`             | Build all workspaces             |
+| `npm run lint`              | Lint all workspaces              |
+| `npm run format`            | Format code with Prettier        |
+| `npm run format:check`      | Check code formatting            |
+| `npm run app:start`         | Start Expo dev server            |
+| `npm run app:ios`           | Run on iOS                       |
+| `npm run app:android`       | Run on Android                   |
+| `npm run app:build:ios`     | Create iOS release build         |
+| `npm run app:build:android` | Create Android release build     |
+| `npm run app:build:web`     | Build static web bundle          |
+| `npm run app:e2e`           | Run Maestro E2E suite            |
+| `npm run app:e2e:android`   | Run Maestro E2E on Android       |
+| `npm run app:e2e:ios`       | Run Maestro E2E on iOS           |
+
+## E2E Testing (Maestro)
+
+The E2E suite is located in `app/.maestro/` and covers all screens and core app functionalities (deck/flashcard CRUD, study, quiz, statistics, and settings flows).
+
+### Prerequisites
+
+- Install Maestro CLI: https://docs.maestro.dev/getting-started/installing-maestro
+- Start the app on a simulator/device (for example with `npm run app:ios` or `npm run app:android`)
+
+### Run tests
+
+```bash
+# Auto-select available simulator/device
+npm run app:e2e
+
+# Force Android
+npm run app:e2e:android
+
+# Force iOS
+npm run app:e2e:ios
+```
+
+Entry flow: `app/.maestro/main.yaml`.
 
 ## Import / Export Format
 

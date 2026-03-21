@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.domenicoesposito.minimalflashcards"
+      "bundleIdentifier": "com.deploynk.minimalflashcards"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +19,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.domenicoesposito.minimalflashcards"
+      "package": "com.deploynk.minimalflashcards"
     },
     "web": {
       "bundler": "metro",
