@@ -1,0 +1,45 @@
+appId: com.deploynk.minimalflashcards
+---
+- tapOn:
+    id: deck-detail-study-button
+- assertVisible:
+    id: flashcard-viewer-screen
+- tapOn:
+    id: flashcard-viewer-card
+- assertVisible:
+    id: flashcard-viewer-answer-read-more-button
+- tapOn:
+    id: flashcard-viewer-answer-read-more-button
+- assertVisible:
+    id: read-more-screen
+- tapOn:
+    id: header-back-button
+- tapOn:
+    id: flashcard-viewer-exit-button
+- assertVisible:
+    id: deck-detail-screen
+
+- tapOn:
+    id: deck-detail-quiz-button
+- assertVisible:
+    id: flashcard-viewer-screen
+- tapOn:
+    id: flashcard-viewer-card
+- tapOn:
+    id: quiz-difficulty-easy-button
+- assertVisible:
+    id: quiz-all-easy-dialog
+- tapOn:
+    id: quiz-all-easy-continue-button
+- tapOn:
+    id: flashcard-viewer-exit-button
+- assertVisible:
+    id: quiz-exit-dialog
+- tapOn:
+    id: quiz-exit-save-button
+- assertVisible:
+    id: quiz-completion-card
+- tapOn:
+    id: quiz-completion-close-button
+- assertVisible:
+    id: deck-detail-screen

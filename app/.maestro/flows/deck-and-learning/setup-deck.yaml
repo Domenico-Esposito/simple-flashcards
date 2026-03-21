@@ -1,0 +1,30 @@
+appId: com.deploynk.minimalflashcards
+---
+- extendedWaitUntil:
+    visible:
+      id: home-screen
+    timeout: 20000
+
+- tapOn:
+    id: header-actions-menu-button
+- tapOn:
+    id: home-new-deck-action
+- assertVisible:
+    id: deck-form-screen
+
+- tapOn:
+    id: deck-form-title-input
+- inputText: E2E Deck Base
+
+- tapOn:
+    id: deck-form-description-input
+- inputText: Deck creato dai test Maestro
+
+- tapOn:
+    id: deck-form-save-button
+- assertVisible:
+    id: home-screen
+
+- tapOn: E2E Deck Base
+- assertVisible:
+    id: deck-detail-screen

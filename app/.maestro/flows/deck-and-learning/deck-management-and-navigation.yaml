@@ -1,0 +1,46 @@
+appId: com.deploynk.minimalflashcards
+---
+- tapOn:
+    id: header-actions-menu-button
+- tapOn:
+    id: deck-detail-stats-action
+- assertVisible:
+    id: deck-statistics-screen
+- tapOn:
+    id: stats-interval-year
+- tapOn:
+    id: stats-interval-day
+- tapOn:
+    id: header-back-button
+- assertVisible:
+    id: deck-detail-screen
+
+- tapOn:
+    id: header-actions-menu-button
+- tapOn:
+    id: deck-detail-edit-action
+- assertVisible:
+    id: deck-form-screen
+- tapOn:
+    id: deck-form-title-input
+- inputText: ' Main'
+- tapOn:
+    id: deck-form-save-button
+- assertVisible:
+    id: deck-detail-screen
+
+- tapOn:
+    id: header-back-button
+- assertVisible:
+    id: home-screen
+
+- tapOn:
+    id: tab-statistics
+- assertVisible:
+    id: statistics-screen
+- tapOn:
+    id: stats-interval-month
+- tapOn:
+    id: stats-interval-quarter
+- tapOn:
+    id: tab-decks

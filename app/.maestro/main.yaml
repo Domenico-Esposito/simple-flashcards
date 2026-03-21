@@ -1,0 +1,6 @@
+appId: com.deploynk.minimalflashcards
+---
+- launchApp:
+    clearState: true
+- runFlow: flows/deck-and-learning.yaml
+- runFlow: flows/settings-and-maintenance.yaml

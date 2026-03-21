@@ -1,0 +1,17 @@
+appId: com.deploynk.minimalflashcards
+---
+- tapOn:
+    id: deck-detail-flashcard-[0-9]+$
+- assertVisible:
+    id: flashcard-form-screen
+- tapOn:
+    id: flashcard-form-section-question
+- tapOn:
+    id: flashcard-form-question-input
+- inputText: ' **aggiornato**'
+- tapOn:
+    id: flashcard-form-keyboard-done-button
+- tapOn:
+    id: flashcard-form-save-button
+- assertVisible:
+    id: deck-detail-screen

@@ -1,0 +1,54 @@
+appId: com.deploynk.minimalflashcards
+---
+- tapOn:
+    id: deck-detail-add-flashcard-button
+- assertVisible:
+    id: flashcard-form-screen
+- tapOn:
+    id: flashcard-form-type-multiple-choice
+- tapOn:
+    id: flashcard-form-question-input
+- inputText: '**MCQ E2E**'
+- tapOn:
+    id: flashcard-form-keyboard-done-button
+- tapOn:
+    id: flashcard-form-option-input-0
+- inputText: Opzione A
+- tapOn:
+    id: flashcard-form-option-input-1
+- inputText: Opzione B
+- tapOn:
+    id: flashcard-form-keyboard-done-button
+- tapOn:
+    id: flashcard-form-option-correct-1
+- tapOn:
+    id: flashcard-form-save-button
+- assertVisible:
+    id: deck-detail-screen
+
+- tapOn: MCQ E2E
+- assertVisible:
+    id: flashcard-form-screen
+- tapOn:
+    id: flashcard-form-question-input
+- inputText: ' _v2_'
+- tapOn:
+    id: flashcard-form-keyboard-done-button
+- tapOn:
+    id: flashcard-form-save-button
+- assertVisible:
+    id: deck-detail-screen
+
+- tapOn: MCQ E2E v2
+- assertVisible:
+    id: flashcard-form-screen
+- tapOn:
+    id: flashcard-form-delete-button
+- extendedWaitUntil:
+    visible:
+      id: app-alert-content
+    timeout: 10000
+- tapOn:
+    id: app-alert-button-destructive-[0-9]+$
+- assertVisible:
+    id: deck-detail-screen

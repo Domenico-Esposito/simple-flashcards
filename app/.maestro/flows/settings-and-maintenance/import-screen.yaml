@@ -1,0 +1,41 @@
+appId: com.deploynk.minimalflashcards
+---
+- tapOn:
+    id: settings-item-import
+- assertVisible:
+    id: import-screen
+- tapOn:
+    id: import-from-url-button
+- assertVisible:
+    id: app-alert-content
+- tapOn:
+    id: app-alert-button-default-0
+- tapOn:
+    id: import-mode-json-button
+- tapOn:
+    id: import-json-input
+- inputText: '{"title":"Imported E2E Deck","description":"Creato in E2E","flashcards":[{"question":"Imported Q","answer":"Imported A"}]}'
+- back
+- scrollUntilVisible:
+    element:
+      id: import-from-json-button
+    direction: DOWN
+- hideKeyboard
+- tapOn:
+    id: import-from-json-button
+- extendedWaitUntil:
+    visible:
+      id: app-alert-content
+    timeout: 10000
+- tapOn:
+    id: app-alert-button-default-0
+- tapOn:
+    id: import-toggle-format-button
+- assertVisible:
+    id: import-format-panel
+- tapOn:
+    id: import-toggle-format-button
+- tapOn:
+    id: header-back-button
+- assertVisible:
+    id: settings-screen

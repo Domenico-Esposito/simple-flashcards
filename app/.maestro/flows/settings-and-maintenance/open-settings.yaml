@@ -1,0 +1,6 @@
+appId: com.deploynk.minimalflashcards
+---
+- tapOn:
+    id: tab-settings
+- assertVisible:
+    id: settings-screen

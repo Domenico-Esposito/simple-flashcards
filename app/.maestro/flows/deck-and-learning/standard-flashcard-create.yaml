@@ -1,0 +1,33 @@
+appId: com.deploynk.minimalflashcards
+---
+- tapOn:
+    id: deck-detail-add-flashcard-button
+- assertVisible:
+    id: flashcard-form-screen
+
+- tapOn:
+    id: flashcard-form-section-question
+- tapOn:
+    id: flashcard-form-question-input
+- inputText: '**STD E2E Q LONG** maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro'
+- tapOn:
+    id: flashcard-form-keyboard-done-button
+
+- tapOn:
+    id: flashcard-form-section-answer
+- tapOn:
+    id: flashcard-form-answer-input
+- inputText: '**STD E2E A LONG** contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto'
+- inputText: ' contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto'
+- inputText: ' contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto'
+- tapOn:
+    id: flashcard-form-keyboard-done-button
+
+- scrollUntilVisible:
+    element:
+      id: flashcard-form-save-button
+    direction: DOWN
+- tapOn:
+    id: flashcard-form-save-button
+- assertVisible:
+    id: deck-detail-screen

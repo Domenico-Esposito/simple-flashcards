@@ -1,0 +1,16 @@
+appId: com.deploynk.minimalflashcards
+---
+- tapOn:
+    id: settings-item-backup
+- assertVisible:
+    id: backup-screen
+- tapOn:
+    id: backup-restore-button
+- assertVisible:
+    id: app-alert-content
+- tapOn:
+    id: app-alert-button-cancel-0
+- tapOn:
+    id: header-back-button
+- assertVisible:
+    id: settings-screen

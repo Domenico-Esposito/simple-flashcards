@@ -1,0 +1,10 @@
+appId: com.deploynk.minimalflashcards
+---
+- tapOn:
+    id: settings-item-info
+- assertVisible:
+    id: info-screen
+- tapOn:
+    id: header-back-button
+- assertVisible:
+    id: settings-screen

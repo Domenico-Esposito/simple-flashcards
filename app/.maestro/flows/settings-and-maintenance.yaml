@@ -1,0 +1,9 @@
+appId: com.deploynk.minimalflashcards
+---
+- runFlow: settings-and-maintenance/open-settings.yaml
+- runFlow: settings-and-maintenance/import-screen.yaml
+- runFlow: settings-and-maintenance/export-screen.yaml
+- runFlow: settings-and-maintenance/backup-screen.yaml
+- runFlow: settings-and-maintenance/reset-stats-screen.yaml
+- runFlow: settings-and-maintenance/info-screen.yaml
+- runFlow: settings-and-maintenance/reset-data-and-home-empty.yaml
