@@ -56,7 +56,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
     editMultipleChoiceFlashcard,
     removeFlashcard,
   } = useFlashcardsStore();
-  const { showAlert, AlertDialog } = useAppAlert();
+  const { showAlert, AlertDialog } = useAppAlert({ useModal: true });
   const keyboardHeight = useKeyboardHeight();
   const insets = useSafeAreaInsets();
 
@@ -79,7 +79,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
   const [isLoading, setIsLoading] = useState(mode === 'edit');
   const [activeSection, setActiveSection] = useState<EditorSection>('question');
   const [cardType, setCardType] = useState<FlashcardType>('standard');
-  
+
   // Use a ref for unique ID generation
   const nextId = useRef(3);
   const [options, setOptions] = useState<OptionField[]>([
@@ -139,10 +139,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
   }, [mode, flashcardId, setQuestionText, setAnswerText, clearQuestionError, clearAnswerError]);
 
   const handleAddOption = () => {
-    setOptions((prev) => [
-      ...prev,
-      { id: String(nextId.current++), text: '', isCorrect: false },
-    ]);
+    setOptions((prev) => [...prev, { id: String(nextId.current++), text: '', isCorrect: false }]);
     setOptionsError(null);
   };
 
@@ -223,22 +220,36 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
   const handleDelete = () => {
     if (mode !== 'edit' || flashcardId === undefined) return;
 
-    showAlert(t('flashcard.delete.title'), t('flashcard.delete.message'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: async () => {
-          await removeFlashcard(flashcardId);
-          router.back();
+    // Avoid tap-through with focused editors by dismissing keyboard first,
+    // then opening the alert on the next frame.
+    questionEditor.inputRef.current?.blur();
+    answerEditor.inputRef.current?.blur();
+    Keyboard.dismiss();
+
+    requestAnimationFrame(() => {
+      showAlert(t('flashcard.delete.title'), t('flashcard.delete.message'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            await removeFlashcard(flashcardId);
+            router.back();
+          },
         },
-      },
-    ]);
+      ]);
+    });
   };
 
   if (isLoading) {
     return (
-      <View flex={1} justifyContent="center" alignItems="center" backgroundColor="$background">
+      <View
+        flex={1}
+        justifyContent="center"
+        alignItems="center"
+        backgroundColor="$background"
+        testID="flashcard-form-loading"
+      >
         <Text color="$secondary">{t('common.loading')}</Text>
       </View>
     );
@@ -252,7 +263,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View flex={1} backgroundColor="$background">
+      <View flex={1} backgroundColor="$background" testID="flashcard-form-screen">
         <Header
           title={mode === 'new' ? t('flashcard.createTitle') : t('flashcard.editTitle')}
           isModal
@@ -275,6 +286,8 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
                 borderWidth={0}
                 backgroundColor={cardType === 'standard' ? '$background' : 'transparent'}
                 pressStyle={{ backgroundColor: '$background' }}
+                testID="flashcard-form-type-standard"
+                accessibilityLabel="flashcard-form-type-standard"
               >
                 {t('flashcard.typeStandard')}
               </Button>
@@ -285,6 +298,8 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
                 borderWidth={0}
                 backgroundColor={cardType === 'multiple_choice' ? '$background' : 'transparent'}
                 pressStyle={{ backgroundColor: '$background' }}
+                testID="flashcard-form-type-multiple-choice"
+                accessibilityLabel="flashcard-form-type-multiple-choice"
               >
                 {t('flashcard.typeMultipleChoice')}
               </Button>
@@ -300,6 +315,8 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
                   borderWidth={0}
                   backgroundColor={activeSection === 'question' ? '$background' : 'transparent'}
                   pressStyle={{ backgroundColor: '$background' }}
+                  testID="flashcard-form-section-question"
+                  accessibilityLabel="flashcard-form-section-question"
                 >
                   {t('flashcard.question')}
                 </Button>
@@ -310,6 +327,8 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
                   borderWidth={0}
                   backgroundColor={activeSection === 'answer' ? '$background' : 'transparent'}
                   pressStyle={{ backgroundColor: '$background' }}
+                  testID="flashcard-form-section-answer"
+                  accessibilityLabel="flashcard-form-section-answer"
                 >
                   {t('flashcard.answer')}
                 </Button>
@@ -327,6 +346,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
               <RichTextEditor
                 editor={questionEditor}
                 placeholder={t('flashcard.questionPlaceholder')}
+                testID="flashcard-form-question-input"
               />
               {!!questionError && (
                 <Text fontSize={12} color="$red10">
@@ -344,6 +364,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
               <RichTextEditor
                 editor={answerEditor}
                 placeholder={t('flashcard.answerPlaceholder')}
+                testID="flashcard-form-answer-input"
               />
               {!!answerError && (
                 <Text fontSize={12} color="$red10">
@@ -357,7 +378,12 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
               <YStack gap="$3">
                 {options.map((option, index) => (
                   <XStack key={option.id} gap="$2" alignItems="center">
-                    <Pressable onPress={() => handleSetCorrectOption(index)} hitSlop={8}>
+                    <Pressable
+                      onPress={() => handleSetCorrectOption(index)}
+                      hitSlop={8}
+                      testID={`flashcard-form-option-correct-${index}`}
+                      accessibilityLabel={`flashcard-form-option-correct-${index}`}
+                    >
                       <MaterialIcons
                         name={option.isCorrect ? 'radio-button-checked' : 'radio-button-unchecked'}
                         size={24}
@@ -366,6 +392,8 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
                     </Pressable>
                     <View flex={1}>
                       <TextInput
+                        testID={`flashcard-form-option-input-${index}`}
+                        accessibilityLabel={`flashcard-form-option-input-${index}`}
                         value={option.text}
                         onChangeText={(text) => handleOptionTextChange(index, text)}
                         placeholder={t('flashcard.optionPlaceholder', { index: index + 1 })}
@@ -383,7 +411,12 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
                       />
                     </View>
                     {options.length > 2 && (
-                      <Pressable onPress={() => handleRemoveOption(index)} hitSlop={8}>
+                      <Pressable
+                        onPress={() => handleRemoveOption(index)}
+                        hitSlop={8}
+                        testID={`flashcard-form-option-remove-${index}`}
+                        accessibilityLabel={`flashcard-form-option-remove-${index}`}
+                      >
                         <MaterialIcons name="close" size={20} color={colors.error} />
                       </Pressable>
                     )}
@@ -394,6 +427,8 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
                   onPress={handleAddOption}
                   chromeless
                   icon={<MaterialIcons name="add" size={18} color={colors.accent} />}
+                  testID="flashcard-form-add-option-button"
+                  accessibilityLabel="flashcard-form-add-option-button"
                 >
                   <Text color={colors.accent}>{t('flashcard.addOption')}</Text>
                 </Button>
@@ -406,15 +441,33 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
             )}
 
             <YStack gap="$3">
-              <Button size="$4" onPress={handleSave} themeInverse>
+              <Button
+                size="$4"
+                onPress={handleSave}
+                themeInverse
+                testID="flashcard-form-save-button"
+                accessibilityLabel="flashcard-form-save-button"
+              >
                 {t('common.save')}
               </Button>
               {mode === 'edit' && (
-                <Button size="$4" onPress={handleDelete} theme="red">
+                <Button
+                  size="$4"
+                  onPress={handleDelete}
+                  theme="red"
+                  testID="flashcard-form-delete-button"
+                  accessibilityLabel="flashcard-form-delete-button"
+                >
                   {t('common.delete')}
                 </Button>
               )}
-              <Button size="$4" onPress={() => router.back()} chromeless>
+              <Button
+                size="$4"
+                onPress={() => router.back()}
+                chromeless
+                testID="flashcard-form-cancel-button"
+                accessibilityLabel="flashcard-form-cancel-button"
+              >
                 {t('common.cancel')}
               </Button>
             </YStack>
@@ -463,7 +516,13 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
                   })}
                 />
               </ScrollView>
-              <Pressable onPress={handleDonePress} style={{ paddingHorizontal: 12 }} hitSlop={8}>
+              <Pressable
+                onPress={handleDonePress}
+                style={{ paddingHorizontal: 12 }}
+                hitSlop={8}
+                testID="flashcard-form-keyboard-done-button"
+                accessibilityLabel="flashcard-form-keyboard-done-button"
+              >
                 <Text color={colors.accent} fontWeight="600">
                   {t('common.done')}
                 </Text>
