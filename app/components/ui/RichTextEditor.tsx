@@ -63,6 +63,7 @@ type RichTextEditorProps = {
   placeholder?: string;
   minHeight?: number;
   maxHeight?: number;
+  fill?: boolean;
   contentPaddingBottom?: number;
   testID?: string;
   onContentSizeChange?: TextInputProps['onContentSizeChange'];
@@ -81,6 +82,7 @@ export function RichTextEditor({
   placeholder,
   minHeight = 150,
   maxHeight,
+  fill = false,
   contentPaddingBottom = 0,
   testID,
   onContentSizeChange,
@@ -215,9 +217,10 @@ export function RichTextEditor({
   return (
     <View
       backgroundColor="transparent"
-      height={editorHeight}
-      minHeight={minHeight}
-      maxHeight={maxHeight}
+      height={fill ? undefined : editorHeight}
+      minHeight={fill ? 0 : minHeight}
+      maxHeight={fill ? undefined : maxHeight}
+      flex={fill ? 1 : undefined}
       flexShrink={0}
     >
       {Platform.OS !== 'web' && (

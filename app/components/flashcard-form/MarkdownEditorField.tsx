@@ -3,7 +3,7 @@ import type { LayoutChangeEvent } from 'react-native';
 import { YStack } from 'tamagui';
 
 import { FormErrorText } from '@/components/ui/FormErrorText';
-import { RichTextEditorFixedHeight } from '@/components/ui/RichTextEditorFixedHeight';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
 
 type MarkdownEditorFieldProps = {
   editor: MarkdownEditorHandle;
@@ -33,7 +33,7 @@ export function MarkdownEditorField({
       flex={fillAvailableSpace ? 1 : undefined}
       minHeight={fillAvailableSpace ? 0 : undefined}
     >
-      <RichTextEditorFixedHeight
+      <RichTextEditor
         editor={editor}
         placeholder={placeholder}
         testID={testID}
@@ -41,7 +41,7 @@ export function MarkdownEditorField({
         inputProps={{
           onFocus,
           onBlur,
-          scrollEnabled: true,
+          scrollEnabled: fillAvailableSpace,
         }}
       />
       <FormErrorText message={error} />

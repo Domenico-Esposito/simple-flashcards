@@ -241,50 +241,65 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
         </View>
 
         {(showQuestionEditor || showAnswerEditor) && (
-          <YStack
-            flex={1}
-            minHeight={0}
-            gap="$4"
-            paddingHorizontal="$4"
-            paddingTop="$4"
-            paddingBottom={editorBottomPadding}
+          <RNScrollView
+            style={{ flex: 1 }}
+            scrollEnabled={!isMarkdownEditorFocused}
+            automaticallyAdjustContentInsets={false}
+            automaticallyAdjustKeyboardInsets={false}
+            automaticallyAdjustsScrollIndicatorInsets={false}
+            contentInsetAdjustmentBehavior="never"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={!isMarkdownEditorFocused}
+            contentContainerStyle={{
+              flexGrow: 1,
+              paddingTop: FORM_CONTENT_PADDING,
+              paddingBottom: editorBottomPadding,
+            }}
           >
-            {showQuestionEditor && (
-              <MarkdownEditorField
-                editor={questionEditor}
-                placeholder={t('flashcard.questionPlaceholder')}
-                testID="flashcard-form-question-input"
-                error={questionError}
-                fillAvailableSpace
-                onFocus={() => handleEditorFocus('question')}
-                onBlur={() => handleEditorBlur('question')}
-              />
-            )}
+            <YStack
+              flex={isMarkdownEditorFocused ? 1 : undefined}
+              minHeight={isMarkdownEditorFocused ? 0 : undefined}
+              gap="$4"
+              paddingHorizontal="$4"
+            >
+              {showQuestionEditor && (
+                <MarkdownEditorField
+                  editor={questionEditor}
+                  placeholder={t('flashcard.questionPlaceholder')}
+                  testID="flashcard-form-question-input"
+                  error={questionError}
+                  fillAvailableSpace={isMarkdownEditorFocused}
+                  onFocus={() => handleEditorFocus('question')}
+                  onBlur={() => handleEditorBlur('question')}
+                />
+              )}
 
-            {showAnswerEditor && (
-              <MarkdownEditorField
-                editor={answerEditor}
-                placeholder={t('flashcard.answerPlaceholder')}
-                testID="flashcard-form-answer-input"
-                error={answerError}
-                fillAvailableSpace
-                onFocus={() => handleEditorFocus('answer')}
-                onBlur={() => handleEditorBlur('answer')}
-              />
-            )}
+              {showAnswerEditor && (
+                <MarkdownEditorField
+                  editor={answerEditor}
+                  placeholder={t('flashcard.answerPlaceholder')}
+                  testID="flashcard-form-answer-input"
+                  error={answerError}
+                  fillAvailableSpace={isMarkdownEditorFocused}
+                  onFocus={() => handleEditorFocus('answer')}
+                  onBlur={() => handleEditorBlur('answer')}
+                />
+              )}
 
-            {!isMarkdownEditorFocused && (
-              <FlashcardFormActions
-                canDelete={canDelete}
-                saveLabel={t('common.save')}
-                deleteLabel={t('common.delete')}
-                cancelLabel={t('common.cancel')}
-                onSave={handleSave}
-                onDelete={handleDelete}
-                onCancel={() => router.back()}
-              />
-            )}
-          </YStack>
+              {!isMarkdownEditorFocused && (
+                <FlashcardFormActions
+                  canDelete={canDelete}
+                  saveLabel={t('common.save')}
+                  deleteLabel={t('common.delete')}
+                  cancelLabel={t('common.cancel')}
+                  onSave={handleSave}
+                  onDelete={handleDelete}
+                  onCancel={() => router.back()}
+                />
+              )}
+            </YStack>
+          </RNScrollView>
         )}
 
         {cardType === 'multiple_choice' && activeSection === 'options' && (
