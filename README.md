@@ -141,6 +141,16 @@ npm run app:android
 | `npm run app:e2e:android`   | Run Maestro E2E on Android       |
 | `npm run app:e2e:ios`       | Run Maestro E2E on iOS           |
 
+### Web SEO configuration
+
+When building for web, the app uses `EXPO_PUBLIC_SITE_URL` to generate canonical and social metadata URLs.
+
+```bash
+EXPO_PUBLIC_SITE_URL=https://your-domain.example npm run app:build:web
+```
+
+If not provided, it falls back to `https://minimalflashcards.app`.
+
 ## E2E Testing (Maestro)
 
 The E2E suite is located in `app/.maestro/` and covers all screens and core app functionalities (deck/flashcard CRUD, study, quiz, statistics, and settings flows).

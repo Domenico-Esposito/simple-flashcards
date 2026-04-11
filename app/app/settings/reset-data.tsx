@@ -1,5 +1,11 @@
+import { RouteHead } from '@/components/seo/RouteHead';
 import { ResetDataScreen } from '@/components/screens';
 
 export default function ResetDataRoute() {
-  return <ResetDataScreen />;
+  return (
+    <>
+      <RouteHead noIndex title="Reset Data" />
+      <ResetDataScreen />
+    </>
+  );
 }

@@ -1,5 +1,11 @@
+import { RouteHead } from '@/components/seo/RouteHead';
 import { ResetStatsScreen } from '@/components/screens';
 
 export default function ResetStatsRoute() {
-  return <ResetStatsScreen />;
+  return (
+    <>
+      <RouteHead noIndex title="Reset Statistics" />
+      <ResetStatsScreen />
+    </>
+  );
 }

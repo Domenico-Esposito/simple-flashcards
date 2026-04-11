@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /deck
+Disallow: /flashcard-edit
+Disallow: /read-more
+Disallow: /settings
+Disallow: /statistics
+Disallow: /_sitemap
+
+Sitemap: /sitemap.xml
