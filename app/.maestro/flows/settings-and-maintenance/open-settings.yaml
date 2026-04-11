@@ -1,6 +1,18 @@
 appId: com.deploynk.minimalflashcards
 ---
-- tapOn:
-    id: tab-settings
+- runFlow:
+    when:
+      visible:
+        id: tab-settings
+    commands:
+      - tapOn:
+          id: tab-settings
+- runFlow:
+    when:
+      visible:
+        id: sidebar-tab-settings
+    commands:
+      - tapOn:
+          id: sidebar-tab-settings
 - assertVisible:
     id: settings-screen

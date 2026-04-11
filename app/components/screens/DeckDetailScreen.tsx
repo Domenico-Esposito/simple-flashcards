@@ -29,7 +29,7 @@ type FlashcardListContentProps = {
 function FlashcardGrid({ flashcards, onEdit, onDelete }: FlashcardListContentProps) {
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
-      <View flexDirection="row" flexWrap="wrap" margin={-6}>
+      <View flexDirection="row" flexWrap="wrap" margin={-6} testID="deck-detail-flashcard-grid">
         {flashcards.map((item) => (
           <View key={item.id} width="50%" padding={6}>
             <FlashcardListItem

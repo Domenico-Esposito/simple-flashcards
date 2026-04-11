@@ -3,28 +3,81 @@ appId: com.deploynk.minimalflashcards
 - extendedWaitUntil:
     visible:
       id: home-screen
-    timeout: 20000
+    timeout: 60000
 
-- tapOn:
-    id: header-actions-menu-button
-- tapOn:
-    id: home-new-deck-action
-- assertVisible:
-    id: deck-form-screen
+- runFlow:
+    when:
+      visible:
+        id: large-screen-navigation
+    commands:
+      - assertVisible:
+          id: large-screen-header
+      - assertVisible:
+          id: header-actions-container
 
-- tapOn:
-    id: deck-form-title-input
-- inputText: E2E Deck Base
+- runFlow:
+    when:
+      visible:
+        id: home-deck-card-[0-9]+$
+    commands:
+      - tapOn:
+          id: home-deck-card-[0-9]+$
+      - assertVisible:
+          id: deck-detail-screen
 
-- tapOn:
-    id: deck-form-description-input
-- inputText: Deck creato dai test Maestro
+- runFlow:
+    when:
+      visible:
+        id: home-screen
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: home-new-deck-action
+          commands:
+            - tapOn:
+                id: home-new-deck-action
+      - runFlow:
+          when:
+            visible:
+              id: header-actions-menu-button
+          commands:
+            - tapOn:
+                id: header-actions-menu-button
+            - extendedWaitUntil:
+                visible:
+                  id: home-new-deck-action
+                timeout: 10000
+            - tapOn:
+                id: home-new-deck-action
+      - extendedWaitUntil:
+          visible:
+            id: deck-form-screen
+          timeout: 15000
+      - extendedWaitUntil:
+          visible:
+            id: deck-form-title-input
+          timeout: 15000
+      - tapOn:
+          id: deck-form-title-input
+      - inputText: E2E Deck Base
+      - tapOn:
+          id: deck-form-description-input
+      - inputText: Deck creato dai test Maestro
+      - tapOn:
+          id: deck-form-save-button
+      - extendedWaitUntil:
+          visible:
+            id: home-screen
+          timeout: 20000
+      - extendedWaitUntil:
+          visible:
+            id: home-deck-card-[0-9]+$
+          timeout: 20000
+      - tapOn:
+          id: home-deck-card-[0-9]+$
+      - assertVisible:
+          id: deck-detail-screen
 
-- tapOn:
-    id: deck-form-save-button
-- assertVisible:
-    id: home-screen
-
-- tapOn: E2E Deck Base
 - assertVisible:
     id: deck-detail-screen

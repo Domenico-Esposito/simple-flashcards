@@ -6,20 +6,16 @@ appId: com.deploynk.minimalflashcards
     id: flashcard-form-screen
 
 - tapOn:
-    id: flashcard-form-section-question
-- tapOn:
     id: flashcard-form-question-input
-- inputText: '**STD E2E Q LONG** maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro maestro'
+- inputText: 'E2E Standard Flashcard Question'
 - tapOn:
     id: flashcard-form-keyboard-done-button
 
 - tapOn:
-    id: flashcard-form-section-answer
+    id: flashcard-form-answer-toggle
 - tapOn:
     id: flashcard-form-answer-input
-- inputText: '**STD E2E A LONG** contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto'
-- inputText: ' contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto'
-- inputText: ' contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto contenuto'
+- inputText: 'E2E Standard Flashcard Answer'
 - tapOn:
     id: flashcard-form-keyboard-done-button
 

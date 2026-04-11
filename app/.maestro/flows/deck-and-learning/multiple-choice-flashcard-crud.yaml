@@ -5,18 +5,21 @@ appId: com.deploynk.minimalflashcards
 - assertVisible:
     id: flashcard-form-screen
 - tapOn:
-    id: flashcard-form-type-multiple-choice
+    id: flashcard-form-multiple-choice-toggle
 - tapOn:
     id: flashcard-form-question-input
-- inputText: '**MCQ E2E**'
-- tapOn:
-    id: flashcard-form-keyboard-done-button
+- inputText: 'E2E Multiple Choice Flashcard Question'
+- pressKey: Enter
+- pressKey: Enter
+- inputRandomText:
+    length: 500
+- scroll
 - tapOn:
     id: flashcard-form-option-input-0
-- inputText: Opzione A
+- inputText: 'Option A'
 - tapOn:
     id: flashcard-form-option-input-1
-- inputText: Opzione B
+- inputText: 'Option B'
 - tapOn:
     id: flashcard-form-keyboard-done-button
 - tapOn:
@@ -26,20 +29,32 @@ appId: com.deploynk.minimalflashcards
 - assertVisible:
     id: deck-detail-screen
 
-- tapOn: MCQ E2E
+- tapOn:
+    text: '.*E2E Multiple Choice Flashcard Question.*'
 - assertVisible:
     id: flashcard-form-screen
-- tapOn:
-    id: flashcard-form-question-input
-- inputText: ' _v2_'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          point: 5%,15%
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          point: 5%,17%
+- inputText: '## Title '
 - tapOn:
     id: flashcard-form-keyboard-done-button
 - tapOn:
     id: flashcard-form-save-button
 - assertVisible:
     id: deck-detail-screen
-
-- tapOn: MCQ E2E v2
+- assertVisible: '.*Title E2E Multiple Choice Flashcard Question.*'
+- tapOn:
+    id: deck-detail-flashcard-[0-9]+$
 - assertVisible:
     id: flashcard-form-screen
 - tapOn:

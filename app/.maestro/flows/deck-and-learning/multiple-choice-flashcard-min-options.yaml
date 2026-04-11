@@ -1,0 +1,29 @@
+appId: com.deploynk.minimalflashcards
+---
+- tapOn:
+    id: deck-detail-add-flashcard-button
+- assertVisible:
+    id: flashcard-form-screen
+- tapOn:
+    id: flashcard-form-multiple-choice-toggle
+- tapOn:
+    id: flashcard-form-question-input
+- inputText: 'E2E Multiple Choice Minimum Options Question'
+- pressKey: Enter
+- tapOn:
+    id: flashcard-form-option-input-0
+- inputText: 'Only option'
+- tapOn:
+    id: flashcard-form-keyboard-done-button
+- tapOn:
+    id: flashcard-form-option-correct-0
+- tapOn:
+    id: flashcard-form-save-button
+- assertVisible:
+    id: flashcard-form-screen
+- assertVisible:
+    id: flashcard-form-options-error
+- tapOn:
+    id: flashcard-form-cancel-button
+- assertVisible:
+    id: deck-detail-screen

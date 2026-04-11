@@ -14,7 +14,7 @@ appId: com.deploynk.minimalflashcards
     id: import-mode-json-button
 - tapOn:
     id: import-json-input
-- inputText: '{"title":"Imported E2E Deck","description":"Creato in E2E","flashcards":[{"question":"Imported Q","answer":"Imported A"}]}'
+- inputText: '{"title":"Imported E2E Deck","description":"Creato in E2E","flashcards":[{"question":"## Imported Q lorem ipsum","answer":"**Imported A** lorem ipsum dolor sit amet"}]}'
 - back
 - scrollUntilVisible:
     element:

@@ -1,17 +1,28 @@
 appId: com.deploynk.minimalflashcards
 ---
 - tapOn:
-    id: deck-detail-flashcard-[0-9]+$
+    text: 'E2E Standard Flashcard Question'
 - assertVisible:
     id: flashcard-form-screen
 - tapOn:
-    id: flashcard-form-section-question
-- tapOn:
     id: flashcard-form-question-input
-- inputText: ' **aggiornato**'
+- runFlow:
+    when:
+        platform: Android
+    commands:
+        - tapOn:
+            point: 5%,15%
+- runFlow:
+    when:
+        platform: iOS
+    commands:
+        - tapOn:
+            point: 5%,17%
+- inputText: '## Title '
 - tapOn:
     id: flashcard-form-keyboard-done-button
 - tapOn:
     id: flashcard-form-save-button
 - assertVisible:
     id: deck-detail-screen
+- assertVisible: 'Title E2E Standard Flashcard Question'

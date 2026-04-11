@@ -31,7 +31,7 @@ type DeckListContentProps = {
 function DeckGrid({ decks, deckCounts, onPress, onLongPress }: DeckListContentProps) {
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
-      <View flexDirection="row" flexWrap="wrap" margin={-6}>
+      <View flexDirection="row" flexWrap="wrap" margin={-6} testID="home-deck-grid">
         {decks.map((item) => (
           <View key={item.id} width="50%" padding={6}>
             <DeckCard
@@ -92,7 +92,12 @@ function SearchResultsGrid({ sections, onFlashcardPress }: SearchResultsContentP
               {section.deckTitle}
             </Text>
           </View>
-          <View flexDirection="row" flexWrap="wrap" margin={-6}>
+          <View
+            flexDirection="row"
+            flexWrap="wrap"
+            margin={-6}
+            testID={`home-search-results-grid-${section.deckId}`}
+          >
             {section.data.map((item) => (
               <View key={item.id} width="50%" padding={6}>
                 <FlashcardListItem

@@ -1,7 +1,12 @@
 appId: com.deploynk.minimalflashcards
 ---
-- tapOn:
-    id: header-actions-menu-button
+- runFlow:
+    when:
+      visible:
+        id: header-actions-menu-button
+    commands:
+      - tapOn:
+          id: header-actions-menu-button
 - tapOn:
     id: deck-detail-stats-action
 - assertVisible:
@@ -15,15 +20,65 @@ appId: com.deploynk.minimalflashcards
 - assertVisible:
     id: deck-detail-screen
 
-- tapOn:
-    id: header-actions-menu-button
+- runFlow:
+    when:
+      visible:
+        id: sidebar-navigation
+    commands:
+      - assertVisible:
+          id: deck-detail-flashcard-grid
+      - assertVisible:
+          id: large-screen-header
+      - assertVisible:
+          id: header-actions-container
+
+- runFlow:
+    when:
+      visible:
+        id: header-actions-menu-button
+    commands:
+      - tapOn:
+          id: header-actions-menu-button
 - tapOn:
     id: deck-detail-edit-action
 - assertVisible:
     id: deck-form-screen
 - tapOn:
     id: deck-form-title-input
-- inputText: ' Main'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - longPressOn:
+          id: deck-form-title-input
+      - extendedWaitUntil:
+          visible: "^(Select All|Seleziona tutto|Seleccionar todo|Tout sélectionner|Alles auswählen)$"
+          timeout: 5000
+      - tapOn: "^(Select All|Seleziona tutto|Seleccionar todo|Tout sélectionner|Alles auswählen)$"
+      - eraseText: 1
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - longPressOn:
+          id: deck-form-title-input
+      - extendedWaitUntil:
+          visible: "^(Select All|Seleziona tutto|Seleccionar todo|Tout sélectionner|Alles auswählen)$"
+          timeout: 5000
+      - tapOn: "^(Select All|Seleziona tutto|Seleccionar todo|Tout sélectionner|Alles auswählen)$"
+      - eraseText: 1
+- runFlow:
+    when:
+      platform: Web
+    commands:
+      - tapOn:
+          id: deck-form-title-input
+          point: "100%,50%"
+      - repeat:
+          times: 2
+          commands:
+            - eraseText: 100
+- inputText: 'E2E Deck Base Main'
 - tapOn:
     id: deck-form-save-button
 - assertVisible:
@@ -34,13 +89,49 @@ appId: com.deploynk.minimalflashcards
 - assertVisible:
     id: home-screen
 
-- tapOn:
-    id: tab-statistics
-- assertVisible:
-    id: statistics-screen
-- tapOn:
-    id: stats-interval-month
-- tapOn:
-    id: stats-interval-quarter
-- tapOn:
-    id: tab-decks
+- runFlow:
+    when:
+      visible:
+        id: sidebar-navigation
+    commands:
+      - assertVisible:
+          id: large-screen-navigation
+      - assertVisible:
+          id: home-deck-grid
+      - tapOn:
+          id: home-search-input
+      - inputText: STD E2E
+      - assertVisible:
+          id: home-search-results-grid-[0-9]+$
+      - tapOn:
+          id: home-search-clear-button
+      - assertVisible:
+          id: home-deck-grid
+      - tapOn:
+          id: sidebar-tab-statistics
+      - assertVisible:
+          id: statistics-screen
+      - tapOn:
+          id: stats-interval-month
+      - tapOn:
+          id: stats-interval-quarter
+      - tapOn:
+          id: sidebar-tab-decks
+      - assertVisible:
+          id: home-screen
+
+- runFlow:
+    when:
+      visible:
+        id: tab-statistics
+    commands:
+      - tapOn:
+          id: tab-statistics
+      - assertVisible:
+          id: statistics-screen
+      - tapOn:
+          id: stats-interval-month
+      - tapOn:
+          id: stats-interval-quarter
+      - tapOn:
+          id: tab-decks

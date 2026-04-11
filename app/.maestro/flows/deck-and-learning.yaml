@@ -1,8 +1,7 @@
 appId: com.deploynk.minimalflashcards
 ---
 - runFlow: deck-and-learning/setup-deck.yaml
-- runFlow: deck-and-learning/standard-flashcard-create.yaml
-- runFlow: deck-and-learning/multiple-choice-flashcard-crud.yaml
-- runFlow: deck-and-learning/standard-flashcard-edit.yaml
+- runFlow: deck-and-learning/flashcard-create-scenarios.yaml
+- runFlow: deck-and-learning/flashcard-edit-scenarios.yaml
 - runFlow: deck-and-learning/study-and-quiz.yaml
 - runFlow: deck-and-learning/deck-management-and-navigation.yaml

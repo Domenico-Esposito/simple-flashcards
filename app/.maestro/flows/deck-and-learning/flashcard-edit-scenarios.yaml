@@ -1,0 +1,80 @@
+appId: com.deploynk.minimalflashcards
+---
+# Scenario 1: edit an existing standard flashcard created in the create scenarios flow.
+# We prepend a markdown title so the assertion can validate the text transformation.
+- assertVisible:
+    id: deck-detail-screen
+- tapOn:
+    text: '^E2E Standard Flashcard Question$'
+- assertVisible:
+    id: flashcard-form-screen
+- tapOn:
+    id: flashcard-form-question-input
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          point: 5%,15%
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          point: 5%,17%
+- inputText: '## Title '
+- tapOn:
+    id: flashcard-form-keyboard-done-button
+- tapOn:
+    id: flashcard-form-save-button
+- assertVisible:
+    id: deck-detail-screen
+- assertVisible: 'Title E2E Standard Flashcard Question'
+
+# Scenario 2: edit and then delete an existing multiple choice flashcard.
+# The target card is the long-question MC card produced by the create scenarios flow.
+- assertVisible:
+    id: deck-detail-screen
+- tapOn:
+    text: '^E2E Multiple Choice Long Question.*$'
+- assertVisible:
+    id: flashcard-form-screen
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          point: 5%,15%
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          point: 5%,17%
+- inputText: '## Title '
+- tapOn:
+    id: flashcard-form-keyboard-done-button
+- tapOn:
+    id: flashcard-form-save-button
+- assertVisible:
+    id: deck-detail-screen
+- assertVisible: '^Title E2E Multiple Choice Long Question.*$'
+
+# Scenario 3: delete the edited multiple choice flashcard.
+# This keeps coverage for destructive actions with alert confirmation.
+- assertVisible:
+    id: deck-detail-screen
+- tapOn:
+    text: '^Title E2E Multiple Choice Long Question.*$'
+- assertVisible:
+    id: flashcard-form-screen
+- tapOn:
+    id: flashcard-form-delete-button
+- extendedWaitUntil:
+    visible:
+      id: app-alert-content
+    timeout: 10000
+- tapOn:
+    id: app-alert-button-destructive-[0-9]+$
+- assertVisible:
+    id: deck-detail-screen

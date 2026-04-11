@@ -15,8 +15,20 @@ appId: com.deploynk.minimalflashcards
 - tapOn:
     id: header-back-button
 
-- tapOn:
-    id: tab-decks
+- runFlow:
+    when:
+      visible:
+        id: tab-decks
+    commands:
+      - tapOn:
+          id: tab-decks
+- runFlow:
+    when:
+      visible:
+        id: sidebar-tab-decks
+    commands:
+      - tapOn:
+          id: sidebar-tab-decks
 - assertVisible:
     id: home-screen
 - assertVisible:
