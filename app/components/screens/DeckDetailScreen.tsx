@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 import { FlatList, Pressable, ScrollView } from 'react-native';
 import { Text, View, YStack, XStack } from 'tamagui';
 import { useRouter } from 'expo-router';
@@ -25,10 +25,74 @@ type FlashcardListContentProps = {
   onDelete: (flashcardId: number) => void;
 };
 
-/** Large screen: grid layout for flashcard items */
+const LIST_BOTTOM_PADDING = 20;
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
+      <Text color="$gray10" fontSize={16} textAlign="center">
+        {message}
+      </Text>
+    </YStack>
+  );
+}
+
+type ActionTileProps = {
+  icon: ComponentProps<typeof MaterialIcons>['name'];
+  label: string;
+  iconColor: string;
+  textColor: string;
+  backgroundColor: string;
+  onPress: () => void;
+  testID: string;
+};
+
+function ActionTile({
+  icon,
+  label,
+  iconColor,
+  textColor,
+  backgroundColor,
+  onPress,
+  testID,
+}: ActionTileProps) {
+  return (
+    <Pressable onPress={onPress} style={{ flex: 1 }} testID={testID} accessibilityLabel={testID}>
+      <View
+        backgroundColor={backgroundColor}
+        borderRadius="$4"
+        padding="$4"
+        alignItems="center"
+        justifyContent="center"
+        gap="$2"
+      >
+        <MaterialIcons name={icon} size={24} color={iconColor} />
+        <Text fontSize={14} fontWeight="600" color={textColor}>
+          {label}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
+function flashcardMatchesQuery(flashcard: Flashcard, query: string) {
+  if (flashcard.question.toLowerCase().includes(query)) {
+    return true;
+  }
+
+  if (flashcard.type === 'multiple_choice') {
+    return flashcard.options.some((option) => option.text.toLowerCase().includes(query));
+  }
+
+  return flashcard.answer.toLowerCase().includes(query);
+}
+
 function FlashcardGrid({ flashcards, onEdit, onDelete }: FlashcardListContentProps) {
   return (
-    <ScrollView contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      contentContainerStyle={{ paddingBottom: LIST_BOTTOM_PADDING }}
+      showsVerticalScrollIndicator={false}
+    >
       <View flexDirection="row" flexWrap="wrap" margin={-6} testID="deck-detail-flashcard-grid">
         {flashcards.map((item) => (
           <View key={item.id} width="50%" padding={6}>
@@ -45,7 +109,6 @@ function FlashcardGrid({ flashcards, onEdit, onDelete }: FlashcardListContentPro
   );
 }
 
-/** Mobile: flat list for flashcard items */
 function FlashcardMobileList({ flashcards, onEdit, onDelete }: FlashcardListContentProps) {
   return (
     <FlatList
@@ -59,7 +122,7 @@ function FlashcardMobileList({ flashcards, onEdit, onDelete }: FlashcardListCont
           testID={`deck-detail-flashcard-${item.id}`}
         />
       )}
-      contentContainerStyle={{ paddingBottom: 20 }}
+      contentContainerStyle={{ paddingBottom: LIST_BOTTOM_PADDING }}
       ItemSeparatorComponent={() => <View height={10} />}
       showsVerticalScrollIndicator={false}
     />
@@ -77,17 +140,14 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
   const { showAlert, AlertDialog } = useAppAlert();
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Filter flashcards based on search query
   const filteredFlashcards = useMemo(() => {
-    if (!searchQuery.trim()) return flashcards;
-    const query = searchQuery.toLowerCase().trim();
-    return flashcards.filter((fc) => {
-      const q = fc.question.toLowerCase().includes(query);
-      if (fc.type === 'multiple_choice') {
-        return q || fc.options.some((o) => o.text.toLowerCase().includes(query));
-      }
-      return q || fc.answer.toLowerCase().includes(query);
-    });
+    const normalizedQuery = searchQuery.toLowerCase().trim();
+
+    if (!normalizedQuery) {
+      return flashcards;
+    }
+
+    return flashcards.filter((flashcard) => flashcardMatchesQuery(flashcard, normalizedQuery));
   }, [flashcards, searchQuery]);
 
   useEffect(() => {
@@ -117,6 +177,31 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
     );
   }
 
+  const hasFlashcards = flashcards.length > 0;
+  const normalizedSearchQuery = searchQuery.trim();
+
+  let content: ReactNode;
+
+  if (!hasFlashcards) {
+    content = <EmptyState message={t('deck.noFlashcards')} />;
+  } else if (filteredFlashcards.length === 0) {
+    content = <EmptyState message={t('deck.noSearchResults', { query: normalizedSearchQuery })} />;
+  } else {
+    content = isLargeScreen ? (
+      <FlashcardGrid
+        flashcards={filteredFlashcards}
+        onEdit={handleEditFlashcard}
+        onDelete={handleDeleteFlashcard}
+      />
+    ) : (
+      <FlashcardMobileList
+        flashcards={filteredFlashcards}
+        onEdit={handleEditFlashcard}
+        onDelete={handleDeleteFlashcard}
+      />
+    );
+  }
+
   return (
     <View flex={1} backgroundColor="$background" testID="deck-detail-screen">
       <Header
@@ -139,76 +224,41 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
       />
 
       <YStack flex={1} paddingHorizontal="$4" gap="$4">
-        {/* Action Buttons */}
         <XStack gap="$3">
-          <Pressable
+          <ActionTile
+            icon="add"
+            label={t('deck.add')}
+            iconColor={colors.onAccent}
+            textColor={colors.onAccent}
+            backgroundColor="$primary"
             onPress={() => router.push(`/deck/${deckId}/flashcard/new`)}
-            style={{ flex: 1 }}
             testID="deck-detail-add-flashcard-button"
-            accessibilityLabel="deck-detail-add-flashcard-button"
-          >
-            <View
-              backgroundColor="$primary"
-              borderRadius="$4"
-              padding="$4"
-              alignItems="center"
-              justifyContent="center"
-              gap="$2"
-            >
-              <MaterialIcons name="add" size={24} color={colors.onAccent} />
-              <Text fontSize={14} fontWeight="600" color={colors.onAccent}>
-                {t('deck.add')}
-              </Text>
-            </View>
-          </Pressable>
-          {flashcards.length > 0 && (
-            <Pressable
+          />
+          {hasFlashcards && (
+            <ActionTile
+              icon="menu-book"
+              label={t('deck.study')}
+              iconColor={colors.accent}
+              textColor="$color"
+              backgroundColor="$backgroundStrong"
               onPress={() => router.push(`/deck/${deckId}/study`)}
-              style={{ flex: 1 }}
               testID="deck-detail-study-button"
-              accessibilityLabel="deck-detail-study-button"
-            >
-              <View
-                backgroundColor="$backgroundStrong"
-                borderRadius="$4"
-                padding="$4"
-                alignItems="center"
-                justifyContent="center"
-                gap="$2"
-              >
-                <MaterialIcons name="menu-book" size={24} color={colors.accent} />
-                <Text fontSize={14} fontWeight="600" color="$color">
-                  {t('deck.study')}
-                </Text>
-              </View>
-            </Pressable>
+            />
           )}
-          {flashcards.length > 0 && (
-            <Pressable
+          {hasFlashcards && (
+            <ActionTile
+              icon="play-arrow"
+              label={t('deck.startQuiz')}
+              iconColor={colors.success}
+              textColor="$color"
+              backgroundColor="$backgroundStrong"
               onPress={() => router.push(`/deck/${deckId}/quiz`)}
-              style={{ flex: 1 }}
               testID="deck-detail-quiz-button"
-              accessibilityLabel="deck-detail-quiz-button"
-            >
-              <View
-                backgroundColor="$backgroundStrong"
-                borderRadius="$4"
-                padding="$4"
-                alignItems="center"
-                justifyContent="center"
-                gap="$2"
-              >
-                <MaterialIcons name="play-arrow" size={24} color={colors.success} />
-                <Text fontSize={14} fontWeight="600" color="$color">
-                  {t('deck.startQuiz')}
-                </Text>
-              </View>
-            </Pressable>
+            />
           )}
         </XStack>
 
-        {/* Search bar */}
-        {flashcards.length > 0 && (
+        {hasFlashcards && (
           <SearchBar
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -218,8 +268,7 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
           />
         )}
 
-        {/* Section title */}
-        {flashcards.length > 0 && (
+        {hasFlashcards && (
           <Text
             fontSize={18}
             fontWeight="600"
@@ -231,32 +280,7 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
           </Text>
         )}
 
-        {/* Flashcards list */}
-        {flashcards.length === 0 ? (
-          <YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
-            <Text color="$gray10" fontSize={16} textAlign="center">
-              {t('deck.noFlashcards')}
-            </Text>
-          </YStack>
-        ) : filteredFlashcards.length === 0 ? (
-          <YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
-            <Text color="$gray10" fontSize={16} textAlign="center">
-              {t('deck.noSearchResults', { query: searchQuery })}
-            </Text>
-          </YStack>
-        ) : isLargeScreen ? (
-          <FlashcardGrid
-            flashcards={filteredFlashcards}
-            onEdit={handleEditFlashcard}
-            onDelete={handleDeleteFlashcard}
-          />
-        ) : (
-          <FlashcardMobileList
-            flashcards={filteredFlashcards}
-            onEdit={handleEditFlashcard}
-            onDelete={handleDeleteFlashcard}
-          />
-        )}
+        {content}
       </YStack>
       {AlertDialog}
     </View>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { FlatList, ScrollView, SectionList } from 'react-native';
 import { Text, View, YStack } from 'tamagui';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -20,6 +20,39 @@ type SearchResultSection = {
   data: Flashcard[];
 };
 
+type SearchState = {
+  matchingDeckIds: number[];
+  sections: SearchResultSection[];
+};
+
+const LIST_BOTTOM_PADDING = 20;
+
+function EmptyState({ message, testID }: { message: string; testID: string }) {
+  return (
+    <YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
+      <Text color="$gray10" fontSize={16} textAlign="center" testID={testID}>
+        {message}
+      </Text>
+    </YStack>
+  );
+}
+
+function SearchSectionHeader({ title }: { title: string }) {
+  return (
+    <View backgroundColor="$background" paddingVertical="$2" marginTop="$3">
+      <Text
+        fontSize={13}
+        fontWeight="600"
+        color="$gray10"
+        textTransform="uppercase"
+        letterSpacing={0.5}
+      >
+        {title}
+      </Text>
+    </View>
+  );
+}
+
 type DeckListContentProps = {
   decks: Deck[];
   deckCounts: Record<number, number>;
@@ -27,10 +60,12 @@ type DeckListContentProps = {
   onLongPress: (deck: Deck) => void;
 };
 
-/** Large screen: grid layout for deck cards */
 function DeckGrid({ decks, deckCounts, onPress, onLongPress }: DeckListContentProps) {
   return (
-    <ScrollView contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      contentContainerStyle={{ paddingBottom: LIST_BOTTOM_PADDING }}
+      showsVerticalScrollIndicator={false}
+    >
       <View flexDirection="row" flexWrap="wrap" margin={-6} testID="home-deck-grid">
         {decks.map((item) => (
           <View key={item.id} width="50%" padding={6}>
@@ -48,7 +83,6 @@ function DeckGrid({ decks, deckCounts, onPress, onLongPress }: DeckListContentPr
   );
 }
 
-/** Mobile: flat list for deck cards */
 function DeckMobileList({ decks, deckCounts, onPress, onLongPress }: DeckListContentProps) {
   return (
     <FlatList
@@ -63,7 +97,7 @@ function DeckMobileList({ decks, deckCounts, onPress, onLongPress }: DeckListCon
           testID={`home-deck-card-${item.id}`}
         />
       )}
-      contentContainerStyle={{ paddingBottom: 20 }}
+      contentContainerStyle={{ paddingBottom: LIST_BOTTOM_PADDING }}
       ItemSeparatorComponent={() => <View height={12} />}
       showsVerticalScrollIndicator={false}
     />
@@ -75,23 +109,15 @@ type SearchResultsContentProps = {
   onFlashcardPress: (flashcardId: number) => void;
 };
 
-/** Large screen: grid layout for search results */
 function SearchResultsGrid({ sections, onFlashcardPress }: SearchResultsContentProps) {
   return (
-    <ScrollView contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      contentContainerStyle={{ paddingBottom: LIST_BOTTOM_PADDING }}
+      showsVerticalScrollIndicator={false}
+    >
       {sections.map((section) => (
         <View key={section.deckId}>
-          <View backgroundColor="$background" paddingVertical="$2" marginTop="$3">
-            <Text
-              fontSize={13}
-              fontWeight="600"
-              color="$gray10"
-              textTransform="uppercase"
-              letterSpacing={0.5}
-            >
-              {section.deckTitle}
-            </Text>
-          </View>
+          <SearchSectionHeader title={section.deckTitle} />
           <View
             flexDirection="row"
             flexWrap="wrap"
@@ -114,25 +140,12 @@ function SearchResultsGrid({ sections, onFlashcardPress }: SearchResultsContentP
   );
 }
 
-/** Mobile: section list for search results */
 function SearchResultsMobileList({ sections, onFlashcardPress }: SearchResultsContentProps) {
   return (
     <SectionList
       sections={sections}
       keyExtractor={(item) => item.id.toString()}
-      renderSectionHeader={({ section }) => (
-        <View backgroundColor="$background" paddingVertical="$2" marginTop="$3">
-          <Text
-            fontSize={13}
-            fontWeight="600"
-            color="$gray10"
-            textTransform="uppercase"
-            letterSpacing={0.5}
-          >
-            {section.deckTitle}
-          </Text>
-        </View>
-      )}
+      renderSectionHeader={({ section }) => <SearchSectionHeader title={section.deckTitle} />}
       renderItem={({ item }) => (
         <FlashcardListItem
           flashcard={item}
@@ -140,7 +153,7 @@ function SearchResultsMobileList({ sections, onFlashcardPress }: SearchResultsCo
           testID={`home-search-flashcard-${item.id}`}
         />
       )}
-      contentContainerStyle={{ paddingBottom: 20 }}
+      contentContainerStyle={{ paddingBottom: LIST_BOTTOM_PADDING }}
       ItemSeparatorComponent={() => <View height={10} />}
       stickySectionHeadersEnabled={false}
       showsVerticalScrollIndicator={false}
@@ -155,56 +168,80 @@ export function HomeScreen() {
   const { showAlert, AlertDialog } = useAppAlert();
   const [deckCounts, setDeckCounts] = useState<Record<number, number>>({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredDecks, setFilteredDecks] = useState<Deck[]>([]);
   const isLargeScreen = useIsLargeScreen();
-  const [searchResults, setSearchResults] = useState<SearchResultSection[]>([]);
+  const [searchState, setSearchState] = useState<SearchState>({
+    matchingDeckIds: [],
+    sections: [],
+  });
+  const trimmedSearchQuery = searchQuery.trim();
 
-  // Perform search using FTS5
   useEffect(() => {
+    if (!trimmedSearchQuery) {
+      setSearchState({ matchingDeckIds: [], sections: [] });
+      return;
+    }
+
+    let isActive = true;
+
     const performSearch = async () => {
-      if (!searchQuery.trim()) {
-        setFilteredDecks(decks);
-        setSearchResults([]);
+      const { matchingDeckIds, flashcardsByDeck } = await search(trimmedSearchQuery);
+
+      if (!isActive) {
         return;
       }
 
-      const { matchingDeckIds, flashcardsByDeck } = await search(searchQuery.trim());
-
-      setFilteredDecks(decks.filter((deck) => matchingDeckIds.includes(deck.id)));
-
-      // Build sections for flashcard results
-      const sections: SearchResultSection[] = [];
-      for (const deck of decks) {
-        if (flashcardsByDeck[deck.id]?.length > 0) {
-          sections.push({
-            deckId: deck.id,
-            deckTitle: deck.title,
-            data: flashcardsByDeck[deck.id],
-          });
-        }
-      }
-      setSearchResults(sections);
+      setSearchState({
+        matchingDeckIds,
+        sections: decks.flatMap((deck) =>
+          flashcardsByDeck[deck.id]?.length
+            ? [
+                {
+                  deckId: deck.id,
+                  deckTitle: deck.title,
+                  data: flashcardsByDeck[deck.id],
+                },
+              ]
+            : [],
+        ),
+      });
     };
 
-    performSearch();
-  }, [decks, searchQuery]);
+    void performSearch();
+
+    return () => {
+      isActive = false;
+    };
+  }, [decks, trimmedSearchQuery]);
+
+  const filteredDecks = useMemo(() => {
+    if (!trimmedSearchQuery) {
+      return decks;
+    }
+
+    const matchingDeckIds = new Set(searchState.matchingDeckIds);
+    return decks.filter((deck) => matchingDeckIds.has(deck.id));
+  }, [decks, searchState.matchingDeckIds, trimmedSearchQuery]);
 
   const loadCounts = useCallback(async () => {
-    const counts: Record<number, number> = {};
-    for (const deck of decks) {
-      counts[deck.id] = await getFlashcardCount(deck.id);
+    if (decks.length === 0) {
+      setDeckCounts({});
+      return;
     }
-    setDeckCounts(counts);
+
+    const entries = await Promise.all(
+      decks.map(async (deck) => [deck.id, await getFlashcardCount(deck.id)] as const),
+    );
+
+    setDeckCounts(Object.fromEntries(entries));
   }, [decks]);
 
   useEffect(() => {
     loadDecks();
   }, [loadDecks]);
 
-  // Reload counts every time the screen is focused
   useFocusEffect(
     useCallback(() => {
-      loadCounts();
+      void loadCounts();
     }, [loadCounts]),
   );
 
@@ -222,6 +259,46 @@ export function HomeScreen() {
   const handleDeckPress = (deckId: number) => router.push(`/deck/${deckId}`);
   const handleFlashcardPress = (flashcardId: number) =>
     router.push(`/flashcard-edit/${flashcardId}`);
+  const hasDecks = decks.length > 0;
+  const hasSearchResults = trimmedSearchQuery.length > 0 && searchState.sections.length > 0;
+
+  let content: ReactNode;
+
+  if (!hasDecks) {
+    content = <EmptyState message={t('home.noDecks')} testID="home-empty-state" />;
+  } else if (filteredDecks.length === 0) {
+    content = (
+      <EmptyState
+        message={t('home.noSearchResults', { query: trimmedSearchQuery })}
+        testID="home-search-empty-state"
+      />
+    );
+  } else if (hasSearchResults) {
+    content = isLargeScreen ? (
+      <SearchResultsGrid sections={searchState.sections} onFlashcardPress={handleFlashcardPress} />
+    ) : (
+      <SearchResultsMobileList
+        sections={searchState.sections}
+        onFlashcardPress={handleFlashcardPress}
+      />
+    );
+  } else {
+    content = isLargeScreen ? (
+      <DeckGrid
+        decks={filteredDecks}
+        deckCounts={deckCounts}
+        onPress={handleDeckPress}
+        onLongPress={handleDeleteDeck}
+      />
+    ) : (
+      <DeckMobileList
+        decks={filteredDecks}
+        deckCounts={deckCounts}
+        onPress={handleDeckPress}
+        onLongPress={handleDeleteDeck}
+      />
+    );
+  }
 
   return (
     <View flex={1} backgroundColor="$background" testID="home-screen">
@@ -239,8 +316,7 @@ export function HomeScreen() {
       />
 
       <YStack flex={1} paddingHorizontal="$4" gap="$4">
-        {/* Search bar */}
-        {decks.length > 0 && (
+        {hasDecks && (
           <SearchBar
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -250,42 +326,7 @@ export function HomeScreen() {
           />
         )}
 
-        {decks.length === 0 ? (
-          <YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
-            <Text color="$gray10" fontSize={16} textAlign="center" testID="home-empty-state">
-              {t('home.noDecks')}
-            </Text>
-          </YStack>
-        ) : filteredDecks.length === 0 ? (
-          <YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
-            <Text color="$gray10" fontSize={16} textAlign="center" testID="home-search-empty-state">
-              {t('home.noSearchResults', { query: searchQuery })}
-            </Text>
-          </YStack>
-        ) : searchQuery.trim() && searchResults.length > 0 ? (
-          isLargeScreen ? (
-            <SearchResultsGrid sections={searchResults} onFlashcardPress={handleFlashcardPress} />
-          ) : (
-            <SearchResultsMobileList
-              sections={searchResults}
-              onFlashcardPress={handleFlashcardPress}
-            />
-          )
-        ) : isLargeScreen ? (
-          <DeckGrid
-            decks={filteredDecks}
-            deckCounts={deckCounts}
-            onPress={handleDeckPress}
-            onLongPress={handleDeleteDeck}
-          />
-        ) : (
-          <DeckMobileList
-            decks={filteredDecks}
-            deckCounts={deckCounts}
-            onPress={handleDeckPress}
-            onLongPress={handleDeleteDeck}
-          />
-        )}
+        {content}
       </YStack>
       {AlertDialog}
     </View>

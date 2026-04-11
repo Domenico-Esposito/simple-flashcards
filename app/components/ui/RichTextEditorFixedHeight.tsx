@@ -7,13 +7,13 @@ import {
   type MarkdownEditorHandle,
 } from '@domenico-esposito/react-native-markdown-editor';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { createSegmentComponents } from '@/components/ui/markdown-theme';
 import { getColors } from '@/constants/colors';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 const FIXED_EDITOR_HEIGHT = 280;
 
-type RichTextEditorFixedHeightCloneProps = {
+type RichTextEditorFixedHeightProps = {
   editor: MarkdownEditorHandle;
   placeholder?: string;
   testID?: string;
@@ -24,13 +24,13 @@ type RichTextEditorFixedHeightCloneProps = {
   >;
 };
 
-export function RichTextEditorFixedHeightClone({
+export function RichTextEditorFixedHeight({
   editor,
   placeholder,
   testID,
   fill = false,
   inputProps,
-}: RichTextEditorFixedHeightCloneProps) {
+}: RichTextEditorFixedHeightProps) {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
   const segmentComponents = useMemo(() => createSegmentComponents(colorScheme), [colorScheme]);
