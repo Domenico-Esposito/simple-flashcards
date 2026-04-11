@@ -1,42 +1,263 @@
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, type ComponentProps } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   Keyboard,
-  View as RNView,
+  Platform,
   Pressable,
-  TextInput,
+  ScrollView as RNScrollView,
+  View as RNView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  MarkdownToolbar,
+  type MarkdownToolbarButtonState,
+} from '@domenico-esposito/react-native-markdown-editor';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Button, Text, View, XStack, YStack } from 'tamagui';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MarkdownToolbar } from '@domenico-esposito/react-native-markdown-editor';
-import type { MarkdownToolbarButtonState } from '@domenico-esposito/react-native-markdown-editor';
 import { useTranslation } from 'react-i18next';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { useFlashcardsStore } from '@/store/flashcards';
+import { MarkdownEditorFieldClone } from '@/components/flashcard-form/MarkdownEditorFieldClone';
+import { MultipleChoiceOptionsField } from '@/components/flashcard-form/MultipleChoiceOptionsField';
+import type { EditorSection } from '@/components/flashcard-form/types';
 import { Header } from '@/components/Header';
-import { getFlashcardById } from '@/utils/database';
-import {
-  RichTextEditor,
-  useKeyboardHeight,
-  useMarkdownEditor,
-} from '@/components/ui/RichTextEditor';
+import { useKeyboardHeight, useMarkdownEditor } from '@/components/ui/RichTextEditor';
+import { getColors } from '@/constants/colors';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppAlert } from '@/hooks/useAppAlert';
-import { getColors } from '@/constants/colors';
-import { useFormTextField } from '@/hooks/useFormTextField';
-import { FlashcardType } from '@/types';
+import { useIsLargeScreen } from '@/hooks/useLargeScreen';
+import { useFlashcardFormState } from '@/components/screens/flashcard-form/useFlashcardFormState';
 
-type EditorSection = 'question' | 'answer';
+const FORM_CONTENT_PADDING = 16;
+const FORM_CONTENT_BOTTOM_PADDING = 24;
+const TOOLBAR_KEYBOARD_GAP_IOS = 8;
+const TOOLBAR_KEYBOARD_GAP_ANDROID = 35;
+const TOOLBAR_INITIAL_HEIGHT = 56;
+const COMPACT_TOGGLE_HEIGHT = 40;
+const TOGGLE_SEGMENT_GAP = 4;
+const ACTIVE_SEGMENT_WIDTH = 44;
+const INACTIVE_SEGMENT_FLEX = 1;
 
-type OptionField = {
-  id: string;
-  text: string;
-  isCorrect: boolean;
+type CompactBooleanToggleProps = {
+  value: boolean;
+  onChange: (value: boolean) => void;
+  accentColor: string;
+  errorColor: string;
+  borderColor: string;
+  activeBackgroundColor: string;
+  inactiveIconColor: string;
+  inactiveTextColor: string;
+  falseLabel: string;
+  trueLabel: string;
+  falseIcon: ComponentProps<typeof MaterialIcons>['name'];
+  trueIcon: ComponentProps<typeof MaterialIcons>['name'];
+  falseTestID: string;
+  trueTestID: string;
+  falseHasError?: boolean;
+  trueHasError?: boolean;
+  showActiveLabel?: boolean;
+  equalSegmentWidths?: boolean;
 };
+
+function CompactBooleanToggle({
+  value,
+  onChange,
+  accentColor,
+  errorColor,
+  borderColor,
+  activeBackgroundColor,
+  inactiveIconColor,
+  inactiveTextColor,
+  falseLabel,
+  trueLabel,
+  falseIcon,
+  trueIcon,
+  falseTestID,
+  trueTestID,
+  falseHasError = false,
+  trueHasError = false,
+  showActiveLabel = false,
+  equalSegmentWidths = false,
+}: CompactBooleanToggleProps) {
+  const [leftWidth, setLeftWidth] = useState(0);
+  const [rightWidth, setRightWidth] = useState(0);
+  const thumbTranslateX = useSharedValue(0);
+  const thumbWidth = useSharedValue(0);
+
+  useEffect(() => {
+    if (leftWidth === 0 || rightWidth === 0) {
+      return;
+    }
+
+    const nextWidth = value ? rightWidth : leftWidth;
+    const nextTranslateX = value ? leftWidth + TOGGLE_SEGMENT_GAP : 0;
+
+    thumbWidth.value = withTiming(nextWidth, { duration: 180 });
+    thumbTranslateX.value = withTiming(nextTranslateX, { duration: 180 });
+  }, [leftWidth, rightWidth, thumbTranslateX, thumbWidth, value]);
+
+  const animatedThumbStyle = useAnimatedStyle(() => {
+    if (thumbWidth.value === 0) {
+      return { opacity: 0 };
+    }
+
+    return {
+      opacity: 1,
+      width: thumbWidth.value,
+      transform: [
+        {
+          translateX: thumbTranslateX.value,
+        },
+      ],
+    };
+  });
+
+  const leftActive = !value;
+  const rightActive = value;
+  const leftShowLabel = !leftActive || showActiveLabel;
+  const rightShowLabel = !rightActive || showActiveLabel;
+
+  return (
+    <View
+      flex={1}
+      flexBasis={0}
+      height={COMPACT_TOGGLE_HEIGHT}
+      minWidth={0}
+      position="relative"
+      padding="$1"
+      borderRadius="$10"
+      backgroundColor="$color2"
+      borderWidth={1}
+      borderColor="$borderColor"
+      overflow="hidden"
+    >
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          {
+            position: 'absolute',
+            left: 2,
+            top: 2,
+            bottom: 2,
+            borderRadius: 999,
+            backgroundColor: activeBackgroundColor,
+            borderWidth: 1,
+            borderColor: accentColor,
+          },
+          animatedThumbStyle,
+        ]}
+      />
+      <XStack height="100%" gap={TOGGLE_SEGMENT_GAP}>
+        <Pressable
+          style={{
+            height: '100%',
+            minWidth: 0,
+            position: 'relative',
+            width:
+              leftActive && !showActiveLabel && !equalSegmentWidths
+                ? ACTIVE_SEGMENT_WIDTH
+                : undefined,
+            flex: equalSegmentWidths ? 1 : leftActive ? undefined : INACTIVE_SEGMENT_FLEX,
+          }}
+          onPress={() => onChange(false)}
+          testID={falseTestID}
+          accessibilityLabel={falseTestID}
+          onLayout={(event) => {
+            setLeftWidth(event.nativeEvent.layout.width);
+          }}
+        >
+          <XStack
+            height="100%"
+            justifyContent="center"
+            alignItems="center"
+            gap="$1.5"
+            paddingHorizontal="$2"
+          >
+            <MaterialIcons
+              name={falseIcon}
+              size={16}
+              color={leftActive ? accentColor : inactiveIconColor}
+            />
+            {leftShowLabel && (
+              <Text
+                flexShrink={1}
+                numberOfLines={1}
+                fontSize={13}
+                fontWeight="700"
+                color={inactiveTextColor}
+              >
+                {falseLabel}
+              </Text>
+            )}
+          </XStack>
+          {falseHasError && (
+            <MaterialIcons
+              name="error-outline"
+              size={14}
+              color={errorColor}
+              style={{ position: 'absolute', top: 4, right: 4 }}
+              testID={`${falseTestID}-error-indicator`}
+              accessibilityLabel={`${falseTestID}-error-indicator`}
+            />
+          )}
+        </Pressable>
+        <Pressable
+          style={{
+            height: '100%',
+            minWidth: 0,
+            position: 'relative',
+            width:
+              rightActive && !showActiveLabel && !equalSegmentWidths
+                ? ACTIVE_SEGMENT_WIDTH
+                : undefined,
+            flex: equalSegmentWidths ? 1 : rightActive ? undefined : INACTIVE_SEGMENT_FLEX,
+          }}
+          onPress={() => onChange(true)}
+          testID={trueTestID}
+          accessibilityLabel={trueTestID}
+          onLayout={(event) => {
+            setRightWidth(event.nativeEvent.layout.width);
+          }}
+        >
+          <XStack
+            height="100%"
+            justifyContent="center"
+            alignItems="center"
+            gap="$1.5"
+            paddingHorizontal="$2"
+          >
+            <MaterialIcons
+              name={trueIcon}
+              size={16}
+              color={rightActive ? accentColor : inactiveIconColor}
+            />
+            {rightShowLabel && (
+              <Text
+                flexShrink={1}
+                numberOfLines={1}
+                fontSize={13}
+                fontWeight="700"
+                color={inactiveTextColor}
+              >
+                {trueLabel}
+              </Text>
+            )}
+          </XStack>
+          {trueHasError && (
+            <MaterialIcons
+              name="error-outline"
+              size={14}
+              color={errorColor}
+              style={{ position: 'absolute', top: 4, right: 4 }}
+              testID={`${trueTestID}-error-indicator`}
+              accessibilityLabel={`${trueTestID}-error-indicator`}
+            />
+          )}
+        </Pressable>
+      </XStack>
+    </View>
+  );
+}
 
 type FlashcardFormScreenProps = {
   mode: 'new' | 'edit';
@@ -48,198 +269,139 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
   const router = useRouter();
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
+  const isLargeScreen = useIsLargeScreen();
   const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
-  const {
-    addFlashcard,
-    addMultipleChoiceFlashcard,
-    editFlashcard,
-    editMultipleChoiceFlashcard,
-    removeFlashcard,
-  } = useFlashcardsStore();
-  const { showAlert, AlertDialog } = useAppAlert({ useModal: true });
-  const keyboardHeight = useKeyboardHeight();
   const insets = useSafeAreaInsets();
-
-  const {
-    value: questionText,
-    error: questionError,
-    setValue: setQuestionText,
-    onChangeText: onQuestionChangeText,
-    clearError: clearQuestionError,
-    validateRequired: validateQuestion,
-  } = useFormTextField();
-  const {
-    value: answerText,
-    error: answerError,
-    setValue: setAnswerText,
-    onChangeText: onAnswerChangeText,
-    clearError: clearAnswerError,
-    validateRequired: validateAnswer,
-  } = useFormTextField();
-  const [isLoading, setIsLoading] = useState(mode === 'edit');
+  const keyboardHeight = useKeyboardHeight();
+  const { showAlert, AlertDialog } = useAppAlert({ useModal: true });
   const [activeSection, setActiveSection] = useState<EditorSection>('question');
-  const [cardType, setCardType] = useState<FlashcardType>('standard');
+  const [focusedEditorSection, setFocusedEditorSection] = useState<EditorSection | null>(null);
+  const [toolbarHeight, setToolbarHeight] = useState(TOOLBAR_INITIAL_HEIGHT);
 
-  // Use a ref for unique ID generation
-  const nextId = useRef(3);
-  const [options, setOptions] = useState<OptionField[]>([
-    { id: '1', text: '', isCorrect: true },
-    { id: '2', text: '', isCorrect: false },
-  ]);
-  const [optionsError, setOptionsError] = useState<string | null>(null);
+  const {
+    isLoading,
+    cardType,
+    options,
+    questionText,
+    answerText,
+    onQuestionChange,
+    onAnswerChange,
+    questionError,
+    answerError,
+    optionsError,
+    canDelete,
+    handleTypeChange,
+    handleAddOption,
+    handleRemoveOption,
+    handleOptionTextChange,
+    handleSetCorrectOption,
+    handleSave,
+    deleteCurrentFlashcard,
+  } = useFlashcardFormState({ mode, deckId, flashcardId });
 
   const questionEditor = useMarkdownEditor({
     value: questionText,
-    onChangeText: onQuestionChangeText,
+    onChangeText: onQuestionChange,
   });
 
   const answerEditor = useMarkdownEditor({
     value: answerText,
-    onChangeText: onAnswerChangeText,
+    onChangeText: onAnswerChange,
   });
 
-  // Get the active editor (only used for standard type's answer section)
-  const activeEditor =
-    activeSection === 'question' || cardType === 'multiple_choice' ? questionEditor : answerEditor;
-  const toolbarBottomOffset = Platform.OS === 'ios' ? insets.bottom + 38 : 8;
+  const activeEditor = focusedEditorSection === 'answer' ? answerEditor : questionEditor;
+  const toolbarBottomOffset = Platform.OS === 'ios' ? insets.bottom + TOOLBAR_KEYBOARD_GAP_IOS : 8;
+  const toolbarKeyboardGap =
+    Platform.OS === 'android' ? TOOLBAR_KEYBOARD_GAP_ANDROID : TOOLBAR_KEYBOARD_GAP_IOS;
 
-  const handleDonePress = () => {
+  useEffect(() => {
+    if (cardType === 'multiple_choice' && focusedEditorSection === 'answer') {
+      setFocusedEditorSection(null);
+    }
+  }, [cardType, focusedEditorSection]);
+
+  useEffect(() => {
+    const focusedSection = focusedEditorSection;
+
+    if (focusedSection == null) {
+      return;
+    }
+
+    const isFocusedEditorVisible =
+      focusedSection === 'question'
+        ? activeSection === 'question'
+        : cardType === 'standard' && activeSection === 'answer';
+
+    if (isFocusedEditorVisible) {
+      return;
+    }
+
+    setFocusedEditorSection(null);
+    Keyboard.dismiss();
+  }, [activeSection, cardType, focusedEditorSection]);
+
+  const isMarkdownEditorFocused =
+    focusedEditorSection != null &&
+    (focusedEditorSection === 'question'
+      ? activeSection === 'question'
+      : cardType === 'standard' && activeSection === 'answer');
+
+  const showToolbar =
+    isMarkdownEditorFocused && (cardType === 'standard' || focusedEditorSection === 'question');
+
+  const bottomOverlayOffset =
+    keyboardHeight > 0 ? keyboardHeight + toolbarKeyboardGap : toolbarBottomOffset;
+  const editorBottomPadding = showToolbar
+    ? bottomOverlayOffset + toolbarHeight + FORM_CONTENT_PADDING
+    : Math.max(insets.bottom, FORM_CONTENT_BOTTOM_PADDING);
+  const scrollContentBottomPadding = Math.max(insets.bottom, FORM_CONTENT_BOTTOM_PADDING);
+
+  const handleDonePress = useCallback(() => {
     activeEditor.inputRef.current?.blur();
     Keyboard.dismiss();
-  };
-
-  // Load existing flashcard data when in edit mode
-  useEffect(() => {
-    if (mode === 'edit' && flashcardId) {
-      const loadFlashcard = async () => {
-        const fc = await getFlashcardById(flashcardId);
-        if (fc) {
-          setQuestionText(fc.question);
-          clearQuestionError();
-          if (fc.type === 'multiple_choice') {
-            setCardType('multiple_choice');
-            setOptions(
-              fc.options.map((o, i) => ({
-                id: String(i),
-                text: o.text,
-                isCorrect: o.isCorrect,
-              })),
-            );
-            nextId.current = fc.options.length;
-          } else {
-            setCardType('standard');
-            setAnswerText(fc.answer);
-            clearAnswerError();
-          }
-        }
-        setIsLoading(false);
-      };
-      loadFlashcard();
-    }
-  }, [mode, flashcardId, setQuestionText, setAnswerText, clearQuestionError, clearAnswerError]);
-
-  const handleAddOption = () => {
-    setOptions((prev) => [...prev, { id: String(nextId.current++), text: '', isCorrect: false }]);
-    setOptionsError(null);
-  };
-
-  const handleRemoveOption = (index: number) => {
-    setOptions((prev) => {
-      const updated = prev.filter((_, i) => i !== index);
-      // If removed option was correct and there are remaining options, make first one correct
-      if (prev[index].isCorrect && updated.length > 0) {
-        updated[0] = { ...updated[0], isCorrect: true };
-      }
-      return updated;
-    });
-    setOptionsError(null);
-  };
-
-  const handleOptionTextChange = (index: number, text: string) => {
-    setOptions((prev) => prev.map((o, i) => (i === index ? { ...o, text } : o)));
-    setOptionsError(null);
-  };
-
-  const handleSetCorrectOption = (index: number) => {
-    setOptions((prev) => prev.map((o, i) => ({ ...o, isCorrect: i === index })));
-    setOptionsError(null);
-  };
-
-  const handleTypeChange = (newType: FlashcardType) => {
-    setCardType(newType);
-    setOptionsError(null);
-    clearAnswerError();
-    if (newType === 'multiple_choice') {
-      setActiveSection('question');
-    }
-  };
-
-  const validateOptions = (): boolean => {
-    setOptionsError(null);
-    const filledOptions = options.filter((o) => o.text.trim().length > 0);
-    if (filledOptions.length < 2) {
-      setOptionsError(t('flashcard.minOptionsRequired'));
-      return false;
-    }
-    if (!options.some((o) => o.isCorrect)) {
-      setOptionsError(t('flashcard.correctOptionRequired'));
-      return false;
-    }
-    return true;
-  };
-
-  const handleSave = async () => {
-    const isQuestionValid = validateQuestion(t('flashcard.questionRequired'));
-    if (!isQuestionValid) return;
-
-    if (cardType === 'multiple_choice') {
-      const isOptionsValid = validateOptions();
-      if (!isOptionsValid) return;
-
-      // Only save options that have text
-      const filledOptions = options.filter((o) => o.text.trim().length > 0);
-      if (mode === 'new' && deckId !== undefined) {
-        await addMultipleChoiceFlashcard(deckId, questionText, filledOptions);
-      } else if (mode === 'edit' && flashcardId !== undefined) {
-        await editMultipleChoiceFlashcard(flashcardId, questionText, filledOptions);
-      }
-    } else {
-      const isAnswerValid = validateAnswer(t('flashcard.answerRequired'));
-      if (!isAnswerValid) return;
-
-      if (mode === 'new' && deckId !== undefined) {
-        await addFlashcard(deckId, questionText, answerText);
-      } else if (mode === 'edit' && flashcardId !== undefined) {
-        await editFlashcard(flashcardId, questionText, answerText);
-      }
-    }
-
-    router.back();
-  };
+  }, [activeEditor]);
 
   const handleDelete = () => {
-    if (mode !== 'edit' || flashcardId === undefined) return;
+    if (!canDelete) {
+      return;
+    }
 
-    // Avoid tap-through with focused editors by dismissing keyboard first,
-    // then opening the alert on the next frame.
-    questionEditor.inputRef.current?.blur();
-    answerEditor.inputRef.current?.blur();
-    Keyboard.dismiss();
-
-    requestAnimationFrame(() => {
-      showAlert(t('flashcard.delete.title'), t('flashcard.delete.message'), [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            await removeFlashcard(flashcardId);
-            router.back();
-          },
-        },
-      ]);
-    });
+    showAlert(t('flashcard.delete.title'), t('flashcard.delete.message'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: deleteCurrentFlashcard,
+      },
+    ]);
   };
+
+  const handleCardTypeToggle = useCallback(
+    (enabled: boolean) => {
+      setActiveSection('question');
+      handleTypeChange(enabled ? 'multiple_choice' : 'standard');
+    },
+    [handleTypeChange],
+  );
+
+  const handleSectionToggle = useCallback(
+    (enabled: boolean) => {
+      setActiveSection(
+        enabled ? (cardType === 'multiple_choice' ? 'options' : 'answer') : 'question',
+      );
+    },
+    [cardType],
+  );
+
+  const handleEditorFocus = useCallback((section: EditorSection) => {
+    setFocusedEditorSection(section);
+  }, []);
+
+  const handleEditorBlur = useCallback((section: EditorSection) => {
+    setFocusedEditorSection((currentSection) =>
+      currentSection === section ? null : currentSection,
+    );
+  }, []);
 
   if (isLoading) {
     return (
@@ -255,283 +417,236 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
     );
   }
 
-  const showToolbar =
-    keyboardHeight > 0 && (cardType === 'standard' || activeSection === 'question');
+  const isMultipleChoice = cardType === 'multiple_choice';
+  const isSecondarySectionActive = activeSection === (isMultipleChoice ? 'options' : 'answer');
+  const showQuestionEditor = activeSection === 'question';
+  const showAnswerEditor = cardType === 'standard' && activeSection === 'answer';
+  const questionHasError = questionError.length > 0;
+  const answerHasError = answerError.length > 0;
+  const optionsHasError = optionsError.length > 0;
+  const secondarySectionHasError = isMultipleChoice ? optionsHasError : answerHasError;
+
+  const renderFormActions = () => (
+    <YStack gap="$3">
+      <Button
+        size="$4"
+        onPress={handleSave}
+        themeInverse
+        testID="flashcard-form-save-button"
+        accessibilityLabel="flashcard-form-save-button"
+      >
+        {t('common.save')}
+      </Button>
+      {canDelete && (
+        <Button
+          size="$4"
+          onPress={handleDelete}
+          theme="red"
+          testID="flashcard-form-delete-button"
+          accessibilityLabel="flashcard-form-delete-button"
+        >
+          {t('common.delete')}
+        </Button>
+      )}
+      <Button
+        size="$4"
+        onPress={() => router.back()}
+        chromeless
+        testID="flashcard-form-cancel-button"
+        accessibilityLabel="flashcard-form-cancel-button"
+      >
+        {t('common.cancel')}
+      </Button>
+    </YStack>
+  );
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View flex={1} backgroundColor="$background" testID="flashcard-form-screen">
-        <Header
-          title={mode === 'new' ? t('flashcard.createTitle') : t('flashcard.editTitle')}
-          isModal
-        />
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{
-            flexGrow: 1,
-            paddingBottom: keyboardHeight > 0 ? 80 : 0,
-          }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <YStack gap="$4" flex={1} paddingHorizontal="$4">
-            {/* Type toggle */}
-            <XStack gap="$2" padding="$1" borderRadius="$4" backgroundColor="$color2">
-              <Button
-                size="$3"
-                flex={1}
-                onPress={() => handleTypeChange('standard')}
-                borderWidth={0}
-                backgroundColor={cardType === 'standard' ? '$background' : 'transparent'}
-                pressStyle={{ backgroundColor: '$background' }}
-                testID="flashcard-form-type-standard"
-                accessibilityLabel="flashcard-form-type-standard"
-              >
-                {t('flashcard.typeStandard')}
-              </Button>
-              <Button
-                size="$3"
-                flex={1}
-                onPress={() => handleTypeChange('multiple_choice')}
-                borderWidth={0}
-                backgroundColor={cardType === 'multiple_choice' ? '$background' : 'transparent'}
-                pressStyle={{ backgroundColor: '$background' }}
-                testID="flashcard-form-type-multiple-choice"
-                accessibilityLabel="flashcard-form-type-multiple-choice"
-              >
-                {t('flashcard.typeMultipleChoice')}
-              </Button>
-            </XStack>
+    <View flex={1} backgroundColor="$background" testID="flashcard-form-screen">
+      <Header
+        title={mode === 'new' ? t('flashcard.createTitle') : t('flashcard.editTitle')}
+        isModal
+      />
+      <View flex={1} minHeight={0}>
+        <View backgroundColor="$background" borderBottomWidth={1} borderBottomColor="$borderColor">
+          <XStack gap="$2" paddingHorizontal="$4" paddingVertical="$2">
+            <CompactBooleanToggle
+              value={isMultipleChoice}
+              onChange={handleCardTypeToggle}
+              accentColor={colors.accent}
+              errorColor={colors.error}
+              borderColor={colors.border}
+              activeBackgroundColor={colors.accentBgTint}
+              inactiveIconColor={colors.toolbarInactive}
+              inactiveTextColor="$secondary"
+              falseLabel={t('flashcard.typeStandard')}
+              trueLabel={t('flashcard.typeMultipleChoice')}
+              falseIcon="short-text"
+              trueIcon="playlist-add-check"
+              falseTestID="flashcard-form-single-answer-toggle"
+              trueTestID="flashcard-form-multiple-choice-toggle"
+              showActiveLabel={isLargeScreen}
+              equalSegmentWidths={isLargeScreen}
+            />
+            <CompactBooleanToggle
+              value={isSecondarySectionActive}
+              onChange={handleSectionToggle}
+              accentColor={colors.accent}
+              errorColor={colors.error}
+              borderColor={colors.border}
+              activeBackgroundColor={colors.accentBgTint}
+              inactiveIconColor={colors.toolbarInactive}
+              inactiveTextColor="$secondary"
+              falseLabel={t('flashcard.question')}
+              trueLabel={isMultipleChoice ? t('flashcard.options') : t('flashcard.answer')}
+              falseIcon="help-outline"
+              trueIcon={isMultipleChoice ? 'format-list-bulleted' : 'chat-bubble-outline'}
+              falseTestID="flashcard-form-question-toggle"
+              trueTestID="flashcard-form-answer-toggle"
+              falseHasError={questionHasError}
+              trueHasError={secondarySectionHasError}
+              showActiveLabel={isLargeScreen}
+              equalSegmentWidths={isLargeScreen}
+            />
+          </XStack>
+        </View>
 
-            {/* Section toggle (only for standard type) */}
-            {cardType === 'standard' && (
-              <XStack gap="$2" padding="$1" borderRadius="$4" backgroundColor="$color2">
-                <Button
-                  size="$3"
-                  flex={1}
-                  onPress={() => setActiveSection('question')}
-                  borderWidth={0}
-                  backgroundColor={activeSection === 'question' ? '$background' : 'transparent'}
-                  pressStyle={{ backgroundColor: '$background' }}
-                  testID="flashcard-form-section-question"
-                  accessibilityLabel="flashcard-form-section-question"
-                >
-                  {t('flashcard.question')}
-                </Button>
-                <Button
-                  size="$3"
-                  flex={1}
-                  onPress={() => setActiveSection('answer')}
-                  borderWidth={0}
-                  backgroundColor={activeSection === 'answer' ? '$background' : 'transparent'}
-                  pressStyle={{ backgroundColor: '$background' }}
-                  testID="flashcard-form-section-answer"
-                  accessibilityLabel="flashcard-form-section-answer"
-                >
-                  {t('flashcard.answer')}
-                </Button>
-              </XStack>
-            )}
-
-            {/* Question Editor - always visible for MC, toggle for standard */}
-            <YStack
-              gap="$1"
-              flex={cardType === 'multiple_choice' ? undefined : 1}
-              display={
-                cardType === 'multiple_choice' || activeSection === 'question' ? 'flex' : 'none'
-              }
-            >
-              <RichTextEditor
+        {(showQuestionEditor || showAnswerEditor) && (
+          <YStack
+            flex={1}
+            minHeight={0}
+            gap="$4"
+            paddingHorizontal="$4"
+            paddingTop="$4"
+            paddingBottom={editorBottomPadding}
+          >
+            {showQuestionEditor && (
+              <MarkdownEditorFieldClone
                 editor={questionEditor}
                 placeholder={t('flashcard.questionPlaceholder')}
                 testID="flashcard-form-question-input"
+                error={questionError}
+                fillAvailableSpace
+                onFocus={() => handleEditorFocus('question')}
+                onBlur={() => handleEditorBlur('question')}
               />
-              {!!questionError && (
-                <Text fontSize={12} color="$red10">
-                  {questionError}
-                </Text>
-              )}
-            </YStack>
+            )}
 
-            {/* Answer Editor - always mounted, hidden when not active or MC mode */}
-            <YStack
-              gap="$1"
-              flex={1}
-              display={cardType === 'standard' && activeSection === 'answer' ? 'flex' : 'none'}
-            >
-              <RichTextEditor
+            {showAnswerEditor && (
+              <MarkdownEditorFieldClone
                 editor={answerEditor}
                 placeholder={t('flashcard.answerPlaceholder')}
                 testID="flashcard-form-answer-input"
+                error={answerError}
+                fillAvailableSpace
+                onFocus={() => handleEditorFocus('answer')}
+                onBlur={() => handleEditorBlur('answer')}
               />
-              {!!answerError && (
-                <Text fontSize={12} color="$red10">
-                  {answerError}
-                </Text>
-              )}
-            </YStack>
-
-            {/* Multiple choice options */}
-            {cardType === 'multiple_choice' && (
-              <YStack gap="$3">
-                {options.map((option, index) => (
-                  <XStack key={option.id} gap="$2" alignItems="center">
-                    <Pressable
-                      onPress={() => handleSetCorrectOption(index)}
-                      hitSlop={8}
-                      testID={`flashcard-form-option-correct-${index}`}
-                      accessibilityLabel={`flashcard-form-option-correct-${index}`}
-                    >
-                      <MaterialIcons
-                        name={option.isCorrect ? 'radio-button-checked' : 'radio-button-unchecked'}
-                        size={24}
-                        color={option.isCorrect ? colors.success : colors.iconDefault}
-                      />
-                    </Pressable>
-                    <View flex={1}>
-                      <TextInput
-                        testID={`flashcard-form-option-input-${index}`}
-                        accessibilityLabel={`flashcard-form-option-input-${index}`}
-                        value={option.text}
-                        onChangeText={(text) => handleOptionTextChange(index, text)}
-                        placeholder={t('flashcard.optionPlaceholder', { index: index + 1 })}
-                        placeholderTextColor={colors.placeholder}
-                        style={{
-                          fontSize: 16,
-                          color: colors.text,
-                          borderWidth: 1,
-                          borderColor: option.isCorrect ? colors.success : colors.border,
-                          borderRadius: 12,
-                          paddingHorizontal: 16,
-                          paddingVertical: 12,
-                          backgroundColor: colors.inputBg,
-                        }}
-                      />
-                    </View>
-                    {options.length > 2 && (
-                      <Pressable
-                        onPress={() => handleRemoveOption(index)}
-                        hitSlop={8}
-                        testID={`flashcard-form-option-remove-${index}`}
-                        accessibilityLabel={`flashcard-form-option-remove-${index}`}
-                      >
-                        <MaterialIcons name="close" size={20} color={colors.error} />
-                      </Pressable>
-                    )}
-                  </XStack>
-                ))}
-                <Button
-                  size="$3"
-                  onPress={handleAddOption}
-                  chromeless
-                  icon={<MaterialIcons name="add" size={18} color={colors.accent} />}
-                  testID="flashcard-form-add-option-button"
-                  accessibilityLabel="flashcard-form-add-option-button"
-                >
-                  <Text color={colors.accent}>{t('flashcard.addOption')}</Text>
-                </Button>
-                {!!optionsError && (
-                  <Text fontSize={12} color="$red10">
-                    {optionsError}
-                  </Text>
-                )}
-              </YStack>
             )}
 
-            <YStack gap="$3">
-              <Button
-                size="$4"
-                onPress={handleSave}
-                themeInverse
-                testID="flashcard-form-save-button"
-                accessibilityLabel="flashcard-form-save-button"
-              >
-                {t('common.save')}
-              </Button>
-              {mode === 'edit' && (
-                <Button
-                  size="$4"
-                  onPress={handleDelete}
-                  theme="red"
-                  testID="flashcard-form-delete-button"
-                  accessibilityLabel="flashcard-form-delete-button"
-                >
-                  {t('common.delete')}
-                </Button>
-              )}
-              <Button
-                size="$4"
-                onPress={() => router.back()}
-                chromeless
-                testID="flashcard-form-cancel-button"
-                accessibilityLabel="flashcard-form-cancel-button"
-              >
-                {t('common.cancel')}
-              </Button>
-            </YStack>
+            {!isMarkdownEditorFocused && renderFormActions()}
           </YStack>
-        </ScrollView>
+        )}
 
-        {/* Floating toolbar above keyboard */}
-        {showToolbar && (
-          <RNView
-            style={{
-              position: 'absolute',
-              bottom: toolbarBottomOffset,
-              left: 0,
-              right: 0,
-              zIndex: 100,
+        {cardType === 'multiple_choice' && activeSection === 'options' && (
+          <RNScrollView
+            style={{ flex: 1 }}
+            automaticallyAdjustContentInsets={false}
+            automaticallyAdjustKeyboardInsets={false}
+            automaticallyAdjustsScrollIndicatorInsets={false}
+            contentInsetAdjustmentBehavior="never"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingTop: FORM_CONTENT_PADDING,
+              paddingBottom: scrollContentBottomPadding,
             }}
           >
-            <XStack
-              borderRadius="$4"
-              paddingVertical="$2"
-              backgroundColor={colors.toolbarBg}
-              borderTopColor="$borderColor"
-              alignItems="center"
-              marginHorizontal="$4"
-            >
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 8 }}
-                keyboardShouldPersistTaps="always"
-                style={{ flex: 1 }}
-              >
-                <MarkdownToolbar
-                  editor={activeEditor}
-                  style={{ flexWrap: 'nowrap', marginBottom: 0, gap: 2 }}
-                  buttonStyle={(state: MarkdownToolbarButtonState) => ({
-                    borderWidth: 0,
-                    borderRadius: 6,
-                    paddingHorizontal: 12,
-                    backgroundColor: state.active ? colors.toolbarActiveBg : 'transparent',
-                  })}
-                  buttonTextStyle={(state: MarkdownToolbarButtonState) => ({
-                    color: state.active ? colors.toolbarActive : colors.toolbarInactive,
-                    fontSize: 14,
-                    fontWeight: '600',
-                  })}
+            <YStack gap="$4" paddingHorizontal="$4">
+              <View>
+                <MultipleChoiceOptionsField
+                  options={options}
+                  colors={colors}
+                  addOptionLabel={t('flashcard.addOption')}
+                  getOptionPlaceholder={(index) =>
+                    t('flashcard.optionPlaceholder', { index: index + 1 })
+                  }
+                  optionsError={optionsError}
+                  onAddOption={handleAddOption}
+                  onOptionTextChange={handleOptionTextChange}
+                  onSetCorrectOption={handleSetCorrectOption}
+                  onRemoveOption={handleRemoveOption}
                 />
-              </ScrollView>
-              <Pressable
-                onPress={handleDonePress}
-                style={{ paddingHorizontal: 12 }}
-                hitSlop={8}
-                testID="flashcard-form-keyboard-done-button"
-                accessibilityLabel="flashcard-form-keyboard-done-button"
-              >
-                <Text color={colors.accent} fontWeight="600">
-                  {t('common.done')}
-                </Text>
-              </Pressable>
-            </XStack>
-          </RNView>
+              </View>
+              {renderFormActions()}
+            </YStack>
+          </RNScrollView>
         )}
       </View>
+      {showToolbar && (
+        <RNView
+          onLayout={(event) => {
+            const nextHeight = event.nativeEvent.layout.height;
+            setToolbarHeight((currentHeight) =>
+              Math.abs(currentHeight - nextHeight) > 1 ? nextHeight : currentHeight,
+            );
+          }}
+          style={{
+            position: 'absolute',
+            bottom: bottomOverlayOffset,
+            left: 0,
+            right: 0,
+            zIndex: 100,
+          }}
+        >
+          <View
+            borderRadius="$4"
+            paddingVertical="$2"
+            paddingRight="$2"
+            backgroundColor={colors.toolbarBg}
+            borderTopColor="$borderColor"
+            marginHorizontal="$4"
+            flexDirection="row"
+            alignItems="center"
+          >
+            <RNScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 8 }}
+              keyboardShouldPersistTaps="always"
+              style={{ flex: 1 }}
+            >
+              <MarkdownToolbar
+                editor={activeEditor}
+                style={{ flexWrap: 'nowrap', marginBottom: 0, gap: 2 }}
+                buttonStyle={(state: MarkdownToolbarButtonState) => ({
+                  borderWidth: 0,
+                  borderRadius: 6,
+                  paddingHorizontal: 12,
+                  backgroundColor: state.active ? colors.toolbarActiveBg : 'transparent',
+                })}
+                buttonTextStyle={(state: MarkdownToolbarButtonState) => ({
+                  color: state.active ? colors.toolbarActive : colors.toolbarInactive,
+                  fontSize: 14,
+                  fontWeight: '600',
+                })}
+              />
+            </RNScrollView>
+            <Pressable
+              onPress={handleDonePress}
+              style={{ paddingHorizontal: 8, paddingVertical: 6, marginLeft: 8 }}
+              hitSlop={8}
+              testID="flashcard-form-keyboard-done-button"
+              accessibilityLabel="flashcard-form-keyboard-done-button"
+            >
+              <Text color={colors.accent} fontWeight="600">
+                {t('common.done')}
+              </Text>
+            </Pressable>
+          </View>
+        </RNView>
+      )}
       {AlertDialog}
-    </KeyboardAvoidingView>
+    </View>
   );
 }

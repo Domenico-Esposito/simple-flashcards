@@ -47,6 +47,7 @@
   "flashcard": {
     "question": "Pregunta",
     "answer": "Respuesta",
+    "options": "Opciones",
     "questionLabel": "PREGUNTA",
     "answerLabel": "RESPUESTA",
     "readMore": "Leer más",
@@ -73,7 +74,8 @@
     "optionTextRequired": "Todas las opciones deben tener texto",
     "selectAnswer": "Selecciona una respuesta",
     "correct": "¡Correcto!",
-    "incorrect": "Incorrecto"
+    "incorrect": "Incorrecto",
+    "navigationHintInfinite": "↓ cambiar carta • toca para {{action}} respuesta"
   },
   "form": {
     "titlePlaceholder": "Título",

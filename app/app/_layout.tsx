@@ -6,7 +6,8 @@ import { Stack, usePathname, useRouter, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, View } from 'react-native';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View as TView, XStack, YStack } from 'tamagui';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -17,6 +18,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useFlashcardsStore } from '@/store/flashcards';
 import { useIsLargeScreen } from '@/hooks/useLargeScreen';
 import { Colors } from '@/constants/theme';
+import { getSafeTopInsetForIpadWindowControls } from '@/utils/windowInsets';
 import { useTranslation } from 'react-i18next';
 import config from '../tamagui.config';
 
@@ -46,7 +48,7 @@ type SidebarTab = {
 /** Large screen: sidebar with content area */
 function LargeScreenNavigation({ colorScheme, topInset }: NavigationLayoutProps) {
   return (
-    <XStack flex={1}>
+    <XStack flex={1} testID="large-screen-navigation">
       <Sidebar />
       <TView flex={1}>
         <Stack
@@ -85,6 +87,7 @@ export default function RootLayout() {
   const initialize = useFlashcardsStore((state) => state.initialize);
   const isLargeScreen = useIsLargeScreen();
   const insets = useSafeAreaInsets();
+  const largeScreenTopInset = getSafeTopInsetForIpadWindowControls(insets.top);
 
   const [fontsLoaded] = useFonts({
     Inter: require('@tamagui/font-inter/otf/Inter-Regular.otf'),
@@ -104,7 +107,9 @@ export default function RootLayout() {
     }
   }, [isReady, fontsLoaded]);
 
-  if (!isReady || !fontsLoaded) {
+  const isServerWebRender = Platform.OS === 'web' && typeof document === 'undefined';
+
+  if ((!isReady || !fontsLoaded) && !isServerWebRender) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
@@ -115,16 +120,18 @@ export default function RootLayout() {
   return (
     <TamaguiProvider config={config} defaultTheme={theme}>
       <Theme name={theme}>
-        <PortalProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            {isLargeScreen ? (
-              <LargeScreenNavigation colorScheme={theme} topInset={insets.top} />
-            ) : (
-              <MobileNavigation />
-            )}
-            <StatusBar style="auto" />
-          </ThemeProvider>
-        </PortalProvider>
+        <KeyboardProvider>
+          <PortalProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              {isLargeScreen ? (
+                <LargeScreenNavigation colorScheme={theme} topInset={largeScreenTopInset} />
+              ) : (
+                <MobileNavigation />
+              )}
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </PortalProvider>
+        </KeyboardProvider>
       </Theme>
     </TamaguiProvider>
   );
@@ -140,6 +147,7 @@ function Sidebar() {
   const pathname = usePathname();
   const tint = Colors[colorScheme ?? 'light'].tint;
   const insets = useSafeAreaInsets();
+  const topInset = getSafeTopInsetForIpadWindowControls(insets.top);
 
   const tabs: SidebarTab[] = [
     { path: '/', label: t('tab.decks'), icon: 'layers' as const },
@@ -162,10 +170,11 @@ function Sidebar() {
       backgroundColor="$backgroundStrong"
       borderRightWidth={1}
       borderRightColor="$borderColor"
-      paddingTop={insets.top + 16}
+      paddingTop={topInset + 16}
       paddingLeft={insets.left}
       paddingHorizontal="$2"
       gap="$1"
+      testID="sidebar-navigation"
     >
       {tabs.map((tab) => {
         const tabPath = tab.path.toString();

@@ -1,5 +1,4 @@
 import { useState, type ComponentProps } from 'react';
-import { Platform } from 'react-native';
 import { Button, Heading, Popover, Stack, Text, XStack, YStack, ZStack } from 'tamagui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -8,6 +7,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useIsLargeScreen } from '@/hooks/useLargeScreen';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getColors } from '@/constants/colors';
+import { getHeaderTopPadding } from '@/utils/windowInsets';
 
 export interface HeaderActionItem {
   icon: ComponentProps<typeof MaterialIcons>['name'];
@@ -65,6 +65,7 @@ function LargeScreenHeader({
       alignItems="center"
       gap="$4"
       minHeight={56}
+      testID="large-screen-header"
     >
       {showBackButton && (
         <Button
@@ -88,7 +89,7 @@ function LargeScreenHeader({
         )}
       </YStack>
       {actions.length > 0 && (
-        <XStack gap="$2">
+        <XStack gap="$2" testID="header-actions-container">
           {actions.map((action, index) => (
             <Button
               key={index}
@@ -132,15 +133,10 @@ function MobileHeader({
     action.onPress();
   };
 
-  const getTopPadding = () => {
-    if (isModal && Platform.OS === 'ios') {
-      return '$2';
-    }
-    return insets.top;
-  };
+  const topPadding = getHeaderTopPadding(insets.top, isModal);
 
   return (
-    <Stack paddingTop={getTopPadding()} backgroundColor={'$background'} paddingBottom="$2">
+    <Stack paddingTop={topPadding} backgroundColor={'$background'} paddingBottom="$2">
       <ZStack gap="$2" minHeight={56}>
         <YStack flex={1} alignItems="center" justifyContent="center" absolute>
           <Heading size="$4" numberOfLines={1} color="$color" fontWeight="600">

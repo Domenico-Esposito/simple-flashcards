@@ -47,6 +47,7 @@
   "flashcard": {
     "question": "Question",
     "answer": "Answer",
+    "options": "Options",
     "questionLabel": "QUESTION",
     "answerLabel": "ANSWER",
     "readMore": "Read more",
@@ -73,7 +74,8 @@
     "optionTextRequired": "All options must have text",
     "selectAnswer": "Select an answer",
     "correct": "Correct!",
-    "incorrect": "Incorrect"
+    "incorrect": "Incorrect",
+    "navigationHintInfinite": "↓ change card • tap to {{action}} answer"
   },
   "form": {
     "titlePlaceholder": "Title",

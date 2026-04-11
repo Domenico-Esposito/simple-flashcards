@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, TextInput as RNTextInput } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Text, TextArea, View, YStack, useTheme } from 'tamagui';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -8,8 +9,10 @@ import { useFlashcardsStore } from '@/store/flashcards';
 import { Header } from '@/components/Header';
 import { useAppAlert } from '@/hooks/useAppAlert';
 import { useFormTextField } from '@/hooks/useFormTextField';
+import { useKeyboardHeight } from '@/components/ui/RichTextEditor';
 
 const TITLE_LINE_HEIGHT = 32;
+const DESCRIPTION_MIN_HEIGHT = 150;
 
 type DeckFormScreenProps = {
   deckId?: number;
@@ -24,6 +27,9 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const keyboardHeight = useKeyboardHeight();
+  const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
   const { showAlert, AlertDialog } = useAppAlert();
 
   const { currentDeck, loadDeck, addDeck, editDeck, removeDeck } = useFlashcardsStore();
@@ -43,6 +49,11 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
     setValue: setDescription,
     onChangeText: onDescriptionChangeText,
   } = useFormTextField();
+
+  const descriptionMaxHeight =
+    Platform.OS === 'ios' && keyboardHeight > 0 && scrollViewportHeight > 0
+      ? scrollViewportHeight
+      : undefined;
 
   useEffect(() => {
     if (isEditing) {
@@ -98,6 +109,7 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
         />
         <ScrollView
           style={{ flex: 1 }}
+          onLayout={(e) => setScrollViewportHeight(e.nativeEvent.layout.height)}
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
@@ -134,6 +146,8 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
                 accessibilityLabel="deck-form-description-input"
                 size="$4"
                 flex={1}
+                minHeight={DESCRIPTION_MIN_HEIGHT}
+                maxHeight={descriptionMaxHeight}
                 value={description}
                 onChangeText={onDescriptionChangeText}
                 placeholder={t('form.descriptionPlaceholder')}

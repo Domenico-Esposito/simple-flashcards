@@ -21,6 +21,8 @@ import { SkiaCardShadow } from '@/components/ui/SkiaCardShadow';
 import { Flashcard } from '@/types';
 import { getColors } from '@/constants/colors';
 import { shuffleArray } from '@/utils';
+import { getFlashcardViewerTopPadding } from '@/utils/windowInsets';
+import { useIsLargeScreen } from '@/hooks/useLargeScreen';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 80;
@@ -59,6 +61,9 @@ export function FlashcardViewer({
   onRequestNextCard,
 }: FlashcardViewerProps) {
   const insets = useSafeAreaInsets();
+  const isLargeScreen = useIsLargeScreen();
+  const topPadding = getFlashcardViewerTopPadding(insets.top, isLargeScreen);
+
   const router = useRouter();
   const colorScheme = useColorScheme();
   const { t } = useTranslation();
@@ -68,15 +73,19 @@ export function FlashcardViewer({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
 
-  const [layoutHeight, setLayoutHeight] = useState(0);
+  const [questionLayoutHeight, setQuestionLayoutHeight] = useState(0);
   const [questionContentHeight, setQuestionContentHeight] = useState(0);
+  const [mcAnswerQuestionLayoutHeight, setMcAnswerQuestionLayoutHeight] = useState(0);
+  const [mcAnswerQuestionContentHeight, setMcAnswerQuestionContentHeight] = useState(0);
+  const [answerLayoutHeight, setAnswerLayoutHeight] = useState(0);
   const [answerContentHeight, setAnswerContentHeight] = useState(0);
 
   // MC state: selected option per card
   const [mcSelections, setMcSelections] = useState<Record<number, number>>({});
 
-  const isQuestionOverflow = questionContentHeight > layoutHeight;
-  const isAnswerOverflow = answerContentHeight > layoutHeight;
+  const isQuestionOverflow = questionContentHeight > questionLayoutHeight;
+  const isMcAnswerQuestionOverflow = mcAnswerQuestionContentHeight > mcAnswerQuestionLayoutHeight;
+  const isAnswerOverflow = answerContentHeight > answerLayoutHeight;
 
   // Refs to avoid stale closures in gesture handler
   const currentIndexRef = useRef(currentIndex);
@@ -252,6 +261,12 @@ export function FlashcardViewer({
       runOnJS(openReadMore)('answer');
     });
 
+  const mcAnswerQuestionReadMoreTap = Gesture.Tap()
+    .maxDistance(10)
+    .onEnd(() => {
+      runOnJS(openReadMore)('question');
+    });
+
   // For MC cards, tap-to-flip is disabled until an option is selected.
   // We use a shared value to communicate this to the gesture worklet.
   const mcHasSelection = useSharedValue(0);
@@ -336,7 +351,8 @@ export function FlashcardViewer({
     if (isMC && mcSelectedIndex === undefined) {
       return t('flashcard.selectAnswer');
     }
-    return t('flashcard.navigationHint', {
+    const hintKey = infiniteMode ? 'flashcard.navigationHintInfinite' : 'flashcard.navigationHint';
+    return t(hintKey, {
       action: showing ? t('flashcard.hideAnswer') : t('flashcard.showAnswer'),
     });
   };
@@ -345,7 +361,7 @@ export function FlashcardViewer({
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View
         flex={1}
-        paddingTop={insets.top}
+        paddingTop={topPadding}
         backgroundColor="$background"
         testID="flashcard-viewer-screen"
       >
@@ -410,103 +426,96 @@ export function FlashcardViewer({
                     <Animated.View
                       style={[{ width: '100%', height: '100%' }, animatedContentStyle]}
                     >
-                      <View
-                        width="100%"
-                        height="100%"
-                        justifyContent="center"
-                        paddingHorizontal="$6"
-                        onLayout={(e: LayoutChangeEvent) =>
-                          setLayoutHeight(e.nativeEvent.layout.height)
-                        }
-                      >
-                        <View
-                          style={{
-                            overflow: 'hidden',
-                            flex: 1,
-                            justifyContent: isMC
-                              ? 'flex-start'
-                              : isQuestionOverflow
-                                ? 'flex-start'
-                                : 'center',
-                          }}
-                        >
-                          <YStack
-                            paddingVertical="$6"
+                      <View width="100%" height="100%" paddingHorizontal="$6">
+                        <YStack flex={1} paddingVertical="$6" gap={isMC ? '$4' : undefined}>
+                          <View
+                            style={{
+                              overflow: 'hidden',
+                              flex: 1,
+                              minHeight: 0,
+                              justifyContent: isQuestionOverflow ? 'flex-start' : 'center',
+                            }}
                             onLayout={(e: LayoutChangeEvent) =>
-                              setQuestionContentHeight(e.nativeEvent.layout.height)
+                              setQuestionLayoutHeight(e.nativeEvent.layout.height)
                             }
                           >
-                            <Text fontSize={14} color="$secondary" marginBottom="$2">
-                              {t('flashcard.questionLabel')}
-                            </Text>
-                            <MarkdownContent markdown={currentCard.question} />
-
-                            {/* MC options on front face */}
-                            {isMC && (
-                              <YStack gap="$2" marginTop="$4">
-                                <Text fontSize={12} color="$secondary" marginBottom="$1">
-                                  {t('flashcard.selectAnswer')}
-                                </Text>
-                                {currentShuffledOptions.map((option, index) => {
-                                  const isSelected = mcSelectedIndex === option.id;
-                                  return (
-                                    <Pressable
-                                      key={option.id}
-                                      onPress={() => handleMcSelect(option.id)}
-                                      disabled={mcSelectedIndex !== undefined}
-                                      testID={`flashcard-viewer-option-${index}`}
-                                      accessibilityLabel={`flashcard-viewer-option-${index}`}
-                                    >
-                                      <View
-                                        paddingHorizontal="$4"
-                                        paddingVertical="$3"
-                                        borderRadius="$3"
-                                        style={{
-                                          borderWidth: 2,
-                                          borderColor: isSelected ? colors.accent : colors.border,
-                                          backgroundColor: isSelected
-                                            ? colors.accentBgTint
-                                            : 'transparent',
-                                        }}
-                                      >
-                                        <Text fontSize={15} color="$color">
-                                          {option.text}
-                                        </Text>
-                                      </View>
-                                    </Pressable>
-                                  );
-                                })}
-                              </YStack>
-                            )}
-                          </YStack>
-                          {!isMC && isQuestionOverflow && (
-                            <View
-                              position="absolute"
-                              bottom={16}
-                              left={0}
-                              right={0}
-                              alignItems="center"
-                              pointerEvents="box-none"
+                            <YStack
+                              onLayout={(e: LayoutChangeEvent) =>
+                                setQuestionContentHeight(e.nativeEvent.layout.height)
+                              }
                             >
-                              <GestureDetector gesture={questionReadMoreTap}>
-                                <View
-                                  testID="flashcard-viewer-question-read-more-button"
-                                  accessibilityLabel="flashcard-viewer-question-read-more-button"
-                                  accessible
-                                >
-                                  <Button
-                                    size="$3"
-                                    theme="active"
-                                    borderRadius="$10"
-                                    pointerEvents="none"
+                              <Text fontSize={14} color="$secondary" marginBottom="$2">
+                                {t('flashcard.questionLabel')}
+                              </Text>
+                              <MarkdownContent markdown={currentCard.question} />
+                            </YStack>
+
+                            {isQuestionOverflow && (
+                              <View
+                                position="absolute"
+                                bottom={16}
+                                left={0}
+                                right={0}
+                                alignItems="center"
+                                pointerEvents="box-none"
+                              >
+                                <GestureDetector gesture={questionReadMoreTap}>
+                                  <View
+                                    testID="flashcard-viewer-question-read-more-button"
+                                    accessibilityLabel="flashcard-viewer-question-read-more-button"
+                                    accessible
                                   >
-                                    {t('flashcard.readMore')}
-                                  </Button>
-                                </View>
-                              </GestureDetector>
-                            </View>
+                                    <Button
+                                      size="$3"
+                                      theme="active"
+                                      borderRadius="$10"
+                                      pointerEvents="none"
+                                    >
+                                      {t('flashcard.readMore')}
+                                    </Button>
+                                  </View>
+                                </GestureDetector>
+                              </View>
+                            )}
+                          </View>
+
+                          {isMC && (
+                            <YStack gap="$2" flexShrink={0}>
+                              <Text fontSize={12} color="$secondary" marginBottom="$1">
+                                {t('flashcard.selectAnswer')}
+                              </Text>
+                              {currentShuffledOptions.map((option, index) => {
+                                const isSelected = mcSelectedIndex === option.id;
+                                return (
+                                  <Pressable
+                                    key={option.id}
+                                    onPress={() => handleMcSelect(option.id)}
+                                    disabled={mcSelectedIndex !== undefined}
+                                    testID={`flashcard-viewer-option-${index}`}
+                                    accessibilityLabel={`flashcard-viewer-option-${index}`}
+                                  >
+                                    <View
+                                      paddingHorizontal="$4"
+                                      paddingVertical="$3"
+                                      borderRadius="$3"
+                                      style={{
+                                        borderWidth: 2,
+                                        borderColor: isSelected ? colors.accent : colors.border,
+                                        backgroundColor: isSelected
+                                          ? colors.accentBgTint
+                                          : 'transparent',
+                                      }}
+                                    >
+                                      <Text fontSize={15} color="$color">
+                                        {option.text}
+                                      </Text>
+                                    </View>
+                                  </Pressable>
+                                );
+                              })}
+                            </YStack>
                           )}
-                        </View>
+                        </YStack>
                       </View>
                     </Animated.View>
                   </SkiaCardShadow>
@@ -536,112 +545,48 @@ export function FlashcardViewer({
                       <View
                         width="100%"
                         height="100%"
-                        justifyContent="center"
                         paddingHorizontal="$6"
                         paddingBottom={answerBottomPadding}
                       >
-                        <View
-                          style={{
-                            overflow: 'hidden',
-                            flex: 1,
-                            justifyContent: isMC
-                              ? 'flex-start'
-                              : isAnswerOverflow
-                                ? 'flex-start'
-                                : 'center',
-                          }}
-                        >
-                          {isMC ? (
-                            <YStack paddingVertical="$6">
-                              <Text fontSize={14} color="$secondary" marginBottom="$2">
-                                {t('flashcard.questionLabel')}
-                              </Text>
-                              <MarkdownContent markdown={currentCard.question} />
-
-                              <YStack gap="$2" marginTop="$4">
-                                {(() => {
-                                  const selectedOpt = currentShuffledOptions.find(
-                                    (o) => o.id === mcSelectedIndex,
-                                  );
-                                  const isCorrectAnswer = selectedOpt?.isCorrect ?? false;
-                                  return (
-                                    <>
-                                      <Text
-                                        fontSize={14}
-                                        fontWeight="700"
-                                        color={isCorrectAnswer ? colors.success : colors.error}
-                                        marginBottom="$1"
-                                      >
-                                        {isCorrectAnswer
-                                          ? t('flashcard.correct')
-                                          : t('flashcard.incorrect')}
-                                      </Text>
-                                      {currentShuffledOptions.map((option) => {
-                                        const isSelected = mcSelectedIndex === option.id;
-                                        let optBorderColor: string = colors.border;
-                                        let bgColor: string = 'transparent';
-
-                                        if (option.isCorrect) {
-                                          optBorderColor = colors.success;
-                                          bgColor = colors.successBgTint;
-                                        } else if (isSelected && !option.isCorrect) {
-                                          optBorderColor = colors.error;
-                                          bgColor = colors.errorBgTint;
-                                        }
-
-                                        return (
-                                          <View
-                                            key={option.id}
-                                            paddingHorizontal="$4"
-                                            paddingVertical="$3"
-                                            borderRadius="$3"
-                                            style={{
-                                              borderWidth: 2,
-                                              borderColor: optBorderColor,
-                                              backgroundColor: bgColor,
-                                            }}
-                                          >
-                                            <Text fontSize={15} color="$color">
-                                              {option.text}
-                                            </Text>
-                                          </View>
-                                        );
-                                      })}
-                                    </>
-                                  );
-                                })()}
-                              </YStack>
-                            </YStack>
-                          ) : (
-                            <>
+                        {isMC ? (
+                          <YStack flex={1} paddingVertical="$6" gap="$4">
+                            <View
+                              style={{
+                                overflow: 'hidden',
+                                flex: 1,
+                                minHeight: 0,
+                                justifyContent: isMcAnswerQuestionOverflow
+                                  ? 'flex-start'
+                                  : 'center',
+                              }}
+                              onLayout={(e: LayoutChangeEvent) =>
+                                setMcAnswerQuestionLayoutHeight(e.nativeEvent.layout.height)
+                              }
+                            >
                               <YStack
-                                paddingVertical="$6"
                                 onLayout={(e: LayoutChangeEvent) =>
-                                  setAnswerContentHeight(e.nativeEvent.layout.height)
+                                  setMcAnswerQuestionContentHeight(e.nativeEvent.layout.height)
                                 }
                               >
                                 <Text fontSize={14} color="$secondary" marginBottom="$2">
-                                  {t('flashcard.answerLabel')}
+                                  {t('flashcard.questionLabel')}
                                 </Text>
-                                <MarkdownContent
-                                  markdown={
-                                    currentCard.type === 'standard' ? currentCard.answer : ''
-                                  }
-                                />
+                                <MarkdownContent markdown={currentCard.question} />
                               </YStack>
-                              {isAnswerOverflow && (
+
+                              {isMcAnswerQuestionOverflow && (
                                 <View
                                   position="absolute"
-                                  bottom={answerBottomPadding + 16}
+                                  bottom={16}
                                   left={0}
                                   right={0}
                                   alignItems="center"
                                   pointerEvents="box-none"
                                 >
-                                  <GestureDetector gesture={answerReadMoreTap}>
+                                  <GestureDetector gesture={mcAnswerQuestionReadMoreTap}>
                                     <View
-                                      testID="flashcard-viewer-answer-read-more-button"
-                                      accessibilityLabel="flashcard-viewer-answer-read-more-button"
+                                      testID="flashcard-viewer-answer-question-read-more-button"
+                                      accessibilityLabel="flashcard-viewer-answer-question-read-more-button"
                                       accessible
                                     >
                                       <Button
@@ -656,9 +601,116 @@ export function FlashcardViewer({
                                   </GestureDetector>
                                 </View>
                               )}
-                            </>
-                          )}
-                        </View>
+                            </View>
+
+                            <YStack gap="$2" flexShrink={0}>
+                              {(() => {
+                                const selectedOpt = currentShuffledOptions.find(
+                                  (o) => o.id === mcSelectedIndex,
+                                );
+                                const isCorrectAnswer = selectedOpt?.isCorrect ?? false;
+                                return (
+                                  <>
+                                    <Text
+                                      fontSize={14}
+                                      fontWeight="700"
+                                      color={isCorrectAnswer ? colors.success : colors.error}
+                                      marginBottom="$1"
+                                    >
+                                      {isCorrectAnswer
+                                        ? t('flashcard.correct')
+                                        : t('flashcard.incorrect')}
+                                    </Text>
+                                    {currentShuffledOptions.map((option) => {
+                                      const isSelected = mcSelectedIndex === option.id;
+                                      let optBorderColor: string = colors.border;
+                                      let bgColor: string = 'transparent';
+
+                                      if (option.isCorrect) {
+                                        optBorderColor = colors.success;
+                                        bgColor = colors.successBgTint;
+                                      } else if (isSelected && !option.isCorrect) {
+                                        optBorderColor = colors.error;
+                                        bgColor = colors.errorBgTint;
+                                      }
+
+                                      return (
+                                        <View
+                                          key={option.id}
+                                          paddingHorizontal="$4"
+                                          paddingVertical="$3"
+                                          borderRadius="$3"
+                                          style={{
+                                            borderWidth: 2,
+                                            borderColor: optBorderColor,
+                                            backgroundColor: bgColor,
+                                          }}
+                                        >
+                                          <Text fontSize={15} color="$color">
+                                            {option.text}
+                                          </Text>
+                                        </View>
+                                      );
+                                    })}
+                                  </>
+                                );
+                              })()}
+                            </YStack>
+                          </YStack>
+                        ) : (
+                          <View
+                            style={{
+                              overflow: 'hidden',
+                              flex: 1,
+                              minHeight: 0,
+                              justifyContent: isAnswerOverflow ? 'flex-start' : 'center',
+                            }}
+                            onLayout={(e: LayoutChangeEvent) =>
+                              setAnswerLayoutHeight(e.nativeEvent.layout.height)
+                            }
+                          >
+                            <YStack
+                              paddingVertical="$6"
+                              onLayout={(e: LayoutChangeEvent) =>
+                                setAnswerContentHeight(e.nativeEvent.layout.height)
+                              }
+                            >
+                              <Text fontSize={14} color="$secondary" marginBottom="$2">
+                                {t('flashcard.answerLabel')}
+                              </Text>
+                              <MarkdownContent
+                                markdown={currentCard.type === 'standard' ? currentCard.answer : ''}
+                              />
+                            </YStack>
+                            {isAnswerOverflow && (
+                              <View
+                                position="absolute"
+                                bottom={16}
+                                left={0}
+                                right={0}
+                                alignItems="center"
+                                pointerEvents="box-none"
+                              >
+                                <GestureDetector gesture={answerReadMoreTap}>
+                                  <View
+                                    testID="flashcard-viewer-answer-read-more-button"
+                                    accessibilityLabel="flashcard-viewer-answer-read-more-button"
+                                    accessible
+                                  >
+                                    <Button
+                                      size="$3"
+                                      theme="active"
+                                      borderRadius="$10"
+                                      pointerEvents="none"
+                                    >
+                                      {t('flashcard.readMore')} 123
+                                    </Button>
+                                  </View>
+                                </GestureDetector>
+                              </View>
+                            )}
+                          </View>
+                        )}
                         {answerFooter?.(currentCard)}
                       </View>
                     </Animated.View>
