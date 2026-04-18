@@ -6,7 +6,7 @@ export default function InfoRoute() {
     <>
       <RouteHead
         title="About"
-        description="Learn more about Minimal Flashcards, the app built with React Native and Expo."
+        description="Learn more about Flashcards, the app built with React Native and Expo."
         canonicalPath="/settings/info"
       />
       <InfoScreen />

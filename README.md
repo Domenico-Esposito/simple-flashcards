@@ -149,7 +149,7 @@ When building for web, the app uses `EXPO_PUBLIC_SITE_URL` to generate canonical
 EXPO_PUBLIC_SITE_URL=https://your-domain.example npm run app:build:web
 ```
 
-If not provided, it falls back to `https://minimalflashcards.app`.
+If not provided, it falls back to `https://flashcards.deploynk.com`.
 
 ## E2E Testing (Maestro)
 

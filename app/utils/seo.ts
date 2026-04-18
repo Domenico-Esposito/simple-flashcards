@@ -1,8 +1,8 @@
-export const SEO_DEFAULT_TITLE = 'Minimal Flashcards';
+export const SEO_DEFAULT_TITLE = 'Flashcards';
 export const SEO_DEFAULT_DESCRIPTION =
   'Create flashcard decks, study with swipe-based sessions, and track progress across iOS, Android, and web.';
 
-const DEFAULT_SITE_URL = 'https://minimalflashcards.app';
+const DEFAULT_SITE_URL = 'https://flashcards.deploynk.com';
 
 export function getSiteUrl(): string {
   const rawSiteUrl = (process.env.EXPO_PUBLIC_SITE_URL ?? DEFAULT_SITE_URL).trim();

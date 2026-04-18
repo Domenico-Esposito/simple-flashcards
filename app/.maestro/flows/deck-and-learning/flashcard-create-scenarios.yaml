@@ -1,4 +1,4 @@
-appId: com.deploynk.minimalflashcards
+appId: com.deploynk.flashcards
 ---
 # Scenario 1: create a standard flashcard with short question and short answer.
 # This keeps the legacy card name used by the edit flow that runs later in the suite.

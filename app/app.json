@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "minimal-flashcards",
-    "slug": "minimal-flashcards",
+    "name": "flashcards",
+    "slug": "flashcards",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "minimalflashcards",
+    "scheme": "flashcards",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.deploynk.minimalflashcards"
+      "bundleIdentifier": "com.deploynk.flashcards"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +19,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.deploynk.minimalflashcards"
+      "package": "com.deploynk.flashcards"
     },
     "web": {
       "bundler": "metro",
@@ -27,7 +27,12 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      ["expo-router", { "origin": "https://minimalflashcards.com" }],
+      [
+        "expo-router",
+        {
+          "origin": "https://flashcards.deploynk.com"
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -44,6 +49,15 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": "https://flashcards.deploynk.com"
+      },
+      "eas": {
+        "projectId": "a9f47530-34cf-4015-9c14-d94dc35b790e"
+      }
+    },
+    "owner": "deploynk"
   }
 }

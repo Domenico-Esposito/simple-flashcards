@@ -1,4 +1,4 @@
-appId: com.deploynk.minimalflashcards
+appId: com.deploynk.flashcards
 ---
 # Scenario 1: edit an existing standard flashcard created in the create scenarios flow.
 # We prepend a markdown title so the assertion can validate the text transformation.

@@ -183,7 +183,7 @@
     "title": "Informazioni",
     "version": "Versione",
     "developedWith": "Sviluppato con",
-    "tagline": "Minimal Flashcards - Studia in modo semplice ed efficace",
+    "tagline": "Flashcards - Studia in modo semplice ed efficace",
     "themeSysFollow": "Il tema segue le impostazioni di sistema.",
     "currentTheme": "Tema attuale: {{theme}}",
     "darkTheme": "Scuro",

@@ -1,4 +1,4 @@
-appId: com.deploynk.minimalflashcards
+appId: com.deploynk.flashcards
 ---
 - runFlow: deck-and-learning/setup-deck.yaml
 - runFlow: deck-and-learning/flashcard-create-scenarios.yaml

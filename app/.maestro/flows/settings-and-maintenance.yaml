@@ -1,4 +1,4 @@
-appId: com.deploynk.minimalflashcards
+appId: com.deploynk.flashcards
 ---
 - runFlow: settings-and-maintenance/open-settings.yaml
 - runFlow: settings-and-maintenance/import-screen.yaml

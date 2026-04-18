@@ -1,4 +1,4 @@
-appId: com.deploynk.minimalflashcards
+appId: com.deploynk.flashcards
 ---
 - launchApp:
     clearState: true

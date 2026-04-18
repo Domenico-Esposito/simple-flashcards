@@ -183,7 +183,7 @@
     "title": "Über",
     "version": "Version",
     "developedWith": "Entwickelt mit",
-    "tagline": "Minimal Flashcards - Einfach und effektiv lernen",
+    "tagline": "Flashcards - Einfach und effektiv lernen",
     "themeSysFollow": "Das Design folgt den Systemeinstellungen.",
     "currentTheme": "Aktuelles Design: {{theme}}",
     "darkTheme": "Dunkel",
