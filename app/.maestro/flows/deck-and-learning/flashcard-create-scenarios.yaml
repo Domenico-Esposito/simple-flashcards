@@ -165,6 +165,6 @@ appId: com.deploynk.minimalflashcards
 - assertVisible:
     id: flashcard-form-options-error
 - tapOn:
-    id: flashcard-form-cancel-button
+    id: header-back-button
 - assertVisible:
     id: deck-detail-screen

@@ -57,6 +57,8 @@ appId: com.deploynk.minimalflashcards
     id: deck-detail-flashcard-[0-9]+$
 - assertVisible:
     id: flashcard-form-screen
+- assertNotVisible:
+    id: flashcard-form-save-button
 - tapOn:
     id: flashcard-form-delete-button
 - extendedWaitUntil:

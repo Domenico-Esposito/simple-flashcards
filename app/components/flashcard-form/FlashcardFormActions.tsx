@@ -1,24 +1,16 @@
 import { Button, YStack } from 'tamagui';
 
 type FlashcardFormActionsProps = {
-  canDelete: boolean;
+  showSave: boolean;
   saveLabel: string;
-  deleteLabel: string;
-  cancelLabel: string;
   onSave: () => void;
-  onDelete: () => void;
-  onCancel: () => void;
 };
 
-export function FlashcardFormActions({
-  canDelete,
-  saveLabel,
-  deleteLabel,
-  cancelLabel,
-  onSave,
-  onDelete,
-  onCancel,
-}: FlashcardFormActionsProps) {
+export function FlashcardFormActions({ showSave, saveLabel, onSave }: FlashcardFormActionsProps) {
+  if (!showSave) {
+    return null;
+  }
+
   return (
     <YStack gap="$3">
       <Button
@@ -29,26 +21,6 @@ export function FlashcardFormActions({
         accessibilityLabel="flashcard-form-save-button"
       >
         {saveLabel}
-      </Button>
-      {canDelete && (
-        <Button
-          size="$4"
-          onPress={onDelete}
-          theme="red"
-          testID="flashcard-form-delete-button"
-          accessibilityLabel="flashcard-form-delete-button"
-        >
-          {deleteLabel}
-        </Button>
-      )}
-      <Button
-        size="$4"
-        onPress={onCancel}
-        chromeless
-        testID="flashcard-form-cancel-button"
-        accessibilityLabel="flashcard-form-cancel-button"
-      >
-        {cancelLabel}
       </Button>
     </YStack>
   );

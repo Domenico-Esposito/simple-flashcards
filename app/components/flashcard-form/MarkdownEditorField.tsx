@@ -1,4 +1,5 @@
 import type { MarkdownEditorHandle } from '@domenico-esposito/react-native-markdown-editor';
+import { Platform } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import { YStack } from 'tamagui';
 
@@ -10,10 +11,10 @@ type MarkdownEditorFieldProps = {
   placeholder: string;
   testID: string;
   error?: string;
-  fillAvailableSpace?: boolean;
   onFocus?: () => void;
   onBlur?: () => void;
   onLayout?: (event: LayoutChangeEvent) => void;
+  isMarkdownEditorFocused?: boolean;
 };
 
 export function MarkdownEditorField({
@@ -21,27 +22,42 @@ export function MarkdownEditorField({
   placeholder,
   testID,
   error,
-  fillAvailableSpace = false,
   onFocus,
   onBlur,
   onLayout,
+  isMarkdownEditorFocused = false,
 }: MarkdownEditorFieldProps) {
+  if (Platform.OS === 'ios') {
+    return (
+      <RichTextEditor
+        editor={editor}
+        placeholder={placeholder}
+        testID={testID}
+        inputProps={{
+          onFocus,
+          onBlur,
+          scrollEnabled: false,
+        }}
+      />
+    );
+  }
+
   return (
     <YStack
       gap="$1"
       onLayout={onLayout}
-      flex={fillAvailableSpace ? 1 : undefined}
-      minHeight={fillAvailableSpace ? 0 : undefined}
+      flex={isMarkdownEditorFocused ? 1 : undefined}
+      minHeight={isMarkdownEditorFocused ? 0 : undefined}
     >
       <RichTextEditor
         editor={editor}
         placeholder={placeholder}
         testID={testID}
-        fill={fillAvailableSpace}
+        fill={isMarkdownEditorFocused}
         inputProps={{
           onFocus,
           onBlur,
-          scrollEnabled: fillAvailableSpace,
+          scrollEnabled: isMarkdownEditorFocused,
         }}
       />
       <FormErrorText message={error} />

@@ -1,4 +1,4 @@
-import { Pressable, ScrollView as RNScrollView, View as RNView } from 'react-native';
+import { Platform, Pressable, ScrollView as RNScrollView, View as RNView } from 'react-native';
 import {
   MarkdownToolbar,
   type MarkdownToolbarButtonState,
@@ -30,18 +30,23 @@ export function FlashcardEditorToolbar({
   onDone,
   onHeightChange,
 }: FlashcardEditorToolbarProps) {
+  const containerStyle =
+    Platform.OS === 'ios'
+      ? undefined
+      : {
+          position: 'absolute' as const,
+          bottom: bottomOffset,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+        };
+
   return (
     <RNView
       onLayout={(event) => {
         onHeightChange(event.nativeEvent.layout.height);
       }}
-      style={{
-        position: 'absolute',
-        bottom: bottomOffset,
-        left: 0,
-        right: 0,
-        zIndex: 100,
-      }}
+      style={containerStyle}
     >
       <View
         borderRadius="$4"

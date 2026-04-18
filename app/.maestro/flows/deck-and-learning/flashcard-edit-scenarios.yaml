@@ -68,6 +68,8 @@ appId: com.deploynk.minimalflashcards
     text: '^Title E2E Multiple Choice Long Question.*$'
 - assertVisible:
     id: flashcard-form-screen
+- assertNotVisible:
+    id: flashcard-form-save-button
 - tapOn:
     id: flashcard-form-delete-button
 - extendedWaitUntil:

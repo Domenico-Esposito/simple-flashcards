@@ -1,21 +1,22 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Keyboard, Platform, StyleSheet, Text as RNText } from 'react-native';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Platform, StyleSheet, Text as RNText } from 'react-native';
 import type {
   LayoutChangeEvent,
-  TextInputProps,
   NativeSyntheticEvent,
   TextInputContentSizeChangeEventData,
+  TextInputProps,
 } from 'react-native';
-import { View } from 'tamagui';
 import {
   MarkdownTextInput,
   useMarkdownEditor,
 } from '@domenico-esposito/react-native-markdown-editor';
-import type { MarkdownEditorHandle } from '@domenico-esposito/react-native-markdown-editor';
+import { View } from 'tamagui';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { createSegmentComponents } from '@/components/ui/markdown-theme';
-import { getColors } from '@/constants/colors';
+import {
+  type RichTextEditorProps,
+  useKeyboardHeight,
+  useRichTextEditorTheme,
+} from '@/components/ui/rich-text-editor/shared';
 
 const IOS_SHRINK_SETTLE_DELAY_MS = 100;
 const IOS_WRAP_BOUNCE_GUARD_DELAY_MS = 250;
@@ -34,46 +35,6 @@ function logRichTextEditorDebug(message: string, payload: Record<string, unknown
   }
 }
 
-// Hook to track keyboard height
-function useKeyboardHeight() {
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-
-    const showListener = Keyboard.addListener(showEvent, (e) => {
-      setKeyboardHeight(e.endCoordinates.height);
-    });
-    const hideListener = Keyboard.addListener(hideEvent, () => {
-      setKeyboardHeight(0);
-    });
-
-    return () => {
-      showListener.remove();
-      hideListener.remove();
-    };
-  }, []);
-
-  return keyboardHeight;
-}
-
-type RichTextEditorProps = {
-  editor: MarkdownEditorHandle;
-  placeholder?: string;
-  minHeight?: number;
-  maxHeight?: number;
-  fill?: boolean;
-  contentPaddingBottom?: number;
-  testID?: string;
-  onContentSizeChange?: TextInputProps['onContentSizeChange'];
-  inputProps?: Omit<
-    TextInputProps,
-    'value' | 'onChangeText' | 'onSelectionChange' | 'multiline' | 'onContentSizeChange'
-  >;
-};
-
-// Export hook for external use
 export { useKeyboardHeight };
 export { useMarkdownEditor };
 
@@ -88,9 +49,7 @@ export function RichTextEditor({
   onContentSizeChange,
   inputProps,
 }: RichTextEditorProps) {
-  const colorScheme = useColorScheme() ?? 'light';
-  const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
-  const segmentComponents = useMemo(() => createSegmentComponents(colorScheme), [colorScheme]);
+  const { colors, segmentComponents } = useRichTextEditorTheme();
   const { onFocus: inputOnFocus, onBlur: inputOnBlur, ...restInputProps } = inputProps ?? {};
 
   const stableHeightRef = useRef(minHeight);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useController, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +32,19 @@ export function createDefaultOptions(): OptionField[] {
   return DEFAULT_OPTIONS.map((option) => ({ ...option }));
 }
 
+function serializeFormValues(values: FlashcardFormValues): string {
+  return JSON.stringify({
+    question: values.question,
+    answer: values.answer,
+    cardType: values.cardType,
+    options: values.options.map((option) => ({
+      id: option.id,
+      text: option.text,
+      isCorrect: option.isCorrect,
+    })),
+  });
+}
+
 export function useFlashcardFormState({ mode, deckId, flashcardId }: UseFlashcardFormStateParams) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -45,6 +58,14 @@ export function useFlashcardFormState({ mode, deckId, flashcardId }: UseFlashcar
 
   const [isLoading, setIsLoading] = useState(mode === 'edit');
   const nextId = useRef(3);
+  const initialValuesRef = useRef(
+    serializeFormValues({
+      question: '',
+      answer: '',
+      cardType: 'standard',
+      options: createDefaultOptions(),
+    }),
+  );
 
   const {
     control,
@@ -67,7 +88,7 @@ export function useFlashcardFormState({ mode, deckId, flashcardId }: UseFlashcar
   });
 
   const cardType = useWatch({ control, name: 'cardType' }) ?? 'standard';
-  const options = useWatch({ control, name: 'options' }) ?? [];
+  const watchedOptions = useWatch({ control, name: 'options' });
 
   const { field: questionField } = useController({
     control,
@@ -85,6 +106,18 @@ export function useFlashcardFormState({ mode, deckId, flashcardId }: UseFlashcar
         cardType === 'multiple_choice' || value.trim().length > 0 || t('flashcard.answerRequired'),
     },
   });
+
+  const questionText = questionField.value;
+  const answerText = answerField.value;
+  const options = useMemo(() => watchedOptions ?? [], [watchedOptions]);
+
+  const setInitialValues = useCallback(
+    (values: FlashcardFormValues) => {
+      initialValuesRef.current = serializeFormValues(values);
+      reset(values);
+    },
+    [reset],
+  );
 
   const { append, replace } = useFieldArray({
     control,
@@ -120,7 +153,7 @@ export function useFlashcardFormState({ mode, deckId, flashcardId }: UseFlashcar
         }));
 
         nextId.current = loadedOptions.length + 1;
-        reset({
+        setInitialValues({
           question: flashcard.question,
           answer: '',
           cardType: 'multiple_choice',
@@ -128,7 +161,7 @@ export function useFlashcardFormState({ mode, deckId, flashcardId }: UseFlashcar
         });
       } else if (flashcard) {
         nextId.current = 3;
-        reset({
+        setInitialValues({
           question: flashcard.question,
           answer: flashcard.answer,
           cardType: 'standard',
@@ -144,7 +177,7 @@ export function useFlashcardFormState({ mode, deckId, flashcardId }: UseFlashcar
     return () => {
       isMounted = false;
     };
-  }, [flashcardId, mode, reset]);
+  }, [flashcardId, mode, setInitialValues]);
 
   useEffect(() => {
     if (mode !== 'new') {
@@ -153,13 +186,13 @@ export function useFlashcardFormState({ mode, deckId, flashcardId }: UseFlashcar
 
     nextId.current = 3;
     setIsLoading(false);
-    reset({
+    setInitialValues({
       question: '',
       answer: '',
       cardType: 'standard',
       options: createDefaultOptions(),
     });
-  }, [mode, reset]);
+  }, [mode, setInitialValues]);
 
   const handleAddOption = useCallback(() => {
     append({ id: String(nextId.current++), text: '', isCorrect: false });
@@ -277,17 +310,33 @@ export function useFlashcardFormState({ mode, deckId, flashcardId }: UseFlashcar
     router.back();
   }, [flashcardId, mode, removeFlashcard, router]);
 
+  const shouldShowSave = useMemo(() => {
+    if (mode === 'new') {
+      return true;
+    }
+
+    return (
+      serializeFormValues({
+        question: questionText,
+        answer: answerText,
+        cardType,
+        options,
+      }) !== initialValuesRef.current
+    );
+  }, [answerText, cardType, mode, options, questionText]);
+
   return {
     isLoading,
     cardType,
     options,
-    questionText: questionField.value,
-    answerText: answerField.value,
+    questionText,
+    answerText,
     onQuestionChange: questionField.onChange,
     onAnswerChange: answerField.onChange,
     questionError: typeof errors.question?.message === 'string' ? errors.question.message : '',
     answerError: typeof errors.answer?.message === 'string' ? errors.answer.message : '',
     optionsError: typeof errors.options?.message === 'string' ? errors.options.message : '',
+    shouldShowSave,
     canDelete: mode === 'edit' && flashcardId !== undefined,
     handleTypeChange,
     handleAddOption,
