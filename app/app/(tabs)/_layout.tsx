@@ -1,9 +1,9 @@
 import { Tabs, Slot } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { HapticTab } from '@/components/haptic-tab';
+import { HapticTab } from '@/components/navigation/HapticTab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
+import { navigationColors } from '@/theme/navigation';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useIsLargeScreen } from '@/hooks/useLargeScreen';
 
@@ -20,7 +20,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: navigationColors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
       }}

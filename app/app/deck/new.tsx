@@ -1,11 +1,11 @@
 import { RouteHead } from '@/components/seo/RouteHead';
-import { NewDeckScreen } from '@/components/screens';
+import { DeckFormScreen } from '@/components/screens/DeckFormScreen';
 
 export default function NewDeckRoute() {
   return (
     <>
       <RouteHead noIndex title="New Deck" />
-      <NewDeckScreen />
+      <DeckFormScreen />
     </>
   );
 }

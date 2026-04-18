@@ -86,6 +86,17 @@ export type DeckExport = {
  */
 export type DifficultyRating = 'easy' | 'medium' | 'hard';
 
+export type StatisticsInterval = 'day' | 'month' | 'quarter' | 'semester' | 'year';
+
+export type StatisticsKpis = {
+  totalQuizzes: number;
+  totalCards: number;
+  easyCount: number;
+  hardCount: number;
+  totalTime: number;
+  totalDecks: number;
+};
+
 /**
  * Statistics data series for charts
  */

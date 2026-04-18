@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 
-import { FlashcardViewer } from '@/components/FlashcardViewer';
+import { FlashcardViewer } from '@/components/flashcards/FlashcardViewer';
 
 type StudyScreenProps = {
   deckId: number;

@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, TextInput as RNTextInput } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Text, TextArea, View, YStack, useTheme } from 'tamagui';
+import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, YStack } from 'tamagui';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { useFlashcardsStore } from '@/store/flashcards';
-import { Header } from '@/components/Header';
+import { Header } from '@/components/layout/header';
+import { DeckFormActions } from '@/components/screens/deck-form/DeckFormActions';
+import { DeckFormFields } from '@/components/screens/deck-form/DeckFormFields';
 import { useAppAlert } from '@/hooks/useAppAlert';
 import { useFormTextField } from '@/hooks/useFormTextField';
 import { useKeyboardHeight } from '@/components/ui/RichTextEditor';
-
-const TITLE_LINE_HEIGHT = 32;
-const DESCRIPTION_MIN_HEIGHT = 150;
 
 type DeckFormScreenProps = {
   deckId?: number;
@@ -26,8 +24,6 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
   const isEditing = deckId != null;
   const router = useRouter();
   const { t } = useTranslation();
-  const theme = useTheme();
-  const insets = useSafeAreaInsets();
   const keyboardHeight = useKeyboardHeight();
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
   const { showAlert, AlertDialog } = useAppAlert();
@@ -114,84 +110,26 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
           keyboardShouldPersistTaps="handled"
         >
           <YStack gap="$4" flex={1} padding="$4">
-            <YStack gap="$2">
-              <RNTextInput
-                testID="deck-form-title-input"
-                accessibilityLabel="deck-form-title-input"
-                value={title}
-                onChangeText={onTitleChangeText}
-                placeholder={t('form.titlePlaceholder')}
-                multiline
-                scrollEnabled={false}
-                style={{
-                  fontSize: 24,
-                  lineHeight: TITLE_LINE_HEIGHT,
-                  fontWeight: '700',
-                  padding: 0,
-                  color: theme.color.val,
-                }}
-                placeholderTextColor={theme.color9.val}
-              />
-              {titleError && (
-                <Text fontSize={12} color="$red10">
-                  {titleError}
-                </Text>
-              )}
-            </YStack>
+            <DeckFormFields
+              title={title}
+              titleError={titleError}
+              description={description}
+              descriptionMaxHeight={descriptionMaxHeight}
+              titlePlaceholder={t('form.titlePlaceholder')}
+              descriptionPlaceholder={t('form.descriptionPlaceholder')}
+              onTitleChangeText={onTitleChangeText}
+              onDescriptionChangeText={onDescriptionChangeText}
+            />
 
-            <YStack gap="$1" flex={1}>
-              <TextArea
-                id="description"
-                testID="deck-form-description-input"
-                accessibilityLabel="deck-form-description-input"
-                size="$4"
-                flex={1}
-                minHeight={DESCRIPTION_MIN_HEIGHT}
-                maxHeight={descriptionMaxHeight}
-                value={description}
-                onChangeText={onDescriptionChangeText}
-                placeholder={t('form.descriptionPlaceholder')}
-                borderWidth={0}
-                backgroundColor="transparent"
-                paddingHorizontal={0}
-                paddingVertical={0}
-                fontSize={16}
-                color="$color"
-                placeholderTextColor="$color9"
-              />
-            </YStack>
-
-            <YStack gap="$3">
-              <Button
-                size="$4"
-                onPress={handleSave}
-                themeInverse
-                testID="deck-form-save-button"
-                accessibilityLabel="deck-form-save-button"
-              >
-                {t('common.save')}
-              </Button>
-              {isEditing && (
-                <Button
-                  size="$4"
-                  onPress={handleDelete}
-                  theme="red"
-                  testID="deck-form-delete-button"
-                  accessibilityLabel="deck-form-delete-button"
-                >
-                  {t('deck.delete.title')}
-                </Button>
-              )}
-              <Button
-                size="$4"
-                onPress={() => router.back()}
-                chromeless
-                testID="deck-form-cancel-button"
-                accessibilityLabel="deck-form-cancel-button"
-              >
-                {t('common.cancel')}
-              </Button>
-            </YStack>
+            <DeckFormActions
+              isEditing={isEditing}
+              saveLabel={t('common.save')}
+              deleteLabel={t('deck.delete.title')}
+              cancelLabel={t('common.cancel')}
+              onSave={handleSave}
+              onDelete={handleDelete}
+              onCancel={() => router.back()}
+            />
           </YStack>
         </ScrollView>
       </View>

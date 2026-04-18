@@ -24,7 +24,7 @@ import {
   type RootRendererProps,
 } from '@domenico-esposito/react-native-markdown-editor';
 
-import { Fonts } from '@/constants/theme';
+import { appFonts } from '@/theme/fonts';
 
 // ---------------------------------------------------------------------------
 // Color palette
@@ -99,13 +99,13 @@ export function createSegmentComponents(scheme: ColorScheme): SegmentComponentMa
   ): TextStyle {
     const base = getDefaultSegmentStyle(type, meta);
     const isCode = type === 'code' || type === 'codeBlock';
-    const fontFamily = isCode ? Fonts?.mono : Fonts?.sans;
+    const fontFamily = isCode ? appFonts.mono : appFonts.sans;
     const heading: TextStyle | undefined =
       meta?.lineContext === 'heading'
         ? {
             fontSize: editorHeadingSizes[meta?.headingLevel ?? '1'] ?? 16,
             lineHeight: Math.ceil((editorHeadingSizes[meta?.headingLevel ?? '1'] ?? 16) * 1.5),
-            fontFamily: Fonts?.sansBold,
+            fontFamily: appFonts.sansBold,
           }
         : undefined;
     return Object.assign({}, base, { fontFamily }, overrides, heading);
@@ -143,7 +143,7 @@ export function createSegmentComponents(scheme: ColorScheme): SegmentComponentMa
       type,
       meta,
       children,
-      mergeStyle(type, meta, { color: c.text, fontWeight: '700', fontFamily: Fonts?.sansBold }),
+      mergeStyle(type, meta, { color: c.text, fontWeight: '700', fontFamily: appFonts.sansBold }),
     );
 
   const ItalicSegment = ({ type, meta, children }: SegmentComponentProps) =>
@@ -228,7 +228,7 @@ export function createRendererComponents(scheme: ColorScheme): RendererComponent
 
   function createHeading(fontSize: number) {
     const HeadingComponent = ({ children }: HeadingRendererProps<1 | 2 | 3 | 4 | 5 | 6>) => (
-      <Text style={{ fontSize, fontWeight: '700', fontFamily: Fonts?.sansBold, color: c.text }}>
+      <Text style={{ fontSize, fontWeight: '700', fontFamily: appFonts.sansBold, color: c.text }}>
         {children}
       </Text>
     );
@@ -350,7 +350,7 @@ const rendererStyles = StyleSheet.create({
   },
   bold: {
     fontWeight: '700',
-    fontFamily: Fonts?.sansBold,
+    fontFamily: appFonts.sansBold,
   },
   italic: {
     fontStyle: 'italic',
@@ -359,7 +359,7 @@ const rendererStyles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   inlineCode: {
-    fontFamily: Fonts?.mono,
+    fontFamily: appFonts.mono,
     paddingHorizontal: 4,
     borderRadius: 4,
     fontSize: 17,
@@ -378,7 +378,7 @@ const rendererStyles = StyleSheet.create({
     marginBottom: 8,
   },
   codeBlockText: {
-    fontFamily: Fonts?.mono,
+    fontFamily: appFonts.mono,
     fontSize: 17,
   },
   blockquote: {

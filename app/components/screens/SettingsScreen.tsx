@@ -5,9 +5,9 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { useTranslation } from 'react-i18next';
 
-import { Header } from '@/components/Header';
+import { Header } from '@/components/layout/header';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { getColors } from '@/constants/colors';
+import { getColors } from '@/theme/colors';
 
 type SettingsItem = {
   title: string;

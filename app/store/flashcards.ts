@@ -1,5 +1,12 @@
 import { create } from 'zustand';
-import { Deck, Flashcard, FlashcardType, StatsSeries, DifficultyRating } from '@/types';
+import type {
+  Deck,
+  DifficultyRating,
+  Flashcard,
+  StatisticsInterval,
+  StatisticsKpis,
+  StatsSeries,
+} from '@/types';
 import * as db from '@/utils/database';
 import { shuffleArray } from '@/utils';
 
@@ -68,23 +75,13 @@ interface FlashcardsState {
   discardQuizSession: () => Promise<void>;
 
   // Actions - Statistics
-  getGlobalStats: (
-    interval: 'day' | 'month' | 'quarter' | 'semester' | 'year',
-    startDate?: string,
-  ) => Promise<StatsSeries[]>;
+  getGlobalStats: (interval: StatisticsInterval, startDate?: string) => Promise<StatsSeries[]>;
   getDeckStats: (
     deckId: number,
-    interval: 'day' | 'month' | 'quarter' | 'semester' | 'year',
+    interval: StatisticsInterval,
     startDate?: string,
   ) => Promise<StatsSeries[]>;
-  getKPIs: (deckId?: number) => Promise<{
-    totalQuizzes: number;
-    totalCards: number;
-    easyCount: number;
-    hardCount: number;
-    totalTime: number;
-    totalDecks: number;
-  }>;
+  getKPIs: (deckId?: number) => Promise<StatisticsKpis>;
   resetStats: () => Promise<void>;
   resetAllData: () => Promise<void>;
 }

@@ -1,54 +1,25 @@
-import { Button, Text, View, YStack } from 'tamagui';
 import { useTranslation } from 'react-i18next';
 
-import { Header } from '@/components/Header';
+import { ResetActionScreen } from '@/components/screens/settings/ResetActionScreen';
 import { useFlashcardsStore } from '@/store/flashcards';
-import { useAppAlert } from '@/hooks/useAppAlert';
 
 export function ResetDataScreen() {
   const { resetAllData } = useFlashcardsStore();
-  const { showAlert, AlertDialog } = useAppAlert();
   const { t } = useTranslation();
 
-  const handleResetData = () => {
-    showAlert(t('resetData.title'), t('resetData.confirmMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.deleteAll'),
-        style: 'destructive',
-        onPress: async () => {
-          await resetAllData();
-          showAlert(t('common.completed'), t('resetData.success'));
-        },
-      },
-    ]);
-  };
-
   return (
-    <View flex={1} backgroundColor="$background" testID="reset-data-screen">
-      <Header title={t('resetData.title')} showBackButton />
-
-      <YStack padding="$4" gap="$4">
-        <Text fontSize={14} color="$secondary">
-          {t('resetData.description1')}
-        </Text>
-
-        <Text fontSize={14} color="$secondary">
-          {t('resetData.description2')}
-        </Text>
-
-        <Button
-          size="$4"
-          theme="red"
-          onPress={handleResetData}
-          marginTop="$4"
-          testID="reset-data-confirm-button"
-          accessibilityLabel="reset-data-confirm-button"
-        >
-          {t('resetData.buttonLabel')}
-        </Button>
-      </YStack>
-      {AlertDialog}
-    </View>
+    <ResetActionScreen
+      title={t('resetData.title')}
+      descriptions={[t('resetData.description1'), t('resetData.description2')]}
+      confirmMessage={t('resetData.confirmMessage')}
+      successMessage={t('resetData.success')}
+      buttonLabel={t('resetData.buttonLabel')}
+      testID="reset-data-screen"
+      buttonTestID="reset-data-confirm-button"
+      confirmLabel={t('common.deleteAll')}
+      cancelLabel={t('common.cancel')}
+      completedTitle={t('common.completed')}
+      onConfirm={resetAllData}
+    />
   );
 }

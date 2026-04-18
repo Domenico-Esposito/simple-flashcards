@@ -1,27 +1,13 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Pressable } from 'react-native';
-import { Text, View, YStack, Button, AlertDialog } from 'tamagui';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useRouter } from 'expo-router';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  runOnJS,
-  withSequence,
-} from 'react-native-reanimated';
-
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-
-import { useTranslation } from 'react-i18next';
 
 import { useFlashcardsStore } from '@/store/flashcards';
-import { FlashcardViewer } from '@/components/FlashcardViewer';
-import { QuizCompletionCard, QuizStats } from '@/components/QuizCompletionCard';
-import { SkiaCardShadow } from '@/components/ui/SkiaCardShadow';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { FlashcardViewer } from '@/components/flashcards/FlashcardViewer';
+import { QuizCompletionCard } from '@/components/quiz/QuizCompletionCard';
+import { QuizAnswerFooter } from '@/components/screens/quiz/QuizAnswerFooter';
+import { QuizAllEasyDialog, QuizExitDialog } from '@/components/screens/quiz/QuizDialogs';
+import { getQuizStats } from '@/components/screens/quiz/getQuizStats';
 import { Flashcard, DifficultyRating } from '@/types';
-import { getColors } from '@/constants/colors';
 import { pickWeightedCard } from '@/utils';
 
 type QuizScreenProps = {
@@ -29,7 +15,6 @@ type QuizScreenProps = {
 };
 
 export function QuizScreen({ deckId }: QuizScreenProps) {
-  const { t } = useTranslation();
   const router = useRouter();
 
   const {
@@ -125,21 +110,6 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
     append(nextCard);
   }, []);
 
-  const getQuizStats = useCallback((): QuizStats => {
-    const ratings = Object.values(cardDifficulty);
-    const easyCount = ratings.filter((r) => r === 'easy').length;
-    const mediumCount = ratings.filter((r) => r === 'medium').length;
-    const hardCount = ratings.filter((r) => r === 'hard').length;
-    const totalTimeMs = sessionStartTime ? Date.now() - sessionStartTime : 0;
-    return {
-      easyCount,
-      mediumCount,
-      hardCount,
-      totalCount: ratings.length,
-      totalTimeMs,
-    };
-  }, [cardDifficulty, sessionStartTime]);
-
   const handleExit = useCallback(() => {
     if (totalAnswered === 0) {
       discardQuizSession();
@@ -172,30 +142,11 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 
   const renderAnswerFooter = useCallback(
     (currentCard: Flashcard) => (
-      <GestureDetector gesture={Gesture.Tap()}>
-        <View position="absolute" bottom={16} left={0} right={0} paddingHorizontal="$4">
-          <View flexDirection="row" gap="$2" width="100%">
-            <DifficultyButton
-              type="hard"
-              onPress={() => handleResponse(currentCard.id, 'hard')}
-              currentRating={cardDifficulty[currentCard.id]}
-              testID="quiz-difficulty-hard-button"
-            />
-            <DifficultyButton
-              type="medium"
-              onPress={() => handleResponse(currentCard.id, 'medium')}
-              currentRating={cardDifficulty[currentCard.id]}
-              testID="quiz-difficulty-medium-button"
-            />
-            <DifficultyButton
-              type="easy"
-              onPress={() => handleResponse(currentCard.id, 'easy')}
-              currentRating={cardDifficulty[currentCard.id]}
-              testID="quiz-difficulty-easy-button"
-            />
-          </View>
-        </View>
-      </GestureDetector>
+      <QuizAnswerFooter
+        cardId={currentCard.id}
+        currentRating={cardDifficulty[currentCard.id]}
+        onRate={handleResponse}
+      />
     ),
     [handleResponse, cardDifficulty],
   );
@@ -213,215 +164,25 @@ export function QuizScreen({ deckId }: QuizScreenProps) {
 
       {/* Quiz completion card rendered via Portal to cover the entire screen (including sidebar on large screens) */}
       {showCompletionCard && (
-        <QuizCompletionCard stats={getQuizStats()} onClose={() => router.back()} />
+        <QuizCompletionCard
+          stats={getQuizStats(cardDifficulty, sessionStartTime)}
+          onClose={() => router.back()}
+        />
       )}
 
-      {/* Exit confirmation dialog */}
-      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
-        <AlertDialog.Portal>
-          <AlertDialog.Overlay key="overlay" backgroundColor="rgba(0,0,0,0.5)" />
-          <AlertDialog.Content
-            key="content"
-            bordered
-            elevate
-            maxWidth={340}
-            paddingHorizontal="$5"
-            paddingVertical="$5"
-            borderRadius="$6"
-            testID="quiz-exit-dialog"
-          >
-            <YStack gap="$3">
-              <AlertDialog.Title size="$6">{t('quiz.exitTitle')}</AlertDialog.Title>
-              <AlertDialog.Description size="$3" color="$secondary">
-                {t('quiz.exitMessage')}
-              </AlertDialog.Description>
-              <YStack gap="$2" paddingTop="$2">
-                <AlertDialog.Cancel asChild>
-                  <Button
-                    borderRadius="$4"
-                    testID="quiz-exit-cancel-button"
-                    accessibilityLabel="quiz-exit-cancel-button"
-                  >
-                    {t('common.cancel')}
-                  </Button>
-                </AlertDialog.Cancel>
-                <AlertDialog.Action asChild>
-                  <Button
-                    borderRadius="$4"
-                    onPress={handleExitWithSave}
-                    testID="quiz-exit-save-button"
-                    accessibilityLabel="quiz-exit-save-button"
-                  >
-                    {t('common.exit')}
-                  </Button>
-                </AlertDialog.Action>
-                <AlertDialog.Action asChild>
-                  <Button
-                    theme="red"
-                    borderRadius="$4"
-                    onPress={handleExitDiscard}
-                    testID="quiz-exit-discard-button"
-                    accessibilityLabel="quiz-exit-discard-button"
-                  >
-                    {t('quiz.exitWithoutSaving')}
-                  </Button>
-                </AlertDialog.Action>
-              </YStack>
-            </YStack>
-          </AlertDialog.Content>
-        </AlertDialog.Portal>
-      </AlertDialog>
+      <QuizExitDialog
+        open={showExitDialog}
+        onOpenChange={setShowExitDialog}
+        onExitWithSave={handleExitWithSave}
+        onExitDiscard={handleExitDiscard}
+      />
 
-      {/* All cards easy dialog */}
-      <AlertDialog open={showAllEasyDialog} onOpenChange={setShowAllEasyDialog}>
-        <AlertDialog.Portal>
-          <AlertDialog.Overlay key="overlay" backgroundColor="rgba(0,0,0,0.5)" />
-          <AlertDialog.Content
-            key="content"
-            bordered
-            elevate
-            maxWidth={340}
-            paddingHorizontal="$5"
-            paddingVertical="$5"
-            borderRadius="$6"
-            testID="quiz-all-easy-dialog"
-          >
-            <YStack gap="$3">
-              <AlertDialog.Title size="$6">{t('quiz.allEasyTitle')}</AlertDialog.Title>
-              <AlertDialog.Description size="$3" color="$secondary">
-                {t('quiz.allEasyMessage')}
-              </AlertDialog.Description>
-              <YStack gap="$2" paddingTop="$2">
-                <AlertDialog.Action asChild>
-                  <Button
-                    theme="active"
-                    borderRadius="$4"
-                    onPress={handleAllEasyExit}
-                    testID="quiz-all-easy-exit-button"
-                    accessibilityLabel="quiz-all-easy-exit-button"
-                  >
-                    {t('quiz.closeButton')}
-                  </Button>
-                </AlertDialog.Action>
-                <AlertDialog.Cancel asChild>
-                  <Button
-                    borderRadius="$4"
-                    onPress={handleAllEasyContinue}
-                    testID="quiz-all-easy-continue-button"
-                    accessibilityLabel="quiz-all-easy-continue-button"
-                  >
-                    {t('quiz.continue')}
-                  </Button>
-                </AlertDialog.Cancel>
-              </YStack>
-            </YStack>
-          </AlertDialog.Content>
-        </AlertDialog.Portal>
-      </AlertDialog>
+      <QuizAllEasyDialog
+        open={showAllEasyDialog}
+        onOpenChange={setShowAllEasyDialog}
+        onExit={handleAllEasyExit}
+        onContinue={handleAllEasyContinue}
+      />
     </>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Difficulty button with press animation
-// ---------------------------------------------------------------------------
-
-const BUTTON_CONFIG: Record<
-  DifficultyRating,
-  {
-    icon: 'sentiment-dissatisfied' | 'sentiment-neutral' | 'sentiment-satisfied';
-    colorKey: 'error' | 'warning' | 'success';
-    shadowKey: 'errorShadow' | 'warningShadow' | 'successShadow';
-    labelKey: string;
-  }
-> = {
-  hard: {
-    icon: 'sentiment-dissatisfied',
-    colorKey: 'error',
-    shadowKey: 'errorShadow',
-    labelKey: 'quiz.hard',
-  },
-  medium: {
-    icon: 'sentiment-neutral',
-    colorKey: 'warning',
-    shadowKey: 'warningShadow',
-    labelKey: 'quiz.medium',
-  },
-  easy: {
-    icon: 'sentiment-satisfied',
-    colorKey: 'success',
-    shadowKey: 'successShadow',
-    labelKey: 'quiz.easy',
-  },
-};
-
-const DifficultyButton = ({
-  type,
-  onPress,
-  currentRating,
-  testID,
-}: {
-  type: DifficultyRating;
-  onPress: () => void;
-  currentRating?: DifficultyRating;
-  testID: string;
-}) => {
-  const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePress = () => {
-    scale.value = withSequence(
-      withTiming(1.15, { duration: 100 }),
-      withTiming(1, { duration: 150 }, (finished) => {
-        if (finished) {
-          runOnJS(onPress)();
-        }
-      }),
-    );
-  };
-
-  const config = BUTTON_CONFIG[type];
-  const bgColor = colors[config.colorKey];
-  const shadowColor = colors[config.shadowKey];
-  const label = t(config.labelKey);
-  const opacity = !currentRating ? 1 : currentRating === type ? 1 : 0.4;
-
-  return (
-    <Pressable
-      onPress={handlePress}
-      style={{ flex: 1 }}
-      testID={testID}
-      accessibilityLabel={testID}
-    >
-      <Animated.View style={[animatedStyle, { opacity, overflow: 'visible' }]}>
-        <SkiaCardShadow
-          borderRadius={12}
-          backgroundColor={bgColor}
-          shadows={[{ dx: 0, dy: 4, blur: 8, color: shadowColor }]}
-          style={{ height: 48 }}
-        >
-          <View
-            style={{
-              flex: 1,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-            }}
-          >
-            <MaterialIcons name={config.icon} size={20} color={colors.onAccent} />
-            <Text color={colors.onAccent} fontWeight="600" fontSize={13}>
-              {label}
-            </Text>
-          </View>
-        </SkiaCardShadow>
-      </Animated.View>
-    </Pressable>
-  );
-};

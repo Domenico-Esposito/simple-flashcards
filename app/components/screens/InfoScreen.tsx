@@ -1,7 +1,7 @@
 import { Text, View, YStack, XStack } from 'tamagui';
 import { useTranslation } from 'react-i18next';
 
-import { Header } from '@/components/Header';
+import { Header } from '@/components/layout/header';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export function InfoScreen() {

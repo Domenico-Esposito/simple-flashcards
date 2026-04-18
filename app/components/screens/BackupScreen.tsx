@@ -2,7 +2,12 @@ import { Platform } from 'react-native';
 import { Button, Text, View, YStack } from 'tamagui';
 import { useTranslation } from 'react-i18next';
 
-import { Header } from '@/components/Header';
+import { Header } from '@/components/layout/header';
+import {
+  downloadBlobAsFile,
+  pickFileFromBrowser,
+  pickRestoreFile,
+} from '@/components/screens/settings/backup';
 import { useFlashcardsStore } from '@/store/flashcards';
 import {
   backupDatabaseToFile,
@@ -11,59 +16,6 @@ import {
   restoreDatabaseFromBytes,
 } from '@/utils/database';
 import { useAppAlert } from '@/hooks/useAppAlert';
-import i18n from '@/i18n';
-
-/**
- * Trigger a file download in the browser
- */
-function downloadBlobAsFile(data: Uint8Array, filename: string) {
-  const blob = new Blob([data as unknown as BlobPart], {
-    type: 'application/octet-stream',
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-/**
- * Pick a file via browser file input and return its bytes
- */
-function pickFileFromBrowser(): Promise<Uint8Array> {
-  return new Promise((resolve, reject) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.db';
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) {
-        reject(new Error(i18n.t('backup.noFileSelected')));
-        return;
-      }
-      const buffer = await file.arrayBuffer();
-      resolve(new Uint8Array(buffer));
-    };
-    input.click();
-  });
-}
-
-async function pickRestoreFile(): Promise<import('expo-file-system').File> {
-  const { File } = await import('expo-file-system');
-  const picked = await File.pickFileAsync();
-
-  if (Array.isArray(picked)) {
-    const file = picked[0];
-    if (!file) {
-      throw new Error(i18n.t('backup.noFileSelected'));
-    }
-
-    return new File(file.uri);
-  }
-
-  return new File(picked.uri);
-}
 
 export function BackupScreen() {
   const { refreshAfterRestore } = useFlashcardsStore();

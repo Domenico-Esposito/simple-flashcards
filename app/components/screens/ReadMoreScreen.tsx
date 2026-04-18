@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTranslation } from 'react-i18next';
 
-import { Header } from '@/components/Header';
+import { Header } from '@/components/layout/header';
 import { MarkdownContent } from '@/components/ui/MarkdownContent';
 
 type ReadMoreScreenProps = {

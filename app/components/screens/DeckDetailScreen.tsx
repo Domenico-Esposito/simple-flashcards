@@ -1,133 +1,23 @@
-import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from 'react';
-import { FlatList, Pressable, ScrollView } from 'react-native';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Text, View, YStack, XStack } from 'tamagui';
 import { useRouter } from 'expo-router';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTranslation } from 'react-i18next';
 
 import { useFlashcardsStore } from '@/store/flashcards';
-import { Flashcard } from '@/types';
-import { FlashcardListItem } from '@/components/FlashcardListItem';
-import { Header, createHeaderAction } from '@/components/Header';
-import { SearchBar } from '@/components/SearchBar';
+import { Header, createHeaderAction } from '@/components/layout/header';
+import { SearchBar } from '@/components/search/SearchBar';
 import { useAppAlert } from '@/hooks/useAppAlert';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { getColors } from '@/constants/colors';
+import { getColors } from '@/theme/colors';
 import { useIsLargeScreen } from '@/hooks/useLargeScreen';
+import { CenteredEmptyState } from '@/components/screens/common/CenteredEmptyState';
+import { ActionTile } from '@/components/screens/deck-detail/ActionTile';
+import { FlashcardCollection } from '@/components/screens/deck-detail/FlashcardCollection';
+import { flashcardMatchesQuery } from '@/components/screens/deck-detail/flashcardMatchesQuery';
 
 type DeckDetailScreenProps = {
   deckId: number;
 };
-
-type FlashcardListContentProps = {
-  flashcards: Flashcard[];
-  onEdit: (flashcardId: number) => void;
-  onDelete: (flashcardId: number) => void;
-};
-
-const LIST_BOTTOM_PADDING = 20;
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
-      <Text color="$gray10" fontSize={16} textAlign="center">
-        {message}
-      </Text>
-    </YStack>
-  );
-}
-
-type ActionTileProps = {
-  icon: ComponentProps<typeof MaterialIcons>['name'];
-  label: string;
-  iconColor: string;
-  textColor: string;
-  backgroundColor: string;
-  onPress: () => void;
-  testID: string;
-};
-
-function ActionTile({
-  icon,
-  label,
-  iconColor,
-  textColor,
-  backgroundColor,
-  onPress,
-  testID,
-}: ActionTileProps) {
-  return (
-    <Pressable onPress={onPress} style={{ flex: 1 }} testID={testID} accessibilityLabel={testID}>
-      <View
-        backgroundColor={backgroundColor}
-        borderRadius="$4"
-        padding="$4"
-        alignItems="center"
-        justifyContent="center"
-        gap="$2"
-      >
-        <MaterialIcons name={icon} size={24} color={iconColor} />
-        <Text fontSize={14} fontWeight="600" color={textColor}>
-          {label}
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
-
-function flashcardMatchesQuery(flashcard: Flashcard, query: string) {
-  if (flashcard.question.toLowerCase().includes(query)) {
-    return true;
-  }
-
-  if (flashcard.type === 'multiple_choice') {
-    return flashcard.options.some((option) => option.text.toLowerCase().includes(query));
-  }
-
-  return flashcard.answer.toLowerCase().includes(query);
-}
-
-function FlashcardGrid({ flashcards, onEdit, onDelete }: FlashcardListContentProps) {
-  return (
-    <ScrollView
-      contentContainerStyle={{ paddingBottom: LIST_BOTTOM_PADDING }}
-      showsVerticalScrollIndicator={false}
-    >
-      <View flexDirection="row" flexWrap="wrap" margin={-6} testID="deck-detail-flashcard-grid">
-        {flashcards.map((item) => (
-          <View key={item.id} width="50%" padding={6}>
-            <FlashcardListItem
-              flashcard={item}
-              onPress={() => onEdit(item.id)}
-              onLongPress={() => onDelete(item.id)}
-              testID={`deck-detail-flashcard-${item.id}`}
-            />
-          </View>
-        ))}
-      </View>
-    </ScrollView>
-  );
-}
-
-function FlashcardMobileList({ flashcards, onEdit, onDelete }: FlashcardListContentProps) {
-  return (
-    <FlatList
-      data={flashcards}
-      keyExtractor={(item) => item.id.toString()}
-      renderItem={({ item }) => (
-        <FlashcardListItem
-          flashcard={item}
-          onPress={() => onEdit(item.id)}
-          onLongPress={() => onDelete(item.id)}
-          testID={`deck-detail-flashcard-${item.id}`}
-        />
-      )}
-      contentContainerStyle={{ paddingBottom: LIST_BOTTOM_PADDING }}
-      ItemSeparatorComponent={() => <View height={10} />}
-      showsVerticalScrollIndicator={false}
-    />
-  );
-}
 
 export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
   const router = useRouter();
@@ -183,19 +73,16 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
   let content: ReactNode;
 
   if (!hasFlashcards) {
-    content = <EmptyState message={t('deck.noFlashcards')} />;
+    content = <CenteredEmptyState message={t('deck.noFlashcards')} />;
   } else if (filteredFlashcards.length === 0) {
-    content = <EmptyState message={t('deck.noSearchResults', { query: normalizedSearchQuery })} />;
+    content = (
+      <CenteredEmptyState message={t('deck.noSearchResults', { query: normalizedSearchQuery })} />
+    );
   } else {
-    content = isLargeScreen ? (
-      <FlashcardGrid
+    content = (
+      <FlashcardCollection
         flashcards={filteredFlashcards}
-        onEdit={handleEditFlashcard}
-        onDelete={handleDeleteFlashcard}
-      />
-    ) : (
-      <FlashcardMobileList
-        flashcards={filteredFlashcards}
+        isLargeScreen={isLargeScreen}
         onEdit={handleEditFlashcard}
         onDelete={handleDeleteFlashcard}
       />

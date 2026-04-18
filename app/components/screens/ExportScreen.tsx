@@ -5,7 +5,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { useTranslation } from 'react-i18next';
 
-import { Header } from '@/components/Header';
+import { Header } from '@/components/layout/header';
 import { useFlashcardsStore } from '@/store/flashcards';
 import { exportDeckToJson, shareJsonFile } from '@/utils/import-export';
 import type { Deck } from '@/types';

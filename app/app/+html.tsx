@@ -37,7 +37,10 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta name="twitter:title" content={SEO_DEFAULT_TITLE} />
         <meta name="twitter:description" content={SEO_DEFAULT_DESCRIPTION} />
         <meta name="twitter:image" content={imageUrl} />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeStructuredData) }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(homeStructuredData) }}
+        />
 
         <meta name="theme-color" content="#ffffff" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

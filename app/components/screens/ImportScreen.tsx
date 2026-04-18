@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Platform, ScrollView } from 'react-native';
-import { Button, Input, Label, Text, TextArea, View, YStack, XStack } from 'tamagui';
+import { ScrollView } from 'react-native';
+import { Button, Input, Label, Text, TextArea, View, YStack } from 'tamagui';
 
 import { useTranslation } from 'react-i18next';
 
-import { Header } from '@/components/Header';
+import { Header } from '@/components/layout/header';
+import { ImportFormatSection } from '@/components/screens/import/ImportFormatSection';
+import { ImportModeToggle } from '@/components/screens/import/ImportModeToggle';
 import { useFlashcardsStore } from '@/store/flashcards';
 import { importDeckFromUrl, importDeckFromJson } from '@/utils/import-export';
 import { useAppAlert } from '@/hooks/useAppAlert';
@@ -21,6 +23,18 @@ export function ImportScreen() {
   const [importJson, setImportJson] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [showFormat, setShowFormat] = useState(false);
+  const formatFieldLabels = [
+    t('import.fieldsLabel'),
+    t('import.titleField'),
+    t('import.descriptionField'),
+    t('import.flashcardsField'),
+    t('import.questionField'),
+    t('import.answerField'),
+    t('import.typeField'),
+    t('import.optionsField'),
+    t('import.optionTextField'),
+    t('import.optionCorrectField'),
+  ];
 
   const handleImportFromUrl = async () => {
     if (!importUrl.trim()) {
@@ -84,31 +98,12 @@ export function ImportScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <YStack padding="$4" gap="$6">
           <YStack gap="$3">
-            {/* Import Mode Toggle */}
-            <XStack gap="$2">
-              <Button
-                size="$3"
-                flex={1}
-                onPress={() => setImportMode('url')}
-                themeInverse={importMode === 'url'}
-                chromeless={importMode !== 'url'}
-                testID="import-mode-url-button"
-                accessibilityLabel="import-mode-url-button"
-              >
-                {t('import.fromUrl')}
-              </Button>
-              <Button
-                size="$3"
-                flex={1}
-                onPress={() => setImportMode('json')}
-                themeInverse={importMode === 'json'}
-                chromeless={importMode !== 'json'}
-                testID="import-mode-json-button"
-                accessibilityLabel="import-mode-json-button"
-              >
-                {t('import.fromJson')}
-              </Button>
-            </XStack>
+            <ImportModeToggle
+              importMode={importMode}
+              urlLabel={t('import.fromUrl')}
+              jsonLabel={t('import.fromJson')}
+              onChange={setImportMode}
+            />
 
             {importMode === 'url' ? (
               <>
@@ -176,68 +171,14 @@ export function ImportScreen() {
             )}
           </YStack>
 
-          {/* Format Documentation */}
-          <YStack gap="$3">
-            <Button
-              size="$4"
-              onPress={() => setShowFormat(!showFormat)}
-              chromeless
-              testID="import-toggle-format-button"
-              accessibilityLabel="import-toggle-format-button"
-            >
-              {showFormat ? t('import.hideFormat') : t('import.showFormat')}
-            </Button>
-            {showFormat && (
-              <View
-                backgroundColor="$backgroundStrong"
-                padding="$4"
-                borderRadius="$3"
-                gap="$3"
-                testID="import-format-panel"
-              >
-                <Text fontSize={16} fontWeight="600" color="$color">
-                  {t('import.formatTitle')}
-                </Text>
-                <View backgroundColor="$background" padding="$3" borderRadius="$2">
-                  <Text fontFamily="$mono" fontSize={12} color="$color">
-                    {t('import.formatExample')}
-                  </Text>
-                </View>
-                <YStack gap="$2">
-                  <Text fontSize={14} fontWeight="600" color="$color">
-                    {t('import.fieldsLabel')}
-                  </Text>
-                  <Text fontSize={13} color="$secondary">
-                    {t('import.titleField')}
-                  </Text>
-                  <Text fontSize={13} color="$secondary">
-                    {t('import.descriptionField')}
-                  </Text>
-                  <Text fontSize={13} color="$secondary">
-                    {t('import.flashcardsField')}
-                  </Text>
-                  <Text fontSize={13} color="$secondary" marginLeft="$3">
-                    {t('import.questionField')}
-                  </Text>
-                  <Text fontSize={13} color="$secondary" marginLeft="$3">
-                    {t('import.answerField')}
-                  </Text>
-                  <Text fontSize={13} color="$secondary" marginLeft="$3">
-                    {t('import.typeField')}
-                  </Text>
-                  <Text fontSize={13} color="$secondary" marginLeft="$3">
-                    {t('import.optionsField')}
-                  </Text>
-                  <Text fontSize={13} color="$secondary" marginLeft="$6">
-                    {t('import.optionTextField')}
-                  </Text>
-                  <Text fontSize={13} color="$secondary" marginLeft="$6">
-                    {t('import.optionCorrectField')}
-                  </Text>
-                </YStack>
-              </View>
-            )}
-          </YStack>
+          <ImportFormatSection
+            isVisible={showFormat}
+            toggleLabel={showFormat ? t('import.hideFormat') : t('import.showFormat')}
+            title={t('import.formatTitle')}
+            example={t('import.formatExample')}
+            fieldLabels={formatFieldLabels}
+            onToggle={() => setShowFormat((current) => !current)}
+          />
         </YStack>
       </ScrollView>
       {AlertDialog}

@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { RouteHead } from '@/components/seo/RouteHead';
-import { EditFlashcardScreen } from '@/components/screens/EditFlashcardScreen';
+import { FlashcardFormScreen } from '@/components/screens/FlashcardFormScreen';
 
 export default function EditFlashcardRoute() {
   const { flashcardId } = useLocalSearchParams<{ flashcardId: string }>();
@@ -8,7 +8,7 @@ export default function EditFlashcardRoute() {
   return (
     <>
       <RouteHead noIndex title="Edit Flashcard" />
-      <EditFlashcardScreen flashcardId={parseInt(flashcardId, 10)} />
+      <FlashcardFormScreen mode="edit" flashcardId={parseInt(flashcardId, 10)} />
     </>
   );
 }

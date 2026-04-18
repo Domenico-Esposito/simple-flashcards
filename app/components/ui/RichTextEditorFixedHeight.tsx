@@ -8,7 +8,7 @@ import {
 } from '@domenico-esposito/react-native-markdown-editor';
 
 import { createSegmentComponents } from '@/components/ui/markdown-theme';
-import { getColors } from '@/constants/colors';
+import { getColors } from '@/theme/colors';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 const FIXED_EDITOR_HEIGHT = 280;
