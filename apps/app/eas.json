@@ -1,0 +1,35 @@
+{
+  "cli": {
+    "version": ">= 18.7.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "monorepo": {
+      "cache": {
+        "key": "turbo",
+        "paths": [
+          "../../node_modules/.cache/turbo"
+        ]
+      },
+      "env": {
+        "EXPO_USE_FAST_RESOLVER": "true"
+      }
+    },
+    "development": {
+      "extends": "monorepo",
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "extends": "monorepo",
+      "distribution": "internal"
+    },
+    "production": {
+      "extends": "monorepo",
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
