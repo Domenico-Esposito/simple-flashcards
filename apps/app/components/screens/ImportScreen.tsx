@@ -1,28 +1,27 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView } from 'react-native';
-import { Button, Input, Label, Text, TextArea, View, YStack } from 'tamagui';
+import { Button, Label, Text, TextArea, View, YStack } from 'tamagui';
+import * as Clipboard from 'expo-clipboard';
 
 import { useTranslation } from 'react-i18next';
 
 import { Header } from '@/components/layout/header';
 import { ImportFormatSection } from '@/components/screens/import/ImportFormatSection';
-import { ImportModeToggle } from '@/components/screens/import/ImportModeToggle';
 import { useFlashcardsStore } from '@/store/flashcards';
-import { importDeckFromUrl, importDeckFromJson } from '@/utils/import-export';
+import { importDeckFromJson } from '@/utils/import-export';
 import { useAppAlert } from '@/hooks/useAppAlert';
-
-type ImportMode = 'url' | 'json';
 
 export function ImportScreen() {
   const { t } = useTranslation();
   const { loadDecks } = useFlashcardsStore();
   const { showAlert, AlertDialog } = useAppAlert();
 
-  const [importMode, setImportMode] = useState<ImportMode>('url');
-  const [importUrl, setImportUrl] = useState('');
   const [importJson, setImportJson] = useState('');
   const [isImporting, setIsImporting] = useState(false);
-  const [showFormat, setShowFormat] = useState(false);
+  const [copiedSection, setCopiedSection] = useState<'format' | 'ai' | null>(null);
+  const [isFormatExpanded, setIsFormatExpanded] = useState(false);
+  const [isAiExpanded, setIsAiExpanded] = useState(false);
+  const copyResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const formatFieldLabels = [
     t('import.fieldsLabel'),
     t('import.titleField'),
@@ -35,29 +34,43 @@ export function ImportScreen() {
     t('import.optionTextField'),
     t('import.optionCorrectField'),
   ];
+  const markdownSupportItems = [
+    t('import.markdownHeadingItem'),
+    t('import.markdownBoldItem'),
+    t('import.markdownItalicItem'),
+    t('import.markdownStrikeItem'),
+    t('import.markdownUnorderedListItem'),
+    t('import.markdownOrderedListItem'),
+    t('import.markdownQuoteItem'),
+    t('import.markdownInlineCodeItem'),
+    t('import.markdownCodeBlockItem'),
+    t('import.markdownLinkItem'),
+    t('import.markdownImageItem'),
+    t('import.markdownRuleItem'),
+  ];
 
-  const handleImportFromUrl = async () => {
-    if (!importUrl.trim()) {
-      showAlert(t('common.error'), t('import.invalidUrl'));
-      return;
-    }
+  useEffect(() => {
+    return () => {
+      if (copyResetTimeoutRef.current) {
+        clearTimeout(copyResetTimeoutRef.current);
+      }
+    };
+  }, []);
 
-    setIsImporting(true);
+  const handleCopy = async (section: 'format' | 'ai', content: string) => {
     try {
-      const deck = await importDeckFromUrl(importUrl.trim());
-      await loadDecks();
-      showAlert(
-        t('import.successTitle'),
-        t('import.successMessage', {
-          title: deck.title,
-          count: deck.flashcards.length,
-        }),
-        [{ text: 'OK', onPress: () => setImportUrl('') }],
-      );
-    } catch (error) {
-      showAlert(t('common.error'), error instanceof Error ? error.message : t('import.error'));
-    } finally {
-      setIsImporting(false);
+      await Clipboard.setStringAsync(content);
+      setCopiedSection(section);
+
+      if (copyResetTimeoutRef.current) {
+        clearTimeout(copyResetTimeoutRef.current);
+      }
+
+      copyResetTimeoutRef.current = setTimeout(() => {
+        setCopiedSection(null);
+      }, 2000);
+    } catch {
+      showAlert(t('common.error'), t('import.copyError'));
     }
   };
 
@@ -98,86 +111,72 @@ export function ImportScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <YStack padding="$4" gap="$6">
           <YStack gap="$3">
-            <ImportModeToggle
-              importMode={importMode}
-              urlLabel={t('import.fromUrl')}
-              jsonLabel={t('import.fromJson')}
-              onChange={setImportMode}
-            />
+            <YStack gap="$1">
+              <Text fontSize={18} fontWeight="600" color="$color">
+                {t('import.jsonInputTitle')}
+              </Text>
+              <Text fontSize={14} color="$secondary">
+                {t('import.jsonDescription')}
+              </Text>
+            </YStack>
 
-            {importMode === 'url' ? (
-              <>
-                <Text fontSize={14} color="$secondary">
-                  {t('import.urlDescription')}
-                </Text>
-                <YStack gap="$1">
-                  <Label htmlFor="importUrl">{t('import.urlLabel')}</Label>
-                  <Input
-                    id="importUrl"
-                    testID="import-url-input"
-                    accessibilityLabel="import-url-input"
-                    size="$4"
-                    value={importUrl}
-                    onChangeText={setImportUrl}
-                    placeholder={t('import.urlPlaceholder')}
-                  />
-                </YStack>
-                <Button
-                  size="$4"
-                  onPress={handleImportFromUrl}
-                  disabled={isImporting}
-                  themeInverse
-                  testID="import-from-url-button"
-                  accessibilityLabel="import-from-url-button"
-                >
-                  {isImporting ? t('common.importing') : t('import.fromUrlButton')}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Text fontSize={14} color="$secondary">
-                  {t('import.jsonDescription')}
-                </Text>
-                <YStack gap="$1">
-                  <Label htmlFor="importJson">{t('import.jsonLabel')}</Label>
-                  <TextArea
-                    id="importJson"
-                    testID="import-json-input"
-                    accessibilityLabel="import-json-input"
-                    size="$4"
-                    value={importJson}
-                    onChangeText={setImportJson}
-                    placeholder={t('import.jsonPlaceholder')}
-                    numberOfLines={8}
-                    minHeight={160}
-                    autoCorrect={false}
-                    spellCheck={false}
-                    autoComplete="off"
-                    importantForAutofill="no"
-                    keyboardType="visible-password" // prevents auto-capitalization and auto-correction
-                  />
-                </YStack>
-                <Button
-                  size="$4"
-                  onPress={handleImportFromJson}
-                  disabled={isImporting}
-                  themeInverse
-                  testID="import-from-json-button"
-                  accessibilityLabel="import-from-json-button"
-                >
-                  {isImporting ? t('common.importing') : t('import.fromJsonButton')}
-                </Button>
-              </>
-            )}
+            <YStack gap="$1">
+              <Label htmlFor="importJson">{t('import.jsonLabel')}</Label>
+              <TextArea
+                id="importJson"
+                testID="import-json-input"
+                accessibilityLabel="import-json-input"
+                size="$4"
+                value={importJson}
+                onChangeText={setImportJson}
+                placeholder={t('import.jsonPlaceholder')}
+                numberOfLines={8}
+                minHeight={160}
+                autoCorrect={false}
+                spellCheck={false}
+                autoComplete="off"
+                importantForAutofill="no"
+                keyboardType="visible-password" // prevents auto-capitalization and auto-correction
+              />
+            </YStack>
+            <Button
+              size="$4"
+              onPress={handleImportFromJson}
+              disabled={isImporting}
+              themeInverse
+              testID="import-from-json-button"
+              accessibilityLabel="import-from-json-button"
+            >
+              {isImporting ? t('common.importing') : t('import.fromJsonButton')}
+            </Button>
           </YStack>
 
           <ImportFormatSection
-            isVisible={showFormat}
-            toggleLabel={showFormat ? t('import.hideFormat') : t('import.showFormat')}
-            title={t('import.formatTitle')}
-            example={t('import.formatExample')}
+            formatTitle={t('import.formatTitle')}
+            formatDescription={t('import.formatDescription')}
+            formatExpandLabel={t('import.showDetails')}
+            formatCollapseLabel={t('import.hideDetails')}
+            formatExampleLabel={t('import.formatExampleLabel')}
+            formatExample={t('import.formatExample')}
             fieldLabels={formatFieldLabels}
-            onToggle={() => setShowFormat((current) => !current)}
+            aiTitle={t('import.aiTitle')}
+            aiDescription={t('import.aiDescription')}
+            aiExpandLabel={t('import.showDetails')}
+            aiCollapseLabel={t('import.hideDetails')}
+            aiExampleLabel={t('import.aiExampleLabel')}
+            aiPrompt={t('import.aiPromptExample')}
+            markdownSupportTitle={t('import.markdownSupportTitle')}
+            markdownSupportDescription={t('import.markdownSupportDescription')}
+            markdownSupportItems={markdownSupportItems}
+            copyLabel={t('import.copyButton')}
+            copiedLabel={t('import.copiedButton')}
+            copiedSection={copiedSection}
+            isFormatExpanded={isFormatExpanded}
+            isAiExpanded={isAiExpanded}
+            onCopyFormat={() => handleCopy('format', t('import.formatExample'))}
+            onCopyAi={() => handleCopy('ai', t('import.aiPromptExample'))}
+            onToggleFormat={() => setIsFormatExpanded((current) => !current)}
+            onToggleAi={() => setIsAiExpanded((current) => !current)}
           />
         </YStack>
       </ScrollView>

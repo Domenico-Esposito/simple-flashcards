@@ -54,20 +54,6 @@ export async function shareJsonFile(jsonContent: string, filename: string): Prom
 }
 
 /**
- * Import a deck from a JSON URL
- */
-export async function importDeckFromUrl(url: string): Promise<DeckWithFlashcards> {
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(i18n.t('errors.fileDownload', { status: response.status }));
-  }
-
-  const data = await response.json();
-  return importDeckFromJson(data);
-}
-
-/**
  * Import a deck from a JSON object
  */
 export async function importDeckFromJson(data: unknown): Promise<DeckWithFlashcards> {
