@@ -3,7 +3,7 @@ import { View, YStack } from 'tamagui';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { useFlashcardsStore } from '@/store/flashcards';
+import { useDeckActions, useDecksState } from '@/store/flashcards.selectors';
 import { Header, createHeaderAction } from '@/components/layout/header';
 import { SearchBar } from '@/components/search/SearchBar';
 import { getFlashcardCount } from '@/utils/database';
@@ -18,7 +18,8 @@ import { useHomeSearch } from '@/components/screens/home/useHomeSearch';
 export function HomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { decks, loadDecks, removeDeck } = useFlashcardsStore();
+  const decks = useDecksState();
+  const { loadDecks, removeDeck } = useDeckActions();
   const { showAlert, AlertDialog } = useAppAlert();
   const [deckCounts, setDeckCounts] = useState<Record<number, number>>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,7 +98,7 @@ export function HomeScreen() {
   }
 
   return (
-    <View flex={1} backgroundColor="$background" testID="home-screen">
+    <View flex={1} bg="$background" testID="home-screen">
       <Header
         title={t('home.title')}
         showBackButton={false}
@@ -111,7 +112,7 @@ export function HomeScreen() {
         ]}
       />
 
-      <YStack flex={1} paddingHorizontal="$4" gap="$4">
+      <YStack flex={1} px="$4" gap="$4">
         {hasDecks && (
           <SearchBar
             value={searchQuery}

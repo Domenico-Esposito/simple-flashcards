@@ -3,7 +3,12 @@ import { Text, View, YStack, XStack } from 'tamagui';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { useFlashcardsStore } from '@/store/flashcards';
+import {
+  useCurrentDeckState,
+  useDeckActions,
+  useFlashcardActions,
+  useFlashcardsState,
+} from '@/store/flashcards.selectors';
 import { Header, createHeaderAction } from '@/components/layout/header';
 import { SearchBar } from '@/components/search/SearchBar';
 import { useAppAlert } from '@/hooks/useAppAlert';
@@ -26,7 +31,10 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
   const colors = getColors(colorScheme === 'dark' ? 'dark' : 'light');
   const isLargeScreen = useIsLargeScreen();
 
-  const { currentDeck, flashcards, loadDeck, removeFlashcard } = useFlashcardsStore();
+  const currentDeck = useCurrentDeckState();
+  const flashcards = useFlashcardsState();
+  const { loadDeck } = useDeckActions();
+  const { removeFlashcard } = useFlashcardActions();
   const { showAlert, AlertDialog } = useAppAlert();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -61,8 +69,8 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
 
   if (!currentDeck) {
     return (
-      <View flex={1} justifyContent="center" alignItems="center" backgroundColor="$background">
-        <Text color="$gray10">{t('common.loading')}</Text>
+      <View flex={1} bg="$background" justifyContent="center" alignItems="center">
+        <Text color="$secondary">{t('common.loading')}</Text>
       </View>
     );
   }
@@ -90,7 +98,7 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
   }
 
   return (
-    <View flex={1} backgroundColor="$background" testID="deck-detail-screen">
+    <View flex={1} bg="$background" testID="deck-detail-screen">
       <Header
         title={currentDeck.title}
         subtitle={currentDeck.description}
@@ -110,7 +118,7 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
         ]}
       />
 
-      <YStack flex={1} paddingHorizontal="$4" gap="$4">
+      <YStack flex={1} px="$4" gap="$4">
         <XStack gap="$3">
           <ActionTile
             icon="add"
@@ -160,7 +168,7 @@ export function DeckDetailScreen({ deckId }: DeckDetailScreenProps) {
             fontSize={18}
             fontWeight="600"
             color="$color"
-            marginTop="$2"
+            mt="$2"
             testID="deck-detail-flashcard-count"
           >
             {t('deck.flashcardCount', { count: flashcards.length })}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useFlashcardsStore } from '@/store/flashcards';
+import { useStatisticsActions } from '@/store/flashcards.selectors';
 import type { StatisticsInterval, StatisticsKpis, StatsSeries } from '@/types';
 
 function getStartDateForInterval(interval: StatisticsInterval): string {
@@ -34,7 +34,7 @@ export function useStatistics(deckId?: number, initialInterval: StatisticsInterv
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { getGlobalStats, getDeckStats, getKPIs } = useFlashcardsStore();
+  const { getGlobalStats, getDeckStats, getKPIs } = useStatisticsActions();
 
   const loadStats = useCallback(async () => {
     setLoading(true);

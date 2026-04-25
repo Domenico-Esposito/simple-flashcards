@@ -7,13 +7,13 @@ import { useTranslation } from 'react-i18next';
 
 import { Header } from '@/components/layout/header';
 import { ImportFormatSection } from '@/components/screens/import/ImportFormatSection';
-import { useFlashcardsStore } from '@/store/flashcards';
+import { useDeckActions } from '@/store/flashcards.selectors';
 import { importDeckFromJson } from '@/utils/import-export';
 import { useAppAlert } from '@/hooks/useAppAlert';
 
 export function ImportScreen() {
   const { t } = useTranslation();
-  const { loadDecks } = useFlashcardsStore();
+  const { loadDecks } = useDeckActions();
   const { showAlert, AlertDialog } = useAppAlert();
 
   const [importJson, setImportJson] = useState('');
@@ -105,11 +105,11 @@ export function ImportScreen() {
   };
 
   return (
-    <View flex={1} backgroundColor="$background" testID="import-screen">
+    <View flex={1} bg="$background" testID="import-screen">
       <Header title={t('import.title')} showBackButton />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        <YStack padding="$4" gap="$6">
+        <YStack p="$4" gap="$6">
           <YStack gap="$3">
             <YStack gap="$1">
               <Text fontSize={18} fontWeight="600" color="$color">

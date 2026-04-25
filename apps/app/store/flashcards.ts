@@ -3,6 +3,7 @@ import type {
   Deck,
   DifficultyRating,
   Flashcard,
+  StandardFlashcard,
   StatisticsInterval,
   StatisticsKpis,
   StatsSeries,
@@ -86,17 +87,91 @@ interface FlashcardsState {
   resetAllData: () => Promise<void>;
 }
 
+type DeckContentState = Pick<FlashcardsState, 'currentDeck' | 'flashcards' | 'shuffledFlashcards'>;
+type QuizProgressState = Pick<
+  FlashcardsState,
+  'currentSessionId' | 'sessionStartTime' | 'answeredFlashcardIds' | 'cardDifficulty'
+>;
+
+function createEmptyDeckContentState(): DeckContentState {
+  return {
+    currentDeck: null,
+    flashcards: [],
+    shuffledFlashcards: [],
+  };
+}
+
+function createIdleQuizProgressState(): QuizProgressState {
+  return {
+    currentSessionId: null,
+    sessionStartTime: null,
+    answeredFlashcardIds: new Set<number>(),
+    cardDifficulty: {},
+  };
+}
+
+function replaceFlashcardInCollection(collection: Flashcard[], updated: Flashcard): Flashcard[] {
+  return collection.map((flashcard) => (flashcard.id === updated.id ? updated : flashcard));
+}
+
+function replaceWithStandardFlashcard(
+  collection: Flashcard[],
+  id: number,
+  question: string,
+  answer: string,
+): Flashcard[] {
+  return collection.map((flashcard) => {
+    if (flashcard.id !== id) {
+      return flashcard;
+    }
+
+    const updatedFlashcard: StandardFlashcard = {
+      id,
+      deckId: flashcard.deckId,
+      question,
+      answer,
+      type: 'standard',
+    };
+
+    return updatedFlashcard;
+  });
+}
+
+function removeFlashcardFromCollection(collection: Flashcard[], id: number): Flashcard[] {
+  return collection.filter((flashcard) => flashcard.id !== id);
+}
+
+function removeCardDifficultyEntry(
+  cardDifficulty: Record<number, DifficultyRating>,
+  flashcardId: number,
+): Record<number, DifficultyRating> {
+  if (!(flashcardId in cardDifficulty)) {
+    return cardDifficulty;
+  }
+
+  const { [flashcardId]: _removed, ...remainingDifficulty } = cardDifficulty;
+  return remainingDifficulty;
+}
+
+function removeAnsweredFlashcardId(
+  answeredFlashcardIds: Set<number>,
+  flashcardId: number,
+): Set<number> {
+  if (!answeredFlashcardIds.has(flashcardId)) {
+    return answeredFlashcardIds;
+  }
+
+  const nextAnsweredFlashcardIds = new Set(answeredFlashcardIds);
+  nextAnsweredFlashcardIds.delete(flashcardId);
+  return nextAnsweredFlashcardIds;
+}
+
 export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
   decks: [],
-  currentDeck: null,
-  flashcards: [],
-  shuffledFlashcards: [],
+  ...createEmptyDeckContentState(),
   isLoading: false,
   isInitialized: false,
-  currentSessionId: null,
-  sessionStartTime: null,
-  answeredFlashcardIds: new Set(),
-  cardDifficulty: {},
+  ...createIdleQuizProgressState(),
 
   initialize: async () => {
     if (get().isInitialized) return;
@@ -118,21 +193,19 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
 
   loadDeck: async (id: number) => {
     const deck = await db.getDeckById(id);
-    set({ currentDeck: deck });
-    if (deck) {
-      await get().loadFlashcards(id);
+    if (!deck) {
+      set(createEmptyDeckContentState());
+      return;
     }
+
+    set({ currentDeck: deck, flashcards: [] });
+    await get().loadFlashcards(id);
   },
 
   refreshAfterRestore: async () => {
     set({
-      currentDeck: null,
-      flashcards: [],
-      shuffledFlashcards: [],
-      currentSessionId: null,
-      sessionStartTime: null,
-      answeredFlashcardIds: new Set(),
-      cardDifficulty: {},
+      ...createEmptyDeckContentState(),
+      ...createIdleQuizProgressState(),
     });
     await get().loadDecks();
   },
@@ -156,10 +229,16 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
 
   removeDeck: async (id: number) => {
     await db.deleteDeck(id);
-    set((state) => ({
-      decks: state.decks.filter((d) => d.id !== id),
-      currentDeck: state.currentDeck?.id === id ? null : state.currentDeck,
-    }));
+    set((state) =>
+      state.currentDeck?.id === id
+        ? {
+            decks: state.decks.filter((deck) => deck.id !== id),
+            ...createEmptyDeckContentState(),
+          }
+        : {
+            decks: state.decks.filter((deck) => deck.id !== id),
+          },
+    );
   },
 
   loadFlashcards: async (deckId: number) => {
@@ -208,9 +287,8 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
   editFlashcard: async (id: number, question: string, answer: string) => {
     await db.updateFlashcard(id, question, answer);
     set((state) => ({
-      flashcards: state.flashcards.map((f) =>
-        f.id === id ? { ...f, question, answer, type: 'standard' as const } : f,
-      ),
+      flashcards: replaceWithStandardFlashcard(state.flashcards, id, question, answer),
+      shuffledFlashcards: replaceWithStandardFlashcard(state.shuffledFlashcards, id, question, answer),
     }));
   },
 
@@ -224,7 +302,8 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
     const updated = await db.getFlashcardById(id);
     if (updated) {
       set((state) => ({
-        flashcards: state.flashcards.map((f) => (f.id === id ? updated : f)),
+        flashcards: replaceFlashcardInCollection(state.flashcards, updated),
+        shuffledFlashcards: replaceFlashcardInCollection(state.shuffledFlashcards, updated),
       }));
     }
   },
@@ -232,7 +311,10 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
   removeFlashcard: async (id: number) => {
     await db.deleteFlashcard(id);
     set((state) => ({
-      flashcards: state.flashcards.filter((f) => f.id !== id),
+      flashcards: removeFlashcardFromCollection(state.flashcards, id),
+      shuffledFlashcards: removeFlashcardFromCollection(state.shuffledFlashcards, id),
+      answeredFlashcardIds: removeAnsweredFlashcardId(state.answeredFlashcardIds, id),
+      cardDifficulty: removeCardDifficultyEntry(state.cardDifficulty, id),
     }));
   },
 
@@ -268,10 +350,9 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
   startQuizSession: async (deckId: number) => {
     const sessionId = await db.createQuizSession(deckId);
     set({
+      ...createIdleQuizProgressState(),
       currentSessionId: sessionId,
       sessionStartTime: Date.now(),
-      answeredFlashcardIds: new Set(),
-      cardDifficulty: {},
       shuffledFlashcards: [],
     });
     return sessionId;
@@ -312,12 +393,7 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
       easyCount,
       hardCount,
     );
-    set({
-      currentSessionId: null,
-      sessionStartTime: null,
-      answeredFlashcardIds: new Set(),
-      cardDifficulty: {},
-    });
+    set(createIdleQuizProgressState());
   },
 
   discardQuizSession: async () => {
@@ -325,12 +401,7 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
     if (!currentSessionId) return;
 
     await db.deleteQuizSession(currentSessionId);
-    set({
-      currentSessionId: null,
-      sessionStartTime: null,
-      answeredFlashcardIds: new Set(),
-      cardDifficulty: {},
-    });
+    set(createIdleQuizProgressState());
   },
 
   getGlobalStats: async (interval, startDate) => {
@@ -353,13 +424,8 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
     await db.resetAllData();
     set({
       decks: [],
-      currentDeck: null,
-      flashcards: [],
-      shuffledFlashcards: [],
-      currentSessionId: null,
-      sessionStartTime: null,
-      answeredFlashcardIds: new Set(),
-      cardDifficulty: {},
+      ...createEmptyDeckContentState(),
+      ...createIdleQuizProgressState(),
     });
   },
 }));

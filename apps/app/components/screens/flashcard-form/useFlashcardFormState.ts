@@ -4,7 +4,7 @@ import { useController, useFieldArray, useForm, useWatch } from 'react-hook-form
 import { useTranslation } from 'react-i18next';
 
 import type { OptionField } from '@/components/flashcard-form/types';
-import { useFlashcardsStore } from '@/store/flashcards';
+import { useFlashcardActions } from '@/store/flashcards.selectors';
 import { FlashcardType } from '@/types';
 import { getFlashcardById } from '@/utils/database';
 
@@ -54,7 +54,7 @@ export function useFlashcardFormState({ mode, deckId, flashcardId }: UseFlashcar
     editFlashcard,
     editMultipleChoiceFlashcard,
     removeFlashcard,
-  } = useFlashcardsStore();
+  } = useFlashcardActions();
 
   const [isLoading, setIsLoading] = useState(mode === 'edit');
   const nextId = useRef(3);

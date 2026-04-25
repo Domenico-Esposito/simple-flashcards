@@ -4,7 +4,7 @@ import { View, YStack } from 'tamagui';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { useFlashcardsStore } from '@/store/flashcards';
+import { useCurrentDeckState, useDeckActions } from '@/store/flashcards.selectors';
 import { Header } from '@/components/layout/header';
 import { DeckFormActions } from '@/components/screens/deck-form/DeckFormActions';
 import { DeckFormFields } from '@/components/screens/deck-form/DeckFormFields';
@@ -28,7 +28,8 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
   const { showAlert, AlertDialog } = useAppAlert();
 
-  const { currentDeck, loadDeck, addDeck, editDeck, removeDeck } = useFlashcardsStore();
+  const currentDeck = useCurrentDeckState();
+  const { loadDeck, addDeck, editDeck, removeDeck } = useDeckActions();
 
   const {
     value: title,
@@ -98,7 +99,7 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View flex={1} backgroundColor="$background" testID="deck-form-screen">
+      <View flex={1} bg="$background" testID="deck-form-screen">
         <Header
           title={isEditing ? t('deck.editTitle') : t('deck.createTitle')}
           isModal={isEditing}
@@ -109,7 +110,7 @@ export function DeckFormScreen({ deckId }: DeckFormScreenProps) {
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
-          <YStack gap="$4" flex={1} padding="$4">
+          <YStack gap="$4" flex={1} p="$4">
             <DeckFormFields
               title={title}
               titleError={titleError}

@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
 
 import { ResetActionScreen } from '@/components/screens/settings/ResetActionScreen';
-import { useFlashcardsStore } from '@/store/flashcards';
+import { useMaintenanceActions } from '@/store/flashcards.selectors';
 
 export function ResetDataScreen() {
-  const { resetAllData } = useFlashcardsStore();
+  const { resetAllData } = useMaintenanceActions();
   const { t } = useTranslation();
 
   return (

@@ -1,7 +1,13 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'expo-router';
 
-import { useFlashcardsStore } from '@/store/flashcards';
+import {
+  useFlashcardActions,
+  useFlashcardsState,
+  useQuizActions,
+  useQuizSessionState,
+  useShuffledFlashcardsState,
+} from '@/store/flashcards.selectors';
 import { FlashcardViewer } from '@/components/flashcards/FlashcardViewer';
 import { QuizCompletionCard } from '@/components/quiz/QuizCompletionCard';
 import { QuizAnswerFooter } from '@/components/screens/quiz/QuizAnswerFooter';
@@ -17,19 +23,12 @@ type QuizScreenProps = {
 export function QuizScreen({ deckId }: QuizScreenProps) {
   const router = useRouter();
 
-  const {
-    flashcards,
-    shuffledFlashcards,
-    startQuizSession,
-    endQuizSession,
-    discardQuizSession,
-    recordAnswer,
-    setCardDifficulty,
-    cardDifficulty,
-    sessionStartTime,
-    appendQuizCard,
-    loadFlashcards,
-  } = useFlashcardsStore();
+  const flashcards = useFlashcardsState();
+  const shuffledFlashcards = useShuffledFlashcardsState();
+  const { startQuizSession, endQuizSession, discardQuizSession, recordAnswer, setCardDifficulty } =
+    useQuizActions();
+  const { cardDifficulty, sessionStartTime } = useQuizSessionState();
+  const { appendQuizCard, loadFlashcards } = useFlashcardActions();
 
   const [showCompletionCard, setShowCompletionCard] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);

@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useIsLargeScreen } from '@/hooks/useLargeScreen';
-import { useFlashcardsStore } from '@/store/flashcards';
+import { useFlashcardsInitialization } from '@/store/flashcards.selectors';
 import { getSafeTopInsetForIpadWindowControls } from '@/utils/windowInsets';
 
 const interFonts = {
@@ -30,7 +30,7 @@ export function useRootLayoutState(): RootLayoutState {
   const colorScheme = useColorScheme();
   const theme: RootTheme = colorScheme === 'dark' ? 'dark' : 'light';
   const [isStoreReady, setIsStoreReady] = useState(false);
-  const initialize = useFlashcardsStore((state) => state.initialize);
+  const initialize = useFlashcardsInitialization();
   const isLargeScreen = useIsLargeScreen();
   const insets = useSafeAreaInsets();
   const topInset = getSafeTopInsetForIpadWindowControls(insets.top);

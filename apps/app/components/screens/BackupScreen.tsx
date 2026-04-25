@@ -8,7 +8,7 @@ import {
   pickFileFromBrowser,
   pickRestoreFile,
 } from '@/components/screens/settings/backup';
-import { useFlashcardsStore } from '@/store/flashcards';
+import { useMaintenanceActions } from '@/store/flashcards.selectors';
 import {
   backupDatabaseToFile,
   backupDatabaseToBytes,
@@ -18,7 +18,7 @@ import {
 import { useAppAlert } from '@/hooks/useAppAlert';
 
 export function BackupScreen() {
-  const { refreshAfterRestore } = useFlashcardsStore();
+  const { refreshAfterRestore } = useMaintenanceActions();
   const { showAlert, AlertDialog } = useAppAlert();
   const { t } = useTranslation();
 
@@ -93,10 +93,10 @@ export function BackupScreen() {
   };
 
   return (
-    <View flex={1} backgroundColor="$background" testID="backup-screen">
+    <View flex={1} bg="$background" testID="backup-screen">
       <Header title={t('backup.title')} showBackButton />
 
-      <YStack padding="$4" gap="$4">
+      <YStack p="$4" gap="$4">
         <Text fontSize={14} color="$secondary">
           {t('backup.description')}
         </Text>

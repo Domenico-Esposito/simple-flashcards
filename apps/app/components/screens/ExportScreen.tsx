@@ -1,19 +1,19 @@
 import { useState } from 'react';
-import { FlatList } from 'react-native';
-import { Text, View, YStack, ListItem, ScrollView } from 'tamagui';
+import { FlatList, ScrollView } from 'react-native';
+import { Text, View, YStack, ListItem } from 'tamagui';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { useTranslation } from 'react-i18next';
 
 import { Header } from '@/components/layout/header';
-import { useFlashcardsStore } from '@/store/flashcards';
+import { useDecksState } from '@/store/flashcards.selectors';
 import { exportDeckToJson, shareJsonFile } from '@/utils/import-export';
 import type { Deck } from '@/types';
 import { useAppAlert } from '@/hooks/useAppAlert';
 
 export function ExportScreen() {
   const { t } = useTranslation();
-  const { decks } = useFlashcardsStore();
+  const decks = useDecksState();
   const { showAlert, AlertDialog } = useAppAlert();
   const [exportingDeckId, setExportingDeckId] = useState<number | null>(null);
 
@@ -40,13 +40,13 @@ export function ExportScreen() {
         accessibilityLabel={`export-deck-item-${item.id}`}
         pressTheme
         onPress={() => !isExporting && handleExportDeck(item)}
-        borderRadius="$4"
-        backgroundColor="$background"
+        bg="$background"
         hoverTheme
-        paddingVertical="$3.5"
-        paddingHorizontal="$4"
         disabled={isExporting}
         opacity={isExporting ? 0.5 : 1}
+        borderRadius={16}
+        paddingVertical={14}
+        paddingHorizontal={16}
         iconAfter={
           isExporting ? (
             <MaterialIcons name="hourglass-empty" size={24} color="gray" />
@@ -63,11 +63,11 @@ export function ExportScreen() {
   };
 
   return (
-    <View flex={1} backgroundColor="$background" testID="export-screen">
+    <View flex={1} bg="$background" testID="export-screen">
       <Header title={t('export.title')} showBackButton />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        <YStack padding="$4" gap="$6">
+        <YStack p="$4" gap="$6">
           <YStack gap="$6">
             <Text fontSize={18} fontWeight="600" color="$color">
               {t('export.selectDeck')}
@@ -78,13 +78,13 @@ export function ExportScreen() {
           </YStack>
 
           {decks.length === 0 ? (
-            <YStack padding="$4" paddingTop="$8" alignItems="center">
+            <YStack p="$4" pt="$8" alignItems="center">
               <MaterialIcons name="folder-open" size={64} color="gray" style={{ opacity: 0.3 }} />
               <Text
                 fontSize={16}
                 color="$placeholderColor"
+                mt="$4"
                 textAlign="center"
-                marginTop="$4"
                 testID="export-empty-state"
               >
                 {t('export.noDecks')}
