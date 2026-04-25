@@ -24,21 +24,21 @@ export function QuizExitDialog({
           key="content"
           bordered
           elevate
-          maxWidth={340}
-          paddingHorizontal="$5"
-          paddingVertical="$5"
-          borderRadius="$6"
+          px="$5"
+          py="$5"
           testID="quiz-exit-dialog"
+          maxWidth={340}
+          borderRadius={24}
         >
           <YStack gap="$3">
             <AlertDialog.Title size="$6">{t('quiz.exitTitle')}</AlertDialog.Title>
             <AlertDialog.Description size="$3" color="$secondary">
               {t('quiz.exitMessage')}
             </AlertDialog.Description>
-            <YStack gap="$2" paddingTop="$2">
+            <YStack gap="$2" pt="$2">
               <AlertDialog.Cancel asChild>
                 <Button
-                  borderRadius="$4"
+                  borderRadius={16}
                   testID="quiz-exit-cancel-button"
                   accessibilityLabel="quiz-exit-cancel-button"
                 >
@@ -47,7 +47,7 @@ export function QuizExitDialog({
               </AlertDialog.Cancel>
               <AlertDialog.Action asChild>
                 <Button
-                  borderRadius="$4"
+                  borderRadius={16}
                   onPress={onExitWithSave}
                   testID="quiz-exit-save-button"
                   accessibilityLabel="quiz-exit-save-button"
@@ -58,7 +58,7 @@ export function QuizExitDialog({
               <AlertDialog.Action asChild>
                 <Button
                   theme="red"
-                  borderRadius="$4"
+                  borderRadius={16}
                   onPress={onExitDiscard}
                   testID="quiz-exit-discard-button"
                   accessibilityLabel="quiz-exit-discard-button"
@@ -97,22 +97,22 @@ export function QuizAllEasyDialog({
           key="content"
           bordered
           elevate
-          maxWidth={340}
-          paddingHorizontal="$5"
-          paddingVertical="$5"
-          borderRadius="$6"
+          px="$5"
+          py="$5"
           testID="quiz-all-easy-dialog"
+          maxWidth={340}
+          borderRadius={24}
         >
           <YStack gap="$3">
             <AlertDialog.Title size="$6">{t('quiz.allEasyTitle')}</AlertDialog.Title>
             <AlertDialog.Description size="$3" color="$secondary">
               {t('quiz.allEasyMessage')}
             </AlertDialog.Description>
-            <YStack gap="$2" paddingTop="$2">
+            <YStack gap="$2" pt="$2">
               <AlertDialog.Action asChild>
                 <Button
-                  theme="active"
-                  borderRadius="$4"
+                  themeInverse
+                  borderRadius={16}
                   onPress={onExit}
                   testID="quiz-all-easy-exit-button"
                   accessibilityLabel="quiz-all-easy-exit-button"
@@ -122,7 +122,7 @@ export function QuizAllEasyDialog({
               </AlertDialog.Action>
               <AlertDialog.Cancel asChild>
                 <Button
-                  borderRadius="$4"
+                  borderRadius={16}
                   onPress={onContinue}
                   testID="quiz-all-easy-continue-button"
                   accessibilityLabel="quiz-all-easy-continue-button"

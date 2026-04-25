@@ -33,8 +33,8 @@ export function FlashcardFormToggleBar({
   onSectionToggle,
 }: FlashcardFormToggleBarProps) {
   return (
-    <View backgroundColor="$background" borderBottomWidth={1} borderBottomColor="$borderColor">
-      <XStack gap="$2" paddingHorizontal="$4" paddingVertical="$2">
+    <View bg="$background" borderBottomWidth={1} borderBottomColor="$borderColor">
+      <XStack gap="$2" px="$4" py="$2">
         <CompactBooleanToggle
           value={isMultipleChoice}
           onChange={onCardTypeToggle}

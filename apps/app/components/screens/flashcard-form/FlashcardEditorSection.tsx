@@ -78,7 +78,7 @@ export function FlashcardEditorSection({
 
   if (isIos) {
     return (
-      <View flex={1} paddingHorizontal="$4">
+      <View flex={1} px="$4">
         {editorFields}
       </View>
     );
@@ -103,9 +103,9 @@ export function FlashcardEditorSection({
     >
       <YStack
         flex={isMarkdownEditorFocused ? 1 : undefined}
-        minHeight={isMarkdownEditorFocused ? 0 : undefined}
         gap="$4"
-        paddingHorizontal="$4"
+        px="$4"
+        style={isMarkdownEditorFocused ? { minHeight: 0 } : undefined}
       >
         {editorFields}
       </YStack>

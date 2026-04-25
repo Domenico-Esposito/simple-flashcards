@@ -48,14 +48,14 @@ export function Sidebar() {
   return (
     <YStack
       width={200}
-      backgroundColor="$backgroundStrong"
+      bg="$backgroundStrong"
       borderRightWidth={1}
       borderRightColor="$borderColor"
-      paddingTop={topInset + 16}
-      paddingLeft={insets.left}
-      paddingHorizontal="$2"
+      px="$2"
       gap="$1"
       testID="sidebar-navigation"
+      paddingTop={topInset + 16}
+      paddingLeft={insets.left}
     >
       {tabs.map((tab) => {
         const tabPath = tab.path.toString();
@@ -64,18 +64,18 @@ export function Sidebar() {
         return (
           <Pressable key={tabPath} onPress={() => router.push(tab.path)} testID={tab.testID}>
             <XStack
-              paddingVertical="$3"
-              paddingHorizontal="$3"
-              borderRadius="$3"
-              backgroundColor={isActive ? '$background' : 'transparent'}
+              py="$3"
+              px="$3"
+              bg={isActive ? '$background' : 'transparent'}
               gap="$3"
+              borderRadius={12}
               alignItems="center"
             >
               <MaterialIcons name={tab.icon} size={22} color={isActive ? accentColor : '#888'} />
               <Text
                 fontSize={15}
                 fontWeight={isActive ? '600' : '400'}
-                color={isActive ? '$color' : '$gray10'}
+                color={isActive ? '$color' : '$secondary'}
               >
                 {tab.label}
               </Text>

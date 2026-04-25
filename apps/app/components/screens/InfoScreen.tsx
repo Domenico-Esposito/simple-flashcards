@@ -9,11 +9,11 @@ export function InfoScreen() {
   const { t } = useTranslation();
 
   return (
-    <View flex={1} backgroundColor="$background" testID="info-screen">
+    <View flex={1} bg="$background" testID="info-screen">
       <Header title={t('info.title')} showBackButton />
 
-      <YStack padding="$4" gap="$6">
-        <View backgroundColor="$backgroundStrong" padding="$4" borderRadius="$3" gap="$2">
+      <YStack p="$4" gap="$6">
+        <View bg="$backgroundStrong" p="$4" gap="$2" borderRadius={12}>
           <XStack justifyContent="space-between">
             <Text color="$secondary">{t('info.version')}</Text>
             <Text color="$color">1.0.0</Text>
@@ -28,7 +28,7 @@ export function InfoScreen() {
           {t('info.tagline')}
         </Text>
 
-        <YStack gap="$2" marginTop="$4">
+        <YStack gap="$2" mt="$4">
           <Text fontSize={14} color="$secondary" textAlign="center">
             {t('info.themeSysFollow')}
           </Text>

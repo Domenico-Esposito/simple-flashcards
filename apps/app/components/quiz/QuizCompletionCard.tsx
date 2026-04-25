@@ -98,10 +98,12 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
     <Modal transparent visible animationType="none" statusBarTranslucent>
       <View
         flex={1}
-        backgroundColor="rgba(0,0,0,0.5)"
-        justifyContent="center"
-        alignItems="center"
-        paddingHorizontal="$4"
+        px="$4"
+        style={{
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
         testID="quiz-completion-card"
       >
         <Animated.View
@@ -113,9 +115,9 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
             cardAnimatedStyle,
           ]}
         >
-          <View backgroundColor={cardBg} borderRadius="$10" padding="$6" elevation={10}>
+          <View p="$6" borderRadius={40} style={{ backgroundColor: cardBg, elevation: 10 }}>
             {/* Checkmark icon */}
-            <View alignItems="center" marginBottom="$4">
+            <View mb="$4" alignItems="center">
               <Animated.View
                 style={[
                   {
@@ -131,89 +133,95 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
             </View>
 
             {/* Title */}
-            <Text
-              fontSize={24}
-              fontWeight="700"
-              color={textPrimary}
-              textAlign="center"
-              marginBottom="$2"
-            >
-              {t('quiz.completionTitle')}
-            </Text>
-            <Text fontSize={14} color={textSecondary} textAlign="center" marginBottom="$5">
+                <Text
+                  fontSize={24}
+                  fontWeight="700"
+                  mb="$2"
+                  textAlign="center"
+                  style={{ color: textPrimary }}
+                >
+                  {t('quiz.completionTitle')}
+                </Text>
+            <Text fontSize={14} mb="$5" textAlign="center" style={{ color: textSecondary }}>
               {t('quiz.completionSubtitle', { count: totalCount })}
             </Text>
 
             {/* Stats grid */}
             <Animated.View style={statsAnimatedStyle}>
-              <YStack gap="$3" marginBottom="$5">
+              <YStack gap="$3" mb="$5">
                 {/* Total cards - highlighted */}
                 <View
-                  backgroundColor={colors.accentBgTint}
-                  borderRadius="$4"
-                  padding="$4"
+                  p="$4"
+                  style={{ backgroundColor: colors.accentBgTint }}
+                  borderRadius={16}
                   alignItems="center"
                 >
-                  <Text fontSize={40} fontWeight="800" color={colors.accent}>
+                  <Text fontSize={40} fontWeight="800" style={{ color: colors.accent }}>
                     {totalCount}
                   </Text>
-                  <Text fontSize={13} color={textSecondary} marginTop="$1">
+                  <Text fontSize={13} mt="$1" style={{ color: textSecondary }}>
                     {t('quiz.totalCards')}
                   </Text>
                 </View>
 
                 {/* Easy / Medium / Hard row */}
-                <View flexDirection="row" gap="$2">
+                <View gap="$2" flexDirection="row">
                   <View
                     flex={1}
-                    backgroundColor={colors.successBgTint}
-                    borderRadius="$4"
-                    padding="$3"
+                    p="$3"
+                    style={{
+                      backgroundColor: colors.successBgTint,
+                    }}
+                    borderRadius={16}
                     alignItems="center"
                   >
-                    <View flexDirection="row" alignItems="center" gap="$1">
+                    <View gap="$1" flexDirection="row" alignItems="center">
                       <MaterialIcons name="sentiment-satisfied" size={18} color={colors.success} />
-                      <Text fontSize={22} fontWeight="700" color={colors.success}>
+                      <Text fontSize={22} fontWeight="700" style={{ color: colors.success }}>
                         {easyCount}
                       </Text>
                     </View>
-                    <Text fontSize={11} color={textSecondary} marginTop="$1">
+                    <Text fontSize={11} mt="$1" style={{ color: textSecondary }}>
                       {t('quiz.easy')}
                     </Text>
                   </View>
 
                   <View
                     flex={1}
-                    backgroundColor={colors.warningBgTint}
-                    borderRadius="$4"
-                    padding="$3"
+                    p="$3"
+                    style={{
+                      backgroundColor: colors.warningBgTint,
+                    }}
+                    borderRadius={16}
                     alignItems="center"
                   >
-                    <View flexDirection="row" alignItems="center" gap="$1">
+                    <View gap="$1" flexDirection="row" alignItems="center">
                       <MaterialIcons name="sentiment-neutral" size={18} color={colors.warning} />
-                      <Text fontSize={22} fontWeight="700" color={colors.warning}>
+                      <Text fontSize={22} fontWeight="700" style={{ color: colors.warning }}>
                         {mediumCount}
                       </Text>
                     </View>
-                    <Text fontSize={11} color={textSecondary} marginTop="$1">
+                    <Text fontSize={11} mt="$1" style={{ color: textSecondary }}>
                       {t('quiz.medium')}
                     </Text>
                   </View>
 
                   <View
                     flex={1}
-                    backgroundColor={colors.errorBgTint}
-                    borderRadius="$4"
-                    padding="$3"
+                    p="$3"
+                    style={{
+                      backgroundColor: colors.errorBgTint,
+                    }}
+                    borderRadius={16}
                     alignItems="center"
                   >
-                    <View flexDirection="row" alignItems="center" gap="$1">
+                    <View gap="$1" flexDirection="row" alignItems="center">
                       <MaterialIcons name="sentiment-dissatisfied" size={18} color={colors.error} />
-                      <Text fontSize={22} fontWeight="700" color={colors.error}>
+                      <Text fontSize={22} fontWeight="700" style={{ color: colors.error }}>
                         {hardCount}
                       </Text>
                     </View>
-                    <Text fontSize={11} color={textSecondary} marginTop="$1">
+                    <Text fontSize={11} mt="$1" style={{ color: textSecondary }}>
                       {t('quiz.hard')}
                     </Text>
                   </View>
@@ -221,18 +229,18 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
 
                 {/* Time row */}
                 <View
-                  backgroundColor={colors.chipBg}
-                  borderRadius="$4"
-                  padding="$3"
+                  p="$3"
+                  borderRadius={16}
                   alignItems="center"
+                  style={{ backgroundColor: colors.chipBg }}
                 >
-                  <View flexDirection="row" alignItems="center" gap="$2">
+                  <View gap="$2" flexDirection="row" alignItems="center">
                     <MaterialIcons name="timer" size={20} color={textSecondary} />
-                    <Text fontSize={20} fontWeight="600" color={textPrimary}>
+                    <Text fontSize={20} fontWeight="600" style={{ color: textPrimary }}>
                       {timeString}
                     </Text>
                   </View>
-                  <Text fontSize={12} color={textSecondary} marginTop="$1">
+                  <Text fontSize={12} mt="$1" style={{ color: textSecondary }}>
                     {t('quiz.totalTime')}
                   </Text>
                 </View>
@@ -243,12 +251,12 @@ export function QuizCompletionCard({ stats, onClose }: QuizCompletionCardProps) 
             <Animated.View style={buttonAnimatedStyle}>
               <Button
                 size="$5"
-                theme="active"
-                borderRadius="$4"
+                themeInverse
                 onPress={onClose}
                 fontWeight="600"
                 testID="quiz-completion-close-button"
                 accessibilityLabel="quiz-completion-close-button"
+                borderRadius={16}
               >
                 {t('quiz.closeButton')}
               </Button>

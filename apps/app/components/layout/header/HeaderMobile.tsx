@@ -35,9 +35,18 @@ export function HeaderMobile({
   const topPadding = getHeaderTopPadding(insets.top, isModal);
 
   return (
-    <Stack paddingTop={topPadding} backgroundColor="$background" paddingBottom="$2">
+    <Stack pt={topPadding} bg="$background" pb="$2">
       <ZStack gap="$2" minHeight={56}>
-        <YStack flex={1} alignItems="center" justifyContent="center" absolute>
+        <YStack
+          flex={1}
+          position="absolute"
+          top={0}
+          right={0}
+          bottom={0}
+          left={0}
+          alignItems="center"
+          justifyContent="center"
+        >
           <Heading size="$4" numberOfLines={1} color="$color" fontWeight="600">
             {truncateText(title, maxTitleLength)}
           </Heading>
@@ -50,9 +59,9 @@ export function HeaderMobile({
 
         <XStack
           flex={1}
+          px="$4"
           justifyContent={showBackButton ? 'space-between' : 'flex-end'}
           alignItems="center"
-          paddingHorizontal="$4"
         >
           {showBackButton && (
             <Button
@@ -68,7 +77,7 @@ export function HeaderMobile({
           )}
 
           {(iconActions.length > 0 || menuActions.length > 0) && (
-            <XStack alignItems="center" gap="$1">
+            <XStack gap="$1" alignItems="center">
               {iconActions.map((action, index) => (
                 <Button
                   key={index}
@@ -102,27 +111,27 @@ export function HeaderMobile({
                   </Popover.Trigger>
 
                   <Popover.Content
-                    marginTop="$1"
-                    backgroundColor="$background"
-                    borderRadius="$4"
-                    padding="$0"
+                    mt="$1"
+                    bg="$background"
+                    p="$0"
                     enterStyle={{ opacity: 0, y: -5 }}
                     exitStyle={{ opacity: 0, y: -5 }}
                     animation="bouncy"
                     overflow="hidden"
+                    borderRadius={16}
                   >
                     <YStack>
                       {menuActions.map((action, index) => (
                         <Button
                           key={index}
-                          borderRadius="$0"
                           borderWidth="$0"
                           size="$4"
-                          justifyContent="flex-start"
-                          paddingHorizontal="$3"
+                          px="$3"
                           onPress={() => handleActionPress(action)}
                           testID={action.testID ?? `header-action-${index}`}
                           accessibilityLabel={action.testID ?? `header-action-${index}`}
+                          borderRadius={0}
+                          justifyContent="flex-start"
                         >
                           <XStack gap="$3" alignItems="center">
                             <MaterialIcons
@@ -130,7 +139,9 @@ export function HeaderMobile({
                               size={20}
                               color={getActionColor(action, headerIconColor)}
                             />
-                            <Text color={action.color ?? '$color'}>{action.label}</Text>
+                            <Text style={action.color ? { color: action.color } : undefined}>
+                              {action.label}
+                            </Text>
                           </XStack>
                         </Button>
                       ))}

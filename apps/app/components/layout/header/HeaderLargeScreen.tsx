@@ -17,11 +17,11 @@ export function HeaderLargeScreen({
 }: HeaderLayoutProps) {
   return (
     <XStack
-      backgroundColor="$background"
-      paddingVertical="$3"
-      paddingHorizontal="$4"
-      alignItems="center"
+      bg="$background"
+      py="$3"
+      px="$4"
       gap="$4"
+      alignItems="center"
       minHeight={56}
       testID="large-screen-header"
     >
@@ -65,25 +65,25 @@ export function HeaderLargeScreen({
                 />
               </Button>
             ) : (
-              <Button
-                key={index}
-                size="$4"
-                onPress={action.onPress}
-                borderRadius="$3"
-                testID={action.testID ?? `header-action-${index}`}
-                accessibilityLabel={action.testID ?? `header-action-${index}`}
-              >
-                <XStack gap="$2" alignItems="center">
-                  <MaterialIcons
-                    name={action.icon}
-                    size={18}
-                    color={getActionColor(action, headerIconColor)}
-                  />
-                  <Text color={action.color ?? '$color'} fontSize={14}>
-                    {action.label}
-                  </Text>
-                </XStack>
-              </Button>
+                <Button
+                  key={index}
+                  size="$4"
+                  onPress={action.onPress}
+                  borderRadius={12}
+                  testID={action.testID ?? `header-action-${index}`}
+                  accessibilityLabel={action.testID ?? `header-action-${index}`}
+                >
+                  <XStack gap="$2" alignItems="center">
+                    <MaterialIcons
+                      name={action.icon}
+                      size={18}
+                      color={getActionColor(action, headerIconColor)}
+                    />
+                    <Text fontSize={14} style={action.color ? { color: action.color } : undefined}>
+                      {action.label}
+                    </Text>
+                  </XStack>
+                </Button>
             ),
           )}
         </XStack>

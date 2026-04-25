@@ -19,7 +19,7 @@ export function HomeDeckCollection({
         contentContainerStyle={{ paddingBottom: LIST_BOTTOM_PADDING }}
         showsVerticalScrollIndicator={false}
       >
-        <View flexDirection="row" flexWrap="wrap" margin={-6} testID="home-deck-grid">
+        <View testID="home-deck-grid" flexDirection="row" flexWrap="wrap" margin={-6}>
           {decks.map((item) => (
             <View key={item.id} width="50%" padding={6}>
               <DeckCard

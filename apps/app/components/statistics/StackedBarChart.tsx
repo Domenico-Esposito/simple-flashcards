@@ -94,12 +94,8 @@ export function StackedBarChart({
             ) : (
               showXAxis && (
                 <View
-                  position="absolute"
-                  bottom={0}
-                  left={0}
-                  right={0}
                   height={1}
-                  backgroundColor={resolvedGridColor}
+                  style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: resolvedGridColor }}
                 />
               )
             )}
@@ -108,10 +104,8 @@ export function StackedBarChart({
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View>
               <View
-                flexDirection="row"
-                alignItems="flex-end"
                 height={height + valueTopHeight + topPadding}
-                paddingLeft={4}
+                style={{ flexDirection: 'row', alignItems: 'flex-end', paddingLeft: 4 }}
               >
                 {data.map((item, index) => {
                   const totalHeight = item.stacks.reduce(
@@ -124,9 +118,9 @@ export function StackedBarChart({
                   );
 
                   return (
-                    <View key={index} alignItems="center" marginHorizontal={spacing}>
+                    <View key={index} style={{ alignItems: 'center', marginHorizontal: spacing }}>
                       {showValues && totalValue > 0 && (
-                        <Text fontSize={10} color={resolvedTextColor} marginBottom={2}>
+                        <Text fontSize={10} style={{ color: resolvedTextColor, marginBottom: 2 }}>
                           {totalValue}
                         </Text>
                       )}
@@ -144,17 +138,14 @@ export function StackedBarChart({
               </View>
 
               <View
-                flexDirection="row"
-                paddingLeft={4}
                 height={xAxisLabelHeight}
-                alignItems="center"
+                style={{ flexDirection: 'row', paddingLeft: 4, alignItems: 'center' }}
               >
                 {data.map((item, index) => (
-                  <View key={index} width={barWidth} alignItems="center" marginHorizontal={spacing}>
+                  <View key={index} width={barWidth} style={{ alignItems: 'center', marginHorizontal: spacing }}>
                     <Text
                       fontSize={11}
-                      color={resolvedTextColor}
-                      style={labelStyle}
+                      style={[{ color: resolvedTextColor }, labelStyle]}
                       numberOfLines={1}
                     >
                       {item.label}

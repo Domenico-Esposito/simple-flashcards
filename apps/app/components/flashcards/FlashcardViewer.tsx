@@ -13,7 +13,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 
-import { useFlashcardsStore } from '@/store/flashcards';
+import {
+  useFlashcardActions,
+  useShuffledFlashcardsState,
+} from '@/store/flashcards.selectors';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { MarkdownContent } from '@/components/ui/MarkdownContent';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -68,7 +71,8 @@ export function FlashcardViewer({
   const colorScheme = useColorScheme();
   const { t } = useTranslation();
 
-  const { shuffledFlashcards, loadFlashcardsForQuiz } = useFlashcardsStore();
+  const shuffledFlashcards = useShuffledFlashcardsState();
+  const { loadFlashcardsForQuiz } = useFlashcardActions();
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -337,9 +341,9 @@ export function FlashcardViewer({
     return (
       <View
         flex={1}
+        bg="$background"
         justifyContent="center"
         alignItems="center"
-        backgroundColor="$background"
         testID="flashcard-viewer-loading"
       >
         <Text color="$secondary">{t('common.loading')}</Text>
@@ -361,17 +365,17 @@ export function FlashcardViewer({
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View
         flex={1}
-        paddingTop={topPadding}
-        backgroundColor="$background"
+        pt={topPadding}
+        bg="$background"
         testID="flashcard-viewer-screen"
       >
         {/* Header */}
         <View
           flexDirection="row"
+          px="$4"
+          py="$3"
           alignItems="center"
           justifyContent="space-between"
-          paddingHorizontal="$4"
-          paddingVertical="$3"
         >
           <Pressable
             onPress={onExit}
@@ -390,7 +394,9 @@ export function FlashcardViewer({
 
         {/* Card area */}
         <View
-          style={{ flex: 1, position: 'relative', overflow: 'visible' }}
+          flex={1}
+          position="relative"
+          overflow="visible"
           testID="flashcard-viewer-card"
         >
           <GestureDetector gesture={composedGesture}>
@@ -404,7 +410,7 @@ export function FlashcardViewer({
                 animatedCardStyle,
               ]}
             >
-              <View style={{ flex: 1, position: 'relative', overflow: 'visible' }}>
+              <View flex={1} position="relative" overflow="visible">
                 {/* Front face — Question (+ MC options) */}
                 <Animated.View
                   style={[
@@ -426,8 +432,8 @@ export function FlashcardViewer({
                     <Animated.View
                       style={[{ width: '100%', height: '100%' }, animatedContentStyle]}
                     >
-                      <View width="100%" height="100%" paddingHorizontal="$6">
-                        <YStack flex={1} paddingVertical="$6" gap={isMC ? '$4' : undefined}>
+                      <View width="100%" height="100%" px="$6">
+                        <YStack flex={1} py="$6" gap={isMC ? '$4' : undefined}>
                           <View
                             style={{
                               overflow: 'hidden',
@@ -444,7 +450,7 @@ export function FlashcardViewer({
                                 setQuestionContentHeight(e.nativeEvent.layout.height)
                               }
                             >
-                              <Text fontSize={14} color="$secondary" marginBottom="$2">
+                              <Text fontSize={14} color="$secondary" mb="$2">
                                 {t('flashcard.questionLabel')}
                               </Text>
                               <MarkdownContent markdown={currentCard.question} />
@@ -452,12 +458,12 @@ export function FlashcardViewer({
 
                             {isQuestionOverflow && (
                               <View
+                                pointerEvents="box-none"
                                 position="absolute"
                                 bottom={16}
                                 left={0}
                                 right={0}
                                 alignItems="center"
-                                pointerEvents="box-none"
                               >
                                 <GestureDetector gesture={questionReadMoreTap}>
                                   <View
@@ -467,9 +473,9 @@ export function FlashcardViewer({
                                   >
                                     <Button
                                       size="$3"
-                                      theme="active"
-                                      borderRadius="$10"
+                                      themeInverse
                                       pointerEvents="none"
+                                      borderRadius={999}
                                     >
                                       {t('flashcard.readMore')}
                                     </Button>
@@ -481,7 +487,7 @@ export function FlashcardViewer({
 
                           {isMC && (
                             <YStack gap="$2" flexShrink={0}>
-                              <Text fontSize={12} color="$secondary" marginBottom="$1">
+                              <Text fontSize={12} color="$secondary" mb="$1">
                                 {t('flashcard.selectAnswer')}
                               </Text>
                               {currentShuffledOptions.map((option, index) => {
@@ -495,16 +501,14 @@ export function FlashcardViewer({
                                     accessibilityLabel={`flashcard-viewer-option-${index}`}
                                   >
                                     <View
-                                      paddingHorizontal="$4"
-                                      paddingVertical="$3"
-                                      borderRadius="$3"
-                                      style={{
-                                        borderWidth: 2,
-                                        borderColor: isSelected ? colors.accent : colors.border,
-                                        backgroundColor: isSelected
-                                          ? colors.accentBgTint
-                                          : 'transparent',
-                                      }}
+                                      px="$4"
+                                      py="$3"
+                                      borderWidth={2}
+                                      borderColor={isSelected ? colors.accent : colors.border}
+                                      backgroundColor={
+                                        isSelected ? colors.accentBgTint : 'transparent'
+                                      }
+                                      borderRadius={12}
                                     >
                                       <Text fontSize={15} color="$color">
                                         {option.text}
@@ -545,20 +549,18 @@ export function FlashcardViewer({
                       <View
                         width="100%"
                         height="100%"
-                        paddingHorizontal="$6"
-                        paddingBottom={answerBottomPadding}
+                        px="$6"
+                        pb={answerBottomPadding}
                       >
                         {isMC ? (
-                          <YStack flex={1} paddingVertical="$6" gap="$4">
+                          <YStack flex={1} py="$6" gap="$4">
                             <View
-                              style={{
-                                overflow: 'hidden',
-                                flex: 1,
-                                minHeight: 0,
-                                justifyContent: isMcAnswerQuestionOverflow
-                                  ? 'flex-start'
-                                  : 'center',
-                              }}
+                              overflow="hidden"
+                              flex={1}
+                              minHeight={0}
+                              justifyContent={
+                                isMcAnswerQuestionOverflow ? 'flex-start' : 'center'
+                              }
                               onLayout={(e: LayoutChangeEvent) =>
                                 setMcAnswerQuestionLayoutHeight(e.nativeEvent.layout.height)
                               }
@@ -568,7 +570,7 @@ export function FlashcardViewer({
                                   setMcAnswerQuestionContentHeight(e.nativeEvent.layout.height)
                                 }
                               >
-                                <Text fontSize={14} color="$secondary" marginBottom="$2">
+                                <Text fontSize={14} color="$secondary" mb="$2">
                                   {t('flashcard.questionLabel')}
                                 </Text>
                                 <MarkdownContent markdown={currentCard.question} />
@@ -576,12 +578,12 @@ export function FlashcardViewer({
 
                               {isMcAnswerQuestionOverflow && (
                                 <View
+                                  pointerEvents="box-none"
                                   position="absolute"
                                   bottom={16}
                                   left={0}
                                   right={0}
                                   alignItems="center"
-                                  pointerEvents="box-none"
                                 >
                                   <GestureDetector gesture={mcAnswerQuestionReadMoreTap}>
                                     <View
@@ -591,9 +593,9 @@ export function FlashcardViewer({
                                     >
                                       <Button
                                         size="$3"
-                                        theme="active"
-                                        borderRadius="$10"
+                                        themeInverse
                                         pointerEvents="none"
+                                        borderRadius={999}
                                       >
                                         {t('flashcard.readMore')}
                                       </Button>
@@ -615,7 +617,7 @@ export function FlashcardViewer({
                                       fontSize={14}
                                       fontWeight="700"
                                       color={isCorrectAnswer ? colors.success : colors.error}
-                                      marginBottom="$1"
+                                      mb="$1"
                                     >
                                       {isCorrectAnswer
                                         ? t('flashcard.correct')
@@ -637,9 +639,9 @@ export function FlashcardViewer({
                                       return (
                                         <View
                                           key={option.id}
-                                          paddingHorizontal="$4"
-                                          paddingVertical="$3"
-                                          borderRadius="$3"
+                                          px="$4"
+                                          py="$3"
+                                          borderRadius={12}
                                           style={{
                                             borderWidth: 2,
                                             borderColor: optBorderColor,
@@ -659,23 +661,21 @@ export function FlashcardViewer({
                           </YStack>
                         ) : (
                           <View
-                            style={{
-                              overflow: 'hidden',
-                              flex: 1,
-                              minHeight: 0,
-                              justifyContent: isAnswerOverflow ? 'flex-start' : 'center',
-                            }}
+                            overflow="hidden"
+                            flex={1}
+                            minHeight={0}
+                            justifyContent={isAnswerOverflow ? 'flex-start' : 'center'}
                             onLayout={(e: LayoutChangeEvent) =>
                               setAnswerLayoutHeight(e.nativeEvent.layout.height)
                             }
                           >
                             <YStack
-                              paddingVertical="$6"
+                              py="$6"
                               onLayout={(e: LayoutChangeEvent) =>
                                 setAnswerContentHeight(e.nativeEvent.layout.height)
                               }
                             >
-                              <Text fontSize={14} color="$secondary" marginBottom="$2">
+                              <Text fontSize={14} color="$secondary" mb="$2">
                                 {t('flashcard.answerLabel')}
                               </Text>
                               <MarkdownContent
@@ -684,12 +684,12 @@ export function FlashcardViewer({
                             </YStack>
                             {isAnswerOverflow && (
                               <View
+                                pointerEvents="box-none"
                                 position="absolute"
                                 bottom={16}
                                 left={0}
                                 right={0}
                                 alignItems="center"
-                                pointerEvents="box-none"
                               >
                                 <GestureDetector gesture={answerReadMoreTap}>
                                   <View
@@ -699,11 +699,11 @@ export function FlashcardViewer({
                                   >
                                     <Button
                                       size="$3"
-                                      theme="active"
-                                      borderRadius="$10"
+                                      themeInverse
                                       pointerEvents="none"
+                                      borderRadius={999}
                                     >
-                                      {t('flashcard.readMore')} 123
+                                      {t('flashcard.readMore')}
                                     </Button>
                                   </View>
                                 </GestureDetector>
@@ -723,18 +723,18 @@ export function FlashcardViewer({
 
         {/* Navigation hints */}
         <View
-          paddingBottom={insets.bottom}
-          paddingTop={16}
+          pb={insets.bottom}
+          pt={16}
+          bg="transparent"
           alignItems="center"
           justifyContent="center"
-          backgroundColor="$transparent"
           zIndex={0}
         >
           <Text
             color="$placeholderColor"
             fontSize={12}
-            textAlign="center"
             testID="flashcard-viewer-hint"
+            textAlign="center"
           >
             {(hintText ?? defaultHint)(showAnswer)}
           </Text>

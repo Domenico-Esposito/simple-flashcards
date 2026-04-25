@@ -25,15 +25,17 @@ export function ActionTile({
   return (
     <Pressable onPress={onPress} style={{ flex: 1 }} testID={testID} accessibilityLabel={testID}>
       <View
-        backgroundColor={backgroundColor}
-        borderRadius="$4"
-        padding="$4"
-        alignItems="center"
-        justifyContent="center"
+        p="$4"
         gap="$2"
+        style={{
+          backgroundColor,
+          borderRadius: 16,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       >
         <MaterialIcons name={icon} size={24} color={iconColor} />
-        <Text fontSize={14} fontWeight="600" color={textColor}>
+        <Text fontSize={14} fontWeight="600" style={{ color: textColor }}>
           {label}
         </Text>
       </View>

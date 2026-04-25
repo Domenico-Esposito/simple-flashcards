@@ -63,18 +63,20 @@ export function DeckFormFields({
           accessibilityLabel="deck-form-description-input"
           size="$4"
           flex={1}
-          minHeight={DESCRIPTION_MIN_HEIGHT}
-          maxHeight={descriptionMaxHeight}
           value={description}
           onChangeText={onDescriptionChangeText}
           placeholder={descriptionPlaceholder}
           borderWidth={0}
-          backgroundColor="transparent"
-          paddingHorizontal={0}
-          paddingVertical={0}
           fontSize={16}
-          color="$color"
-          placeholderTextColor="$color9"
+          placeholderTextColor={theme.color9.val}
+          style={{
+            minHeight: DESCRIPTION_MIN_HEIGHT,
+            maxHeight: descriptionMaxHeight,
+            backgroundColor: 'transparent',
+            paddingHorizontal: 0,
+            paddingVertical: 0,
+            color: theme.color.val,
+          }}
         />
       </YStack>
     </>

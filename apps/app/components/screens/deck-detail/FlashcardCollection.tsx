@@ -25,7 +25,7 @@ export function FlashcardCollection({
         contentContainerStyle={{ paddingBottom: LIST_BOTTOM_PADDING }}
         showsVerticalScrollIndicator={false}
       >
-        <View flexDirection="row" flexWrap="wrap" margin={-6} testID="deck-detail-flashcard-grid">
+        <View testID="deck-detail-flashcard-grid" flexDirection="row" flexWrap="wrap" margin={-6}>
           {flashcards.map((item) => (
             <View key={item.id} width="50%" padding={6}>
               <FlashcardListItem

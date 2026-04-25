@@ -13,8 +13,8 @@ type QuizAnswerFooterProps = {
 export function QuizAnswerFooter({ cardId, currentRating, onRate }: QuizAnswerFooterProps) {
   return (
     <GestureDetector gesture={Gesture.Tap()}>
-      <View position="absolute" bottom={16} left={0} right={0} paddingHorizontal="$4">
-        <View flexDirection="row" gap="$2" width="100%">
+      <View px="$4" position="absolute" bottom={16} left={0} right={0}>
+        <View gap="$2" width="100%" flexDirection="row">
           <DifficultyButton
             type="hard"
             onPress={() => onRate(cardId, 'hard')}

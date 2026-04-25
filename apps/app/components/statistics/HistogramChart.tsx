@@ -15,7 +15,7 @@ export function HistogramChart({ data, height = 200 }: Props) {
   if (!data || data.length === 0) {
     return (
       <View height={height} alignItems="center" justifyContent="center">
-        <Text color="$gray10" fontSize={14}>
+        <Text color="$secondary" fontSize={14}>
           {t('stats.noData')}
         </Text>
       </View>

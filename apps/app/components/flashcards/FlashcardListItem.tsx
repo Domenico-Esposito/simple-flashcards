@@ -40,9 +40,9 @@ export function FlashcardListItem({
     >
       {({ pressed }) => (
         <View
-          backgroundColor={pressed ? '$backgroundPress' : '$backgroundStrong'}
-          borderRadius="$4"
-          padding="$4"
+          bg={pressed ? '$backgroundPress' : '$backgroundStrong'}
+          p="$4"
+          borderRadius={16}
         >
           <XStack gap="$3" alignItems="center">
             <YStack flex={1} gap="$2">
@@ -60,7 +60,7 @@ export function FlashcardListItem({
               <Text
                 fontSize={13}
                 lineHeight={18}
-                color="$gray10"
+                color="$secondary"
                 numberOfLines={2}
                 height={36}
                 testID={`${flashcardItemTestID}-answer`}

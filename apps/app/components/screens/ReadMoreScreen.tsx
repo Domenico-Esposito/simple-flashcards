@@ -19,17 +19,11 @@ export function ReadMoreScreen({ type, content }: ReadMoreScreenProps) {
   const title = type === 'question' ? t('flashcard.question') : t('flashcard.answer');
 
   return (
-    <View flex={1} backgroundColor="$background" testID="read-more-screen">
+    <View flex={1} bg="$background" testID="read-more-screen">
       <Header title={title} isModal />
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: insets.bottom }}>
-        <Stack
-          gap="$4"
-          flex={1}
-          paddingHorizontal="$4"
-          paddingVertical="$2"
-          testID="read-more-content"
-        >
+        <Stack gap="$4" flex={1} px="$4" py="$2" testID="read-more-content">
           <MarkdownContent markdown={content || ''} />
         </Stack>
       </ScrollView>

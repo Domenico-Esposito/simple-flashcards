@@ -15,14 +15,9 @@ export function StatisticsChartSection({ title, loading, data }: StatisticsChart
       <Text fontSize={18} fontWeight="600" color="$color">
         {title}
       </Text>
-      <View
-        backgroundColor="$backgroundStrong"
-        borderRadius="$4"
-        padding="$4"
-        testID="statistics-chart-section"
-      >
+      <View bg="$backgroundStrong" p="$4" testID="statistics-chart-section" borderRadius={16}>
         {loading ? (
-          <YStack alignItems="center" justifyContent="center" flex={1}>
+          <YStack flex={1} alignItems="center" justifyContent="center">
             <Spinner size="large" color="$primary" />
           </YStack>
         ) : (

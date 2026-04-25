@@ -33,9 +33,9 @@ export function DeckCard({ deck, flashcardCount, onPress, onLongPress, testID }:
     >
       {({ pressed }) => (
         <View
-          backgroundColor={pressed ? '$backgroundPress' : '$backgroundStrong'}
-          borderRadius="$4"
-          padding="$4"
+          bg={pressed ? '$backgroundPress' : '$backgroundStrong'}
+          p="$4"
+          borderRadius={16}
         >
           <XStack gap="$4" alignItems="stretch" minHeight={80}>
             <YStack justifyContent="center">
@@ -53,21 +53,21 @@ export function DeckCard({ deck, flashcardCount, onPress, onLongPress, testID }:
                   {deck.title}
                 </Text>
                 {deck.description && (
-                  <Text fontSize={14} color="$gray10" numberOfLines={1}>
+                  <Text fontSize={14} color="$secondary" numberOfLines={1}>
                     {deck.description}
                   </Text>
                 )}
               </YStack>
-              <XStack gap="$3" marginTop="$2">
-                <XStack alignItems="center" gap="$1">
+              <XStack gap="$3" mt="$2">
+                <XStack gap="$1" alignItems="center">
                   <MaterialIcons name="layers" size={14} color={colors.muted} />
-                  <Text fontSize={12} color="$gray9">
+                  <Text fontSize={12} color="$secondary">
                     {t('deck.cardCount', { count: flashcardCount })}
                   </Text>
                 </XStack>
-                <XStack alignItems="center" gap="$1">
+                <XStack gap="$1" alignItems="center">
                   <MaterialIcons name="schedule" size={14} color={colors.muted} />
-                  <Text fontSize={12} color="$gray9">
+                  <Text fontSize={12} color="$secondary">
                     {formatDate(deck.createdAt)}
                   </Text>
                 </XStack>

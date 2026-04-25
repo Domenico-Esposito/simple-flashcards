@@ -16,7 +16,7 @@ export function StatisticsSummarySection({ deckId, kpis }: StatisticsSummarySect
 
   return (
     <>
-      <Separator marginVertical="$2" />
+      <Separator my="$2" />
       <YStack gap="$4" testID="statistics-summary-section">
         <Text fontSize={18} fontWeight="600" color="$color">
           {t('stats.summary')}

@@ -49,15 +49,12 @@ export function StatisticsContent({
   return (
     <View
       flex={1}
-      backgroundColor="$background"
+      bg="$background"
       testID={deckId ? 'deck-statistics-screen' : 'statistics-screen'}
     >
       <Header title={resolvedTitle} showBackButton={showBackButton} />
-      <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 50 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <YStack gap="$5">
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <YStack gap="$5" px="$4" pb={50}>
           <StatisticsIntervalSelector
             interval={interval}
             intervals={intervals}
@@ -67,11 +64,11 @@ export function StatisticsContent({
           {error && (
             <YStack
               gap="$1"
-              padding="$3"
-              borderRadius="$4"
+              p="$3"
               borderWidth={1}
               borderColor="$red8"
-              backgroundColor="$red2"
+              bg="$red2"
+              borderRadius={16}
             >
               <Text fontSize={14} fontWeight="600" color="$red10">
                 {t('stats.loadError')}

@@ -47,10 +47,10 @@ export function ResetActionScreen({
   };
 
   return (
-    <View flex={1} backgroundColor="$background" testID={testID}>
+    <View flex={1} bg="$background" testID={testID}>
       <Header title={title} showBackButton />
 
-      <YStack padding="$4" gap="$4">
+      <YStack p="$4" gap="$4">
         {descriptions.map((description) => (
           <Text key={description} fontSize={14} color="$secondary">
             {description}
@@ -61,7 +61,7 @@ export function ResetActionScreen({
           size="$4"
           theme="red"
           onPress={handleReset}
-          marginTop="$4"
+          mt="$4"
           testID={buttonTestID}
           accessibilityLabel={buttonTestID}
         >

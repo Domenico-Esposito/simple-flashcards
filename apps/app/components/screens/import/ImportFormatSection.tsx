@@ -1,7 +1,14 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { Platform } from 'react-native';
 import { Button, Text, View, XStack, YStack, useTheme } from 'tamagui';
 
 type CopySection = 'format' | 'ai';
+
+const monospaceFontFamily = Platform.select({
+  ios: 'Menlo',
+  android: 'monospace',
+  default: 'monospace',
+});
 
 type ImportFormatSectionProps = {
   formatTitle: string;
@@ -64,7 +71,7 @@ export function ImportFormatSection({
   return (
     <YStack gap="$6">
       <YStack gap="$3" testID="import-format-panel">
-        <XStack justifyContent="space-between" alignItems="center" gap="$3">
+        <XStack gap="$3" justifyContent="space-between" alignItems="center">
           <YStack gap="$1" flex={1}>
             <Text fontSize={18} fontWeight="600" color="$color">
               {formatTitle}
@@ -84,8 +91,8 @@ export function ImportFormatSection({
           </Button>
         </XStack>
         {isFormatExpanded ? (
-          <View backgroundColor="$backgroundStrong" padding="$4" borderRadius="$3" gap="$3">
-            <XStack justifyContent="space-between" alignItems="center" gap="$3">
+          <View bg="$backgroundStrong" p="$4" gap="$3" borderRadius={12}>
+            <XStack gap="$3" justifyContent="space-between" alignItems="center">
               <Text fontSize={12} fontWeight="600" color="$secondary" flex={1}>
                 {formatExampleLabel}
               </Text>
@@ -93,18 +100,18 @@ export function ImportFormatSection({
                 {copiedSection === 'format' ? copiedLabel : copyLabel}
               </Button>
             </XStack>
-            <View backgroundColor="$background" padding="$3" borderRadius="$3">
-              <Text fontFamily="$mono" fontSize={12} color="$color">
+            <View bg="$background" p="$3" borderRadius={12}>
+              <Text fontSize={12} color="$color" style={{ fontFamily: monospaceFontFamily }}>
                 {formatExample}
               </Text>
             </View>
-            <YStack gap="$2" paddingTop="$1">
+            <YStack gap="$2" pt="$1">
               {fieldLabels.map((fieldLabel, index) => (
                 <Text
                   key={`${fieldLabel}-${index}`}
                   fontSize={13}
                   color="$secondary"
-                  marginLeft={index >= 7 ? '$6' : index >= 3 ? '$3' : undefined}
+                  ml={index >= 7 ? '$6' : index >= 3 ? '$3' : undefined}
                   fontWeight={index === 0 ? '600' : undefined}
                 >
                   {fieldLabel}
@@ -116,7 +123,7 @@ export function ImportFormatSection({
       </YStack>
 
       <YStack gap="$3">
-        <XStack justifyContent="space-between" alignItems="center" gap="$3">
+        <XStack gap="$3" justifyContent="space-between" alignItems="center">
           <YStack gap="$1" flex={1}>
             <Text fontSize={18} fontWeight="600" color="$color">
               {aiTitle}
@@ -136,8 +143,8 @@ export function ImportFormatSection({
           </Button>
         </XStack>
         {isAiExpanded ? (
-          <View backgroundColor="$backgroundStrong" padding="$4" borderRadius="$3" gap="$4">
-            <XStack justifyContent="space-between" alignItems="center" gap="$3">
+          <View bg="$backgroundStrong" p="$4" gap="$4" borderRadius={12}>
+            <XStack gap="$3" justifyContent="space-between" alignItems="center">
               <Text fontSize={12} fontWeight="600" color="$secondary" flex={1}>
                 {aiExampleLabel}
               </Text>
@@ -145,8 +152,8 @@ export function ImportFormatSection({
                 {copiedSection === 'ai' ? copiedLabel : copyLabel}
               </Button>
             </XStack>
-            <View backgroundColor="$background" padding="$3" borderRadius="$3">
-              <Text fontFamily="$mono" fontSize={12} color="$color">
+            <View bg="$background" p="$3" borderRadius={12}>
+              <Text fontSize={12} color="$color" style={{ fontFamily: monospaceFontFamily }}>
                 {aiPrompt}
               </Text>
             </View>

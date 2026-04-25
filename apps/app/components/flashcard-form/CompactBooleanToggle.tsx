@@ -84,19 +84,19 @@ function CompactToggleSegment({
     >
       <XStack
         height="100%"
+        gap="$1.5"
+        px="$2"
         justifyContent="center"
         alignItems="center"
-        gap="$1.5"
-        paddingHorizontal="$2"
       >
         <MaterialIcons name={icon} size={16} color={active ? accentColor : inactiveIconColor} />
         {showLabel && (
           <Text
-            flexShrink={1}
             numberOfLines={1}
             fontSize={13}
             fontWeight="700"
-            color={inactiveTextColor}
+            flexShrink={1}
+            style={{ color: inactiveTextColor }}
           >
             {label}
           </Text>
@@ -172,14 +172,14 @@ export function CompactBooleanToggle({
       flex={1}
       flexBasis={0}
       height={COMPACT_TOGGLE_HEIGHT}
-      minWidth={0}
       position="relative"
-      padding="$1"
-      borderRadius="$10"
-      backgroundColor="$color2"
+      p="$1"
+      bg="$color2"
       borderWidth={1}
       borderColor="$borderColor"
       overflow="hidden"
+      minWidth={0}
+      borderRadius={999}
     >
       <Animated.View
         pointerEvents="none"

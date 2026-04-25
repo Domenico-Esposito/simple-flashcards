@@ -35,13 +35,13 @@ export function SearchBar({
   return (
     <View position="relative">
       <View
+        pointerEvents="none"
         position="absolute"
-        left="$3"
+        left={12}
         top={0}
         bottom={0}
         justifyContent="center"
         zIndex={1}
-        pointerEvents="none"
       >
         <IconSymbol name="magnifyingglass" size={18} color={secondaryColor} />
       </View>
@@ -52,14 +52,21 @@ export function SearchBar({
         value={value}
         onChangeText={onChangeText}
         placeholder={resolvedPlaceholder}
-        paddingLeft="$7"
-        paddingRight={value.length > 0 ? '$10' : '$4'}
         autoCapitalize="none"
         autoCorrect={false}
         returnKeyType="search"
+        paddingLeft={28}
+        paddingRight={value.length > 0 ? 40 : 16}
       />
       {value.length > 0 && (
-        <View position="absolute" right="$3" top={0} bottom={0} justifyContent="center" zIndex={1}>
+        <View
+          position="absolute"
+          right={12}
+          top={0}
+          bottom={0}
+          justifyContent="center"
+          zIndex={1}
+        >
           <Pressable
             onPress={handleClear}
             testID={resolvedClearButtonTestID}

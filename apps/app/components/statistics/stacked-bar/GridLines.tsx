@@ -38,27 +38,13 @@ export function GridLines({ height, niceMax, steps, gridColor, showXAxis }: Grid
       {ticks.map((tick, index) => {
         const bottomPosition = (tick / niceMax) * height;
         return (
-          <View
-            key={index}
-            position="absolute"
-            bottom={bottomPosition}
-            left={0}
-            right={0}
-            height={1}
-          >
+          <View key={index} height={1} style={{ position: 'absolute', bottom: bottomPosition, left: 0, right: 0 }}>
             <DashedLine color={gridColor} />
           </View>
         );
       })}
       {showXAxis && (
-        <View
-          position="absolute"
-          bottom={0}
-          left={0}
-          right={0}
-          height={1}
-          backgroundColor={gridColor}
-        />
+        <View height={1} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: gridColor }} />
       )}
     </>
   );

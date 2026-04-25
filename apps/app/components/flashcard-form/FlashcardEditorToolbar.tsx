@@ -49,14 +49,16 @@ export function FlashcardEditorToolbar({
       style={containerStyle}
     >
       <View
-        borderRadius="$4"
-        paddingVertical="$2"
-        paddingRight="$2"
-        backgroundColor={colors.toolbarBg}
+        py="$2"
+        pr="$2"
         borderTopColor="$borderColor"
-        marginHorizontal="$4"
-        flexDirection="row"
-        alignItems="center"
+        style={{
+          borderRadius: 16,
+          backgroundColor: colors.toolbarBg,
+          marginHorizontal: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+        }}
       >
         <RNScrollView
           horizontal
@@ -88,7 +90,7 @@ export function FlashcardEditorToolbar({
           testID="flashcard-form-keyboard-done-button"
           accessibilityLabel="flashcard-form-keyboard-done-button"
         >
-          <Text color={accentColor} fontWeight="600">
+          <Text fontWeight="600" style={{ color: accentColor }}>
             {doneLabel}
           </Text>
         </Pressable>

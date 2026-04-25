@@ -9,11 +9,11 @@ type LegendProps = {
 
 export function Legend({ items, textColor }: LegendProps) {
   return (
-    <XStack justifyContent="center" gap="$5" marginTop="$3">
+    <XStack gap="$5" mt="$3" justifyContent="center">
       {items.map((item, index) => (
-        <XStack key={index} alignItems="center" gap="$2">
-          <View width={12} height={12} borderRadius={3} backgroundColor={item.color} />
-          <Text fontSize={13} color={textColor}>
+        <XStack key={index} gap="$2" alignItems="center">
+          <View width={12} height={12} borderRadius={3} style={{ backgroundColor: item.color }} />
+          <Text fontSize={13} style={{ color: textColor }}>
             {item.label}
           </Text>
         </XStack>

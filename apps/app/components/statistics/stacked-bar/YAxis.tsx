@@ -30,11 +30,11 @@ export function YAxis({ height, niceMax, steps, textColor, topOffset = 0 }: YAxi
           <Text
             key={index}
             fontSize={10}
-            color={textColor}
+            position="absolute"
+            bottom={bottomPosition - 6}
+            right={4}
             style={{
-              position: 'absolute',
-              bottom: bottomPosition - 6,
-              right: 4,
+              color: textColor,
             }}
           >
             {tick}

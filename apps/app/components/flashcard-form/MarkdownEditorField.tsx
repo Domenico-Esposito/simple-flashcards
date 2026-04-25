@@ -47,7 +47,7 @@ export function MarkdownEditorField({
       gap="$1"
       onLayout={onLayout}
       flex={isMarkdownEditorFocused ? 1 : undefined}
-      minHeight={isMarkdownEditorFocused ? 0 : undefined}
+      style={isMarkdownEditorFocused ? { minHeight: 0 } : undefined}
     >
       <RichTextEditor
         editor={editor}

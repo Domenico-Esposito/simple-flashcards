@@ -24,27 +24,27 @@ export function StatCard({
       flex={fullWidth ? undefined : 1}
       flexBasis={fullWidth ? undefined : 0}
       width={fullWidth ? '100%' : undefined}
-      backgroundColor="$backgroundStrong"
-      borderRadius="$4"
-      padding="$4"
+      bg="$backgroundStrong"
+      p="$4"
+      borderRadius={16}
     >
       <YStack gap="$2">
         {icon && (
           <View
             width={40}
             height={40}
-            borderRadius="$3"
-            backgroundColor={`${iconColor}20`}
+            mb="$1"
+            borderRadius={12}
             alignItems="center"
             justifyContent="center"
-            marginBottom="$1"
+            style={{ backgroundColor: `${iconColor}20` }}
           >
             <MaterialIcons name={icon} size={22} color={iconColor} />
           </View>
         )}
         <Text
           fontSize={13}
-          color="$gray10"
+          color="$secondary"
           fontWeight="500"
           textTransform="uppercase"
           letterSpacing={0.5}
@@ -55,7 +55,7 @@ export function StatCard({
           {value}
         </Text>
         {subtitle && (
-          <Text fontSize={12} color="$gray9">
+          <Text fontSize={12} color="$secondary">
             {subtitle}
           </Text>
         )}

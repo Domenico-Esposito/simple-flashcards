@@ -59,10 +59,10 @@ export function SettingsScreen() {
   };
 
   return (
-    <View flex={1} backgroundColor="$background" testID="settings-screen">
+    <View flex={1} bg="$background" testID="settings-screen">
       <Header title={t('settings.title')} showBackButton={false} />
 
-      <YStack padding="$4" gap="$2">
+      <YStack p="$4" gap="$2">
         {settingsItems.map((item, index) => {
           const itemTestID = testIDByRoute[item.route.toString()] ?? `settings-item-${index}`;
           return (
@@ -73,13 +73,13 @@ export function SettingsScreen() {
               accessibilityLabel={itemTestID}
             >
               <XStack
-                backgroundColor="$backgroundStrong"
-                padding="$4"
-                borderRadius="$3"
+                bg="$backgroundStrong"
+                p="$4"
+                borderRadius={12}
                 alignItems="center"
                 justifyContent="space-between"
               >
-                <XStack alignItems="center" gap="$3">
+                <XStack gap="$3" alignItems="center">
                   <MaterialIcons name={item.icon} size={24} color={colors.muted} />
                   <Text fontSize={16} color="$color">
                     {item.title}

@@ -57,12 +57,15 @@ export function useAppAlert(options: UseAppAlertOptions = {}) {
       key="content"
       bordered
       elevate
-      maxWidth={340}
-      paddingHorizontal="$5"
-      paddingVertical="$5"
-      borderRadius="$6"
-      zIndex={1001}
-      alignSelf={useModal ? 'center' : undefined}
+      px="$5"
+      py="$5"
+      style={{
+        width: '100%',
+        maxWidth: 340,
+        borderRadius: 24,
+        zIndex: 1001,
+        alignSelf: useModal ? 'center' : undefined,
+      }}
       testID="app-alert-content"
     >
       <YStack gap="$3">
@@ -72,7 +75,7 @@ export function useAppAlert(options: UseAppAlertOptions = {}) {
         <AlertDialog.Description size="$3" color="$secondary" testID="app-alert-message">
           {config.message}
         </AlertDialog.Description>
-        <YStack gap="$2" paddingTop="$2">
+        <YStack gap="$2" pt="$2">
           {config.buttons.map((button, index) => {
             const isCancel = button.style === 'cancel';
             const isDestructive = button.style === 'destructive';
@@ -81,7 +84,6 @@ export function useAppAlert(options: UseAppAlertOptions = {}) {
             return (
               <Wrapper key={index} asChild>
                 <Button
-                  borderRadius="$4"
                   {...(isDestructive ? { theme: 'red' } : {})}
                   onPress={() => handleButtonPress(button)}
                   testID={`app-alert-button-${
@@ -90,6 +92,7 @@ export function useAppAlert(options: UseAppAlertOptions = {}) {
                   accessibilityLabel={`app-alert-button-${
                     isCancel ? 'cancel' : isDestructive ? 'destructive' : 'default'
                   }-${index}`}
+                  style={{ borderRadius: 16 }}
                 >
                   {button.text}
                 </Button>

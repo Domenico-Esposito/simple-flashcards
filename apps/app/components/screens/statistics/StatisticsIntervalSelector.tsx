@@ -21,7 +21,7 @@ export function StatisticsIntervalSelector({
   onSelect,
 }: StatisticsIntervalSelectorProps) {
   return (
-    <View backgroundColor="$backgroundStrong" borderRadius="$4" padding="$1">
+    <View bg="$backgroundStrong" p="$1" borderRadius={16}>
       <XStack>
         {intervals.map((item) => (
           <Pressable
@@ -31,12 +31,8 @@ export function StatisticsIntervalSelector({
             testID={item.testID}
           >
             <View
-              paddingVertical="$2.5"
-              paddingHorizontal="$3"
-              borderRadius="$3"
-              backgroundColor={interval === item.value ? '$background' : 'transparent'}
-              alignItems="center"
-              justifyContent="center"
+              py="$2.5"
+              px="$3"
               {...(interval === item.value && {
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 1 },
@@ -44,11 +40,15 @@ export function StatisticsIntervalSelector({
                 shadowRadius: 2,
                 elevation: 2,
               })}
+              bg={interval === item.value ? '$background' : undefined}
+              borderRadius={12}
+              alignItems="center"
+              justifyContent="center"
             >
               <Text
                 fontSize={13}
                 fontWeight={interval === item.value ? '600' : '400'}
-                color={interval === item.value ? '$color' : '$gray10'}
+                color={interval === item.value ? '$color' : '$secondary'}
               >
                 {item.label}
               </Text>

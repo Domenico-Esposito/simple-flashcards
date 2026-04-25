@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { Fragment, useState, useEffect, useRef, useCallback } from 'react';
 import { Platform, StyleSheet, Text as RNText } from 'react-native';
 import type {
   LayoutChangeEvent,
@@ -175,15 +175,24 @@ export function RichTextEditor({
 
   return (
     <View
-      backgroundColor="transparent"
-      height={fill ? undefined : editorHeight}
-      minHeight={fill ? 0 : minHeight}
-      maxHeight={fill ? undefined : maxHeight}
-      flex={fill ? 1 : undefined}
-      flexShrink={0}
+      style={{
+        backgroundColor: 'transparent',
+        height: fill ? undefined : editorHeight,
+        minHeight: fill ? 0 : minHeight,
+        maxHeight: fill ? undefined : maxHeight,
+        flex: fill ? 1 : undefined,
+        flexShrink: 0,
+      }}
     >
       {Platform.OS !== 'web' && (
-        <View pointerEvents="none" opacity={0} position="absolute" top={0} left={0} right={0}>
+        <View
+          pointerEvents="none"
+          opacity={0}
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+        >
           <RNText
             onLayout={handleMirrorLayout}
             style={[
@@ -192,11 +201,16 @@ export function RichTextEditor({
             ]}
           >
             {editor.highlightedSegments.map((segment, index) => {
-              const Component = segmentComponents[segment.type];
+              const SegmentComponent = segmentComponents[segment.type];
+
+              if (!SegmentComponent) {
+                return <Fragment key={index}>{segment.text}</Fragment>;
+              }
+
               return (
-                <Component key={index} type={segment.type} meta={segment.meta}>
+                <SegmentComponent key={index} type={segment.type} meta={segment.meta}>
                   {segment.text}
-                </Component>
+                </SegmentComponent>
               );
             })}
             {trailingMeasureText}

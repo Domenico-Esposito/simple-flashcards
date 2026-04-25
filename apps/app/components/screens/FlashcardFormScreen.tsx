@@ -179,9 +179,9 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
     return (
       <View
         flex={1}
+        bg="$background"
         justifyContent="center"
         alignItems="center"
-        backgroundColor="$background"
         testID="flashcard-form-loading"
       >
         <Text color="$secondary">{t('common.loading')}</Text>
@@ -213,7 +213,7 @@ export function FlashcardFormScreen({ mode, deckId, flashcardId }: FlashcardForm
     : [];
   const secondarySectionLabel = isMultipleChoice ? t('flashcard.options') : t('flashcard.answer');
   const screenContent = (
-    <View flex={1} backgroundColor="$background" testID="flashcard-form-screen">
+    <View flex={1} bg="$background" testID="flashcard-form-screen">
       <Header title={screenTitle} isModal actions={headerActions} />
       <View flex={1} minHeight={0}>
         <FlashcardFormToggleBar

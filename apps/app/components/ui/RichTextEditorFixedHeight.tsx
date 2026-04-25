@@ -37,11 +37,13 @@ export function RichTextEditorFixedHeight({
 
   return (
     <View
-      backgroundColor="transparent"
-      height={fill ? undefined : FIXED_EDITOR_HEIGHT}
-      flex={fill ? 1 : undefined}
-      minHeight={fill ? 0 : undefined}
-      flexShrink={0}
+      style={{
+        backgroundColor: 'transparent',
+        height: fill ? undefined : FIXED_EDITOR_HEIGHT,
+        flex: fill ? 1 : undefined,
+        minHeight: fill ? 0 : undefined,
+        flexShrink: 0,
+      }}
     >
       <MarkdownTextInput
         editor={editor}

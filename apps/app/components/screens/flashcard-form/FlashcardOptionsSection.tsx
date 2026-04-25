@@ -55,7 +55,7 @@ export function FlashcardOptionsSection({
         paddingBottom: scrollContentBottomPadding,
       }}
     >
-      <YStack gap="$4" paddingHorizontal="$4">
+      <YStack gap="$4" px="$4">
         <View>
           <MultipleChoiceOptionsField
             options={options}

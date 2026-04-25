@@ -14,11 +14,11 @@ type HomeSearchResultsProps = {
 
 function SearchSectionHeader({ title }: { title: string }) {
   return (
-    <View backgroundColor="$background" paddingVertical="$2" marginTop="$3">
+    <View bg="$background" py="$2" mt="$3">
       <Text
         fontSize={13}
         fontWeight="600"
-        color="$gray10"
+        color="$secondary"
         textTransform="uppercase"
         letterSpacing={0.5}
       >
@@ -43,10 +43,10 @@ export function HomeSearchResults({
           <View key={section.deckId}>
             <SearchSectionHeader title={section.deckTitle} />
             <View
+              testID={`home-search-results-grid-${section.deckId}`}
               flexDirection="row"
               flexWrap="wrap"
               margin={-6}
-              testID={`home-search-results-grid-${section.deckId}`}
             >
               {section.data.map((item) => (
                 <View key={item.id} width="50%" padding={6}>

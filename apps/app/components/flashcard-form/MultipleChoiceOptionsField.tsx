@@ -105,7 +105,7 @@ export function MultipleChoiceOptionsField({
         testID="flashcard-form-add-option-button"
         accessibilityLabel="flashcard-form-add-option-button"
       >
-        <Text color={colors.accent}>{addOptionLabel}</Text>
+        <Text style={{ color: colors.accent }}>{addOptionLabel}</Text>
       </Button>
       <FormErrorText
         message={optionsError}

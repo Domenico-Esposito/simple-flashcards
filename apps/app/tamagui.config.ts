@@ -94,6 +94,10 @@ const darkTheme = {
 
 const config = createTamagui({
   ...defaultConfig,
+  settings: {
+    ...defaultConfig.settings,
+    onlyAllowShorthands: false,
+  },
   fonts: {
     ...defaultConfig.fonts,
     body: interFont,
