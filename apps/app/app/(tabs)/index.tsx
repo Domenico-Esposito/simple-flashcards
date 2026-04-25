@@ -1,5 +1,11 @@
+import { RouteHead } from '@/components/seo/RouteHead';
 import { HomeScreen } from '@/components/screens';
 
 export default function HomeRoute() {
-  return <HomeScreen />;
+  return (
+    <>
+      <RouteHead canonicalPath="/" />
+      <HomeScreen />
+    </>
+  );
 }
