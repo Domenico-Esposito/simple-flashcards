@@ -1,6 +1,6 @@
 import { Pressable, TextInput } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Button, Text, View, XStack, YStack } from 'tamagui';
+import { Button, Text, View, XStack, YStack, useTheme } from 'tamagui';
 
 import { FormErrorText } from '@/components/ui/FormErrorText';
 import type { OptionField } from '@/components/flashcard-form/types';
@@ -45,6 +45,9 @@ export function MultipleChoiceOptionsField({
   onOptionSelectionChange,
   inputAccessoryViewID,
 }: MultipleChoiceOptionsFieldProps) {
+  const theme = useTheme();
+  const primaryColor = String(theme.primary.val);
+
   return (
     <YStack gap="$3">
       {options.map((option, index) => (
@@ -101,11 +104,11 @@ export function MultipleChoiceOptionsField({
         size="$3"
         onPress={onAddOption}
         chromeless
-        icon={<MaterialIcons name="add" size={18} color={colors.accent} />}
+        icon={<MaterialIcons name="add" size={18} color={primaryColor} />}
         testID="flashcard-form-add-option-button"
         accessibilityLabel="flashcard-form-add-option-button"
       >
-        <Text style={{ color: colors.accent }}>{addOptionLabel}</Text>
+        <Text color="$primary">{addOptionLabel}</Text>
       </Button>
       <FormErrorText
         message={optionsError}

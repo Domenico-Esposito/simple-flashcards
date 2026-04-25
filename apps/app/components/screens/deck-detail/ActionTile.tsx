@@ -7,8 +7,8 @@ type ActionTileProps = {
   icon: ComponentProps<typeof MaterialIcons>['name'];
   label: string;
   iconColor: string;
-  textColor: string;
-  backgroundColor: string;
+  textColor: ComponentProps<typeof Text>['color'];
+  backgroundColor: ComponentProps<typeof View>['backgroundColor'];
   onPress: () => void;
   testID: string;
 };
@@ -25,17 +25,15 @@ export function ActionTile({
   return (
     <Pressable onPress={onPress} style={{ flex: 1 }} testID={testID} accessibilityLabel={testID}>
       <View
+        backgroundColor={backgroundColor}
+        borderRadius={16}
         p="$4"
         gap="$2"
-        style={{
-          backgroundColor,
-          borderRadius: 16,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        alignItems="center"
+        justifyContent="center"
       >
         <MaterialIcons name={icon} size={24} color={iconColor} />
-        <Text fontSize={14} fontWeight="600" style={{ color: textColor }}>
+        <Text fontSize={14} fontWeight="600" color={textColor}>
           {label}
         </Text>
       </View>

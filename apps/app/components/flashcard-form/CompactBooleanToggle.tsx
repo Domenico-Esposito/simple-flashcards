@@ -16,7 +16,7 @@ type CompactBooleanToggleProps = {
   errorColor: string;
   activeBackgroundColor: string;
   inactiveIconColor: string;
-  inactiveTextColor: string;
+  inactiveTextColor: ComponentProps<typeof Text>['color'];
   falseLabel: string;
   trueLabel: string;
   falseIcon: ComponentProps<typeof MaterialIcons>['name'];
@@ -37,7 +37,7 @@ type CompactToggleSegmentProps = {
   accentColor: string;
   errorColor: string;
   inactiveIconColor: string;
-  inactiveTextColor: string;
+  inactiveTextColor: ComponentProps<typeof Text>['color'];
   testID: string;
   hasError: boolean;
   showActiveLabel: boolean;
@@ -96,7 +96,7 @@ function CompactToggleSegment({
             fontSize={13}
             fontWeight="700"
             flexShrink={1}
-            style={{ color: inactiveTextColor }}
+            color={inactiveTextColor}
           >
             {label}
           </Text>
