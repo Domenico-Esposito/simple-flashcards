@@ -15,6 +15,7 @@
     "deploy:web:dev": "npx expo export --platform web && eas deploy",
     "deploy:web:prod": "npx expo export --platform web && eas deploy --prod",
     "lint": "expo lint",
+    "typecheck": "tsc --noEmit",
     "e2e": "maestro test --no-ansi .maestro/main.yaml",
     "e2e:android": "maestro --platform android test --no-ansi .maestro/main.yaml",
     "e2e:ios": "maestro --platform ios test --no-ansi .maestro/main.yaml"
