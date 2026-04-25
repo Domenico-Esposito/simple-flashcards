@@ -10,7 +10,7 @@ import { useRootLayoutState } from '@/hooks/useRootLayoutState';
 
 SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({
-  duration: 300,
+  duration: 500,
   fade: true,
 });
 

@@ -2,11 +2,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 
+import { AnimatedAppIcon } from '@/components/ui/AnimatedAppIcon';
+
 type RootSplashScreenProps = {
   onLayout?: () => void;
 };
-
-const splashIcon = require('../../../assets/images/splash-icon.png');
 
 export function RootSplashScreen({ onLayout }: RootSplashScreenProps) {
   const iconOpacity = useRef(new Animated.Value(0)).current;
@@ -28,7 +28,9 @@ export function RootSplashScreen({ onLayout }: RootSplashScreenProps) {
         style={styles.gradient}
       >
         <View style={styles.content}>
-          <Animated.Image resizeMode="contain" source={splashIcon} style={[styles.icon, { opacity: iconOpacity }]} />
+          <Animated.View style={{ opacity: iconOpacity }}>
+            <AnimatedAppIcon size={200} />
+          </Animated.View>
         </View>
       </LinearGradient>
     </View>
@@ -47,9 +49,5 @@ const styles = StyleSheet.create({
   },
   gradient: {
     flex: 1,
-  },
-  icon: {
-    height: 200,
-    width: 200,
   },
 });
